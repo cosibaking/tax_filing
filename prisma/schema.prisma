@@ -1,0 +1,358 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Member {
+  id           BigInt    @id @default(autoincrement())
+  phone        String    @unique @db.VarChar(20)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  name         String?   @db.VarChar(64)
+  email        String?   @db.VarChar(128)
+  deleted      Boolean   @default(false)
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  opcEntity    OpcEntity?
+  orders       ServiceOrder[]
+  diagnoses    ComplianceDiagnosis[]
+  consents     ComplianceConsent[]
+  notices      MemberNotice[]
+
+  @@map("members")
+}
+
+model AdminUser {
+  id           BigInt    @id @default(autoincrement())
+  username     String    @unique @db.VarChar(64)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         String    @default("advisor") @db.VarChar(32)
+  deleted      Boolean   @default(false)
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
+
+model OtpCode {
+  id        BigInt   @id @default(autoincrement())
+  phone     String   @db.VarChar(20)
+  code      String   @db.VarChar(8)
+  purpose   String   @db.VarChar(32)
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, purpose])
+  @@map("otp_codes")
+}
+
+model SysAttachment {
+  id         BigInt    @id @default(autoincrement())
+  memberId   BigInt?   @map("member_id")
+  fileName   String    @map("file_name") @db.VarChar(255)
+  mimeType   String    @map("mime_type") @db.VarChar(128)
+  size       Int
+  storageKey String    @map("storage_key") @db.VarChar(512)
+  deleted    Boolean   @default(false)
+  deletedAt  DateTime? @map("deleted_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("sys_attachments")
+}
+
+model MemberNotice {
+  id        BigInt   @id @default(autoincrement())
+  memberId  BigInt   @map("member_id")
+  type      String   @db.VarChar(64)
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  read      Boolean  @default(false)
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@map("member_notices")
+}
+
+model ComplianceAuditLog {
+  id           BigInt   @id @default(autoincrement())
+  entityType   String   @map("entity_type") @db.VarChar(64)
+  entityId     BigInt   @map("entity_id")
+  action       String   @db.VarChar(64)
+  operatorId   BigInt   @map("operator_id")
+  operatorType String   @map("operator_type") @db.VarChar(16)
+  before       Json?
+  after        Json?
+  ip           String?  @db.VarChar(45)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@map("compliance_audit_logs")
+}
+
+model ComplianceConsent {
+  id              BigInt   @id @default(autoincrement())
+  memberId        BigInt   @map("member_id")
+  orderId         BigInt?  @map("order_id")
+  type            String   @db.VarChar(32)
+  documentVersion String   @map("document_version") @db.VarChar(16)
+  ip              String?  @db.VarChar(45)
+  userAgent       String?  @map("user_agent") @db.Text
+  agreedAt        DateTime @map("agreed_at")
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@map("compliance_consents")
+}
+
+model ComplianceDiagnosis {
+  id                 BigInt   @id @default(autoincrement())
+  memberId           BigInt?  @map("member_id")
+  platforms          Json
+  monthlyIncomeRange String   @map("monthly_income_range") @db.VarChar(32)
+  annualCostEstimate Decimal  @map("annual_cost_estimate") @db.Decimal(14, 2)
+  existingEntity     String   @map("existing_entity") @db.VarChar(32)
+  hasFiledTax        Boolean  @map("has_filed_tax")
+  taxBureauContact   Boolean  @map("tax_bureau_contact")
+  recommendedPlan    String   @map("recommended_plan") @db.VarChar(32)
+  taxComparison      Json     @map("tax_comparison")
+  deleted            Boolean  @default(false)
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  member Member? @relation(fields: [memberId], references: [id])
+
+  @@map("compliance_diagnoses")
+}
+
+model ServicePlan {
+  id           BigInt  @id @default(autoincrement())
+  name         String  @db.VarChar(64)
+  tier         String  @db.VarChar(32)
+  monthlyPrice Decimal @map("monthly_price") @db.Decimal(10, 2)
+  features     Json
+  active       Boolean @default(true)
+
+  orders ServiceOrder[]
+
+  @@map("service_plans")
+}
+
+model ServiceOrder {
+  id             BigInt    @id @default(autoincrement())
+  memberId       BigInt    @map("member_id")
+  planId         BigInt    @map("plan_id")
+  diagnosisId    BigInt?   @map("diagnosis_id")
+  status         String    @db.VarChar(32)
+  amount         Decimal   @db.Decimal(10, 2)
+  signedAt       DateTime? @map("signed_at")
+  contractFileId BigInt?   @map("contract_file_id")
+  deleted        Boolean   @default(false)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  member Member      @relation(fields: [memberId], references: [id])
+  plan   ServicePlan @relation(fields: [planId], references: [id])
+
+  @@index([memberId])
+  @@map("service_orders")
+}
+
+model OpcEntity {
+  id              BigInt   @id @default(autoincrement())
+  memberId        BigInt   @unique @map("member_id")
+  companyName     String?  @map("company_name") @db.VarChar(128)
+  creditCode      String?  @map("credit_code") @db.VarChar(32)
+  status          String   @db.VarChar(32)
+  businessScope   String?  @map("business_scope") @db.Text
+  registerAddress String?  @map("register_address") @db.VarChar(255)
+  idCardEncrypted String?  @map("id_card_encrypted") @db.Text
+  phone           String?  @db.VarChar(20)
+  email           String?  @db.VarChar(128)
+  bankAccountEnc  String?  @map("bank_account_enc") @db.Text
+  licenseFileId   BigInt?  @map("license_file_id")
+  deleted         Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  member       Member            @relation(fields: [memberId], references: [id])
+  progressLogs OpcProgressLog[]
+  incomeEntries IncomeEntry[]
+  expenseEntries ExpenseEntry[]
+  bankTransactions BankTransaction[]
+  vouchers     LedgerVoucher[]
+  profitSummaries ProfitSummary[]
+  taxTasks     TaxFilingTask[]
+  statements   MonthlyStatement[]
+
+  @@map("opc_entities")
+}
+
+model OpcProgressLog {
+  id         BigInt   @id @default(autoincrement())
+  opcId      BigInt   @map("opc_id")
+  step       String   @db.VarChar(32)
+  status     String   @db.VarChar(32)
+  note       String?  @db.Text
+  operatedBy BigInt?  @map("operated_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@index([opcId])
+  @@map("opc_progress_logs")
+}
+
+model ExpenseCategory {
+  id          BigInt  @id @default(autoincrement())
+  code        String  @unique @db.VarChar(32)
+  name        String  @db.VarChar(64)
+  voucherHint String  @map("voucher_hint") @db.Text
+  active      Boolean @default(true)
+
+  @@map("expense_categories")
+}
+
+model IncomeEntry {
+  id          BigInt   @id @default(autoincrement())
+  opcId       BigInt   @map("opc_id")
+  platform    String   @db.VarChar(32)
+  category    String   @db.VarChar(32)
+  grossAmount Decimal  @map("gross_amount") @db.Decimal(14, 2)
+  platformFee Decimal  @map("platform_fee") @db.Decimal(14, 2)
+  netAmount   Decimal  @map("net_amount") @db.Decimal(14, 2)
+  occurredAt  DateTime @map("occurred_at")
+  source      String   @default("manual") @db.VarChar(16)
+  note        String?  @db.Text
+  deleted     Boolean  @default(false)
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@index([opcId, occurredAt])
+  @@map("income_entries")
+}
+
+model ExpenseEntry {
+  id           BigInt    @id @default(autoincrement())
+  opcId        BigInt    @map("opc_id")
+  category     String    @db.VarChar(32)
+  amount       Decimal   @db.Decimal(14, 2)
+  invoiceType  String    @map("invoice_type") @db.VarChar(16)
+  attachmentId BigInt?   @map("attachment_id")
+  description  String?   @db.Text
+  warningFlag  Boolean   @default(false) @map("warning_flag")
+  occurredAt   DateTime  @map("occurred_at")
+  deleted      Boolean   @default(false)
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@index([opcId, occurredAt])
+  @@map("expense_entries")
+}
+
+model BankTransaction {
+  id          BigInt   @id @default(autoincrement())
+  opcId       BigInt   @map("opc_id")
+  occurredAt  DateTime @map("occurred_at")
+  amount      Decimal  @db.Decimal(14, 2)
+  description String?  @db.Text
+  matched     Boolean  @default(false)
+  incomeId    BigInt?  @map("income_id")
+  deleted     Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@index([opcId])
+  @@map("bank_transactions")
+}
+
+model LedgerAccount {
+  id   BigInt @id @default(autoincrement())
+  code String @unique @db.VarChar(16)
+  name String @db.VarChar(64)
+  type String @db.VarChar(16)
+
+  @@map("ledger_accounts")
+}
+
+model LedgerVoucher {
+  id            BigInt   @id @default(autoincrement())
+  opcId         BigInt   @map("opc_id")
+  period        String   @db.VarChar(7)
+  debitAccount  String   @map("debit_account") @db.VarChar(16)
+  creditAccount String   @map("credit_account") @db.VarChar(16)
+  amount        Decimal  @db.Decimal(14, 2)
+  refType       String   @map("ref_type") @db.VarChar(32)
+  refId         BigInt   @map("ref_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@index([opcId, period])
+  @@map("ledger_vouchers")
+}
+
+model ProfitSummary {
+  id               BigInt  @id @default(autoincrement())
+  opcId            BigInt  @map("opc_id")
+  year             Int
+  month            Int
+  revenue          Decimal @db.Decimal(14, 2)
+  cost             Decimal @db.Decimal(14, 2)
+  profit           Decimal @db.Decimal(14, 2)
+  cumulativeProfit Decimal @map("cumulative_profit") @db.Decimal(14, 2)
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@unique([opcId, year, month])
+  @@map("profit_summaries")
+}
+
+model TaxFilingTask {
+  id               BigInt    @id @default(autoincrement())
+  opcId            BigInt    @map("opc_id")
+  taxType          String    @map("tax_type") @db.VarChar(32)
+  period           String    @db.VarChar(16)
+  dueDate          DateTime  @map("due_date")
+  status           String    @db.VarChar(16)
+  calculatedAmount Decimal   @map("calculated_amount") @db.Decimal(14, 2)
+  filedAmount      Decimal?  @map("filed_amount") @db.Decimal(14, 2)
+  receiptFileId    BigInt?   @map("receipt_file_id")
+  checklist        Json?
+  deleted          Boolean   @default(false)
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@index([opcId, period])
+  @@map("tax_filing_tasks")
+}
+
+model MonthlyStatement {
+  id        BigInt    @id @default(autoincrement())
+  opcId     BigInt    @map("opc_id")
+  year      Int
+  month     Int
+  summary   Json
+  pdfFileId BigInt?   @map("pdf_file_id")
+  sentAt    DateTime? @map("sent_at")
+  deleted   Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  opc OpcEntity @relation(fields: [opcId], references: [id])
+
+  @@unique([opcId, year, month])
+  @@map("monthly_statements")
+}
