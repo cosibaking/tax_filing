@@ -171,13 +171,39 @@ model OpcEntity {
   companyName     String?  @map("company_name") @db.VarChar(128)
   creditCode      String?  @map("credit_code") @db.VarChar(32)
   status          String   @db.VarChar(32)
+  proposedNames   Json?    @map("proposed_names")
+  registeredCapital Decimal? @map("registered_capital") @db.Decimal(12, 2)
+  capitalTermYears  Int?   @map("capital_term_years")
+  businessTermType  String? @map("business_term_type") @db.VarChar(16)
+  businessTermEnd   DateTime? @map("business_term_end") @db.Date
   businessScope   String?  @map("business_scope") @db.Text
+  registerProvince String? @map("register_province") @db.VarChar(32)
+  registerCity    String?  @map("register_city") @db.VarChar(32)
+  registerDistrict String? @map("register_district") @db.VarChar(32)
   registerAddress String?  @map("register_address") @db.VarChar(255)
+  addressProofFileId BigInt? @map("address_proof_file_id")
+  legalPersonName String?  @map("legal_person_name") @db.VarChar(64)
   idCardEncrypted String?  @map("id_card_encrypted") @db.Text
+  idCardValidFrom DateTime? @map("id_card_valid_from") @db.Date
+  idCardValidTo   DateTime? @map("id_card_valid_to") @db.Date
+  idCardFrontFileId BigInt? @map("id_card_front_file_id")
+  idCardBackFileId  BigInt? @map("id_card_back_file_id")
+  ethnicity       String?  @db.VarChar(16)
+  householdAddress String? @map("household_address") @db.VarChar(255)
+  residentialAddress String? @map("residential_address") @db.VarChar(255)
   phone           String?  @db.VarChar(20)
   email           String?  @db.VarChar(128)
+  esignAuthorized Boolean  @default(false) @map("esign_authorized")
+  establishedAt   DateTime? @map("established_at") @db.Date
+  taxpayerType    String   @default("small_scale") @map("taxpayer_type") @db.VarChar(32)
+  taxActivatedAt  DateTime? @map("tax_activated_at")
+  bankName        String?  @map("bank_name") @db.VarChar(128)
   bankAccountEnc  String?  @map("bank_account_enc") @db.Text
+  bankReceiptFileId BigInt? @map("bank_receipt_file_id")
   licenseFileId   BigInt?  @map("license_file_id")
+  materialsSubmittedAt DateTime? @map("materials_submitted_at")
+  materialsApprovedAt DateTime? @map("materials_approved_at")
+  rejectNote      String?  @map("reject_note") @db.Text
   deleted         Boolean  @default(false)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")

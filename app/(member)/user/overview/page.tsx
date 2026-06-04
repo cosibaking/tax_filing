@@ -26,13 +26,7 @@ export default function OverviewPage() {
       setError('请先登录');
       return;
     }
-    memberFetch<OverviewData>('/api/member/profile')
-      .then((profile) =>
-        memberFetch<OverviewData>('/api/member/compliance/opc').then((opc) => ({
-          ...profile,
-          ...opc,
-        })),
-      )
+    memberFetch<OverviewData>('/api/member/compliance/overview')
       .then(setData)
       .catch((err) => {
         setError(err instanceof ApiClientError ? err.message : '加载失败');
@@ -49,9 +43,7 @@ export default function OverviewPage() {
     );
   }
 
-  const tasks = data?.pendingTasks ?? [
-    { label: '完成方案签约', href: '/user/compliance/plan', urgent: true },
-  ];
+  const tasks = data?.pendingTasks ?? [];
 
   return (
     <div className="space-y-6">
@@ -100,17 +92,21 @@ export default function OverviewPage() {
           <CardTitle>待办事项</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {tasks.map((task) => (
-            <div
-              key={task.href}
-              className={`flex items-center justify-between rounded-md border p-3 ${task.urgent ? 'border-destructive/50 bg-destructive/5' : ''}`}
-            >
-              <span className="text-sm">{task.label}</span>
-              <Button asChild size="sm" variant={task.urgent ? 'default' : 'outline'}>
-                <Link href={task.href}>处理</Link>
-              </Button>
-            </div>
-          ))}
+          {tasks.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">暂无待办，继续保持</p>
+          ) : (
+            tasks.map((task) => (
+              <div
+                key={task.href + task.label}
+                className={`flex items-center justify-between rounded-md border p-3 ${task.urgent ? 'border-destructive/50 bg-destructive/5' : ''}`}
+              >
+                <span className="text-sm">{task.label}</span>
+                <Button asChild size="sm" variant={task.urgent ? 'default' : 'outline'}>
+                  <Link href={task.href}>处理</Link>
+                </Button>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 

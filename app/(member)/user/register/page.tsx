@@ -9,7 +9,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ApiClientError, publicFetch, setMemberTokens } from '@/lib/api/client';
+import {
+  ApiClientError,
+  clearGuestSessionId,
+  getOrCreateGuestSessionId,
+  publicFetch,
+  setMemberTokens,
+} from '@/lib/api/client';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -51,9 +57,18 @@ export default function RegisterPage() {
         refreshToken: string;
       }>('/api/member/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ phone, password, otp, agreeTerms, agreePrivacy, agreeRisk }),
+        body: JSON.stringify({
+          phone,
+          password,
+          otp,
+          agreeTerms,
+          agreePrivacy,
+          agreeRisk,
+          guestSessionId: getOrCreateGuestSessionId(),
+        }),
       });
       setMemberTokens(data.accessToken, data.refreshToken);
+      clearGuestSessionId();
       router.push('/user/overview');
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : '注册失败');

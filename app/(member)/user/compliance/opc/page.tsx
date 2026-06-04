@@ -1,17 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { OpcMaterialsForm } from '@/components/compliance/opc-materials-form';
+import { OpcFileUpload } from '@/components/compliance/opc-file-upload';
 import { ApiClientError, memberFetch } from '@/lib/api/client';
+import type { OpcMaterialsInput } from '@/lib/services/compliance/opc/opc-types';
 
 interface OpcProgress {
   opcStatus?: string;
+  statusLabel?: string;
+  companyName?: string;
+  creditCode?: string;
   steps?: { key: string; label: string; status: 'done' | 'current' | 'pending'; date?: string }[];
+  canEditMaterials?: boolean;
+  rejectNote?: string | null;
+  bankOpeningChecklist?: string[];
+  legalPersonName?: string;
+  phone?: string;
+  proposedNamePrimary?: string;
 }
 
 export default function OpcPage() {
@@ -19,12 +32,13 @@ export default function OpcPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [materialNote, setMaterialNote] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankReceiptFileId, setBankReceiptFileId] = useState('');
 
   const load = () => {
     setLoading(true);
-    memberFetch<OpcProgress>('/api/member/compliance/opc/progress')
-      .then(setProgress)
+    memberFetch<OpcProgress | null>('/api/member/compliance/opc/progress')
+      .then((data) => setProgress(data ?? null))
       .catch((err) => {
         setError(err instanceof ApiClientError ? err.message : '加载失败');
       })
@@ -35,16 +49,14 @@ export default function OpcPage() {
     load();
   }, []);
 
-  const submitMaterials = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitMaterials = async (data: OpcMaterialsInput) => {
     setSubmitting(true);
     setError(null);
     try {
       await memberFetch('/api/member/compliance/opc/materials', {
         method: 'POST',
-        body: JSON.stringify({ note: materialNote }),
+        body: JSON.stringify(data),
       });
-      setMaterialNote('');
       load();
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : '提交失败');
@@ -53,27 +65,66 @@ export default function OpcPage() {
     }
   };
 
-  const steps = progress?.steps ?? [
-    { key: 'materials', label: '材料收集', status: 'done' as const },
-    { key: 'business', label: '工商注册', status: 'current' as const },
-    { key: 'tax', label: '税务登记', status: 'pending' as const },
-    { key: 'bank', label: '银行开户', status: 'pending' as const },
-    { key: 'active', label: '激活完成', status: 'pending' as const },
-  ];
+  const submitBankReceipt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bankReceiptFileId) {
+      setError('请上传开户回执');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await memberFetch('/api/member/compliance/opc/bank-receipt', {
+        method: 'POST',
+        body: JSON.stringify({ bankName, bankReceiptFileId }),
+      });
+      setBankReceiptFileId('');
+      load();
+    } catch (err) {
+      setError(err instanceof ApiClientError ? err.message : '上传失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const steps = progress?.steps ?? [];
+  const showBankSection = progress?.opcStatus === 'tax' || progress?.opcStatus === 'bank';
 
   if (loading) return <p className="text-muted-foreground">加载中…</p>;
 
+  if (!progress) {
+    return (
+      <Alert>
+        <AlertDescription>
+          请先完成{' '}
+          <Link href="/user/compliance/plan" className="underline">
+            方案签约
+          </Link>{' '}
+          后再提交 OPC 注册资料。
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold">OPC 落地进度</h1>
-        <Badge variant={progress?.opcStatus === 'active' ? 'success' : 'warning'}>
-          {progress?.opcStatus === 'active' ? '已激活' : '设立中'}
+        <Badge variant={progress.opcStatus === 'active' ? 'success' : 'warning'}>
+          {progress.statusLabel ?? progress.opcStatus}
         </Badge>
+        <span className="text-sm text-muted-foreground">预计 14 个工作日</span>
       </div>
+
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {progress.rejectNote && (
+        <Alert variant="destructive">
+          <AlertDescription>资料被退回：{progress.rejectNote}</AlertDescription>
         </Alert>
       )}
 
@@ -86,7 +137,7 @@ export default function OpcPage() {
             {steps.map((step, i) => (
               <li key={step.key} className={`mb-6 ${i === steps.length - 1 ? 'mb-0' : ''}`}>
                 <span
-                  className={`absolute -left-2 flex h-4 w-4 items-center justify-center rounded-full ${
+                  className={`absolute -left-2 flex h-4 w-4 rounded-full ${
                     step.status === 'done'
                       ? 'bg-primary'
                       : step.status === 'current'
@@ -95,34 +146,94 @@ export default function OpcPage() {
                   }`}
                 />
                 <p className="font-medium">{step.label}</p>
-                {step.date && (
-                  <p className="text-xs text-muted-foreground">{step.date}</p>
-                )}
+                {step.date && <p className="text-xs text-muted-foreground">{step.date}</p>}
               </li>
             ))}
           </ol>
+          {progress.companyName && (
+            <p className="mt-4 text-sm">
+              <span className="text-muted-foreground">核准名称：</span>
+              {progress.companyName}
+            </p>
+          )}
+          {progress.creditCode && (
+            <p className="text-sm">
+              <span className="text-muted-foreground">统一社会信用代码：</span>
+              {progress.creditCode}
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {progress?.opcStatus !== 'active' && (
+      {progress.canEditMaterials && (
         <Card>
           <CardHeader>
-            <CardTitle>补充材料</CardTitle>
+            <CardTitle>注册资料</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={submitMaterials} className="space-y-4">
+            <OpcMaterialsForm
+              onSubmit={submitMaterials}
+              submitting={submitting}
+              onValidationError={setError}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {!progress.canEditMaterials && progress.opcStatus !== 'active' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>已提交资料</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p>
+              <span className="text-muted-foreground">拟设名称：</span>
+              {progress.proposedNamePrimary ?? '—'}
+            </p>
+            <p>
+              <span className="text-muted-foreground">法人：</span>
+              {progress.legalPersonName ?? '—'}
+            </p>
+            <p>
+              <span className="text-muted-foreground">联系手机：</span>
+              {progress.phone ?? '—'}
+            </p>
+            <p className="text-muted-foreground">资料审核中，请等待顾问处理。</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {showBankSection && (
+        <Card>
+          <CardHeader>
+            <CardTitle>银行开户</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <details className="text-sm">
+              <summary className="cursor-pointer font-medium">开户材料清单</summary>
+              <ul className="mt-2 list-inside list-disc text-muted-foreground">
+                {(progress.bankOpeningChecklist ?? []).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </details>
+            <form onSubmit={submitBankReceipt} className="space-y-4">
               <div>
-                <Label htmlFor="note">材料说明</Label>
+                <Label htmlFor="bankName">开户银行（选填）</Label>
                 <Input
-                  id="note"
+                  id="bankName"
                   className="mt-1"
-                  placeholder="如：身份证已上传、待补充地址证明"
-                  value={materialNote}
-                  onChange={(e) => setMaterialNote(e.target.value)}
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
                 />
               </div>
+              <OpcFileUpload
+                label="开户回执 / 基本存款账户信息"
+                value={bankReceiptFileId}
+                onChange={setBankReceiptFileId}
+              />
               <Button type="submit" disabled={submitting}>
-                {submitting ? '提交中…' : '提交材料说明'}
+                {submitting ? '提交中…' : '上传开户回执'}
               </Button>
             </form>
           </CardContent>

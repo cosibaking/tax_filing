@@ -1,33 +1,7 @@
 import { jsonOk, handleApiError } from '@/lib/api/envelope';
 import { getMemberFromRequest } from '@/lib/auth/member';
-import { prisma, serializeBigInt } from '@/lib/db';
-import { decrypt, maskIdCard, maskBankAccount } from '@/lib/crypto/encrypt';
-
-function maskOpcEntity(opc: {
-  idCardEncrypted: string | null;
-  bankAccountEnc: string | null;
-  [key: string]: unknown;
-}) {
-  const data = serializeBigInt(opc) as Record<string, unknown>;
-  delete data.idCardEncrypted;
-  delete data.bankAccountEnc;
-
-  if (opc.idCardEncrypted) {
-    try {
-      data.idCardMasked = maskIdCard(decrypt(opc.idCardEncrypted));
-    } catch {
-      data.idCardMasked = '****';
-    }
-  }
-  if (opc.bankAccountEnc) {
-    try {
-      data.bankAccountMasked = maskBankAccount(decrypt(opc.bankAccountEnc));
-    } catch {
-      data.bankAccountMasked = '****';
-    }
-  }
-  return data;
-}
+import { prisma } from '@/lib/db';
+import { maskOpcForResponse } from '@/lib/services/compliance/opc/opc-service';
 
 export async function GET(request: Request) {
   try {
@@ -49,9 +23,8 @@ export async function GET(request: Request) {
       });
     }
     return jsonOk({
-      ...maskOpcEntity(opc),
+      ...maskOpcForResponse(opc, 'member'),
       hasOrder: !!order,
-      opcStatus: opc.status,
     });
   } catch (error) {
     return handleApiError(error);

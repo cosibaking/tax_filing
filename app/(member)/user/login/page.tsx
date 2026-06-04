@@ -9,7 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ApiClientError, publicFetch, setMemberTokens } from '@/lib/api/client';
+import {
+  ApiClientError,
+  clearGuestSessionId,
+  getOrCreateGuestSessionId,
+  publicFetch,
+  setMemberTokens,
+} from '@/lib/api/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,9 +39,12 @@ export default function LoginPage() {
           phone,
           password: mode === 'password' ? password : undefined,
           otp: mode === 'otp' ? otp : undefined,
+          loginType: mode === 'otp' ? 'otp' : 'password',
+          guestSessionId: getOrCreateGuestSessionId(),
         }),
       });
       setMemberTokens(data.accessToken, data.refreshToken);
+      clearGuestSessionId();
       router.push('/user/overview');
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : '登录失败');

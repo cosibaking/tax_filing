@@ -1,8 +1,15 @@
 import { prisma, serializeBigInt } from '@/lib/db';
 import { writeAuditLog } from '@/lib/services/compliance/audit/audit-log';
 import { getClientIp, getUserAgent } from '@/lib/auth/member';
-import { encrypt } from '@/lib/crypto/encrypt';
 import { isDev } from '@/lib/api/constants';
+import { ensureOpcEntityOnSign } from '@/lib/services/compliance/opc/opc-service';
+
+export {
+  submitOpcMaterials,
+  getOpcProgress,
+  submitBankReceipt,
+} from '@/lib/services/compliance/opc/opc-service';
+export { applyOpcAdminAction, listOpcTasks, getOpcTaskDetail } from '@/lib/services/compliance/opc/opc-service';
 
 async function loadPdfDocument() {
   const { default: PDFDocument } = await import('pdfkit');
@@ -88,15 +95,7 @@ export async function signContract(
     },
   });
 
-  let opc = await prisma.opcEntity.findFirst({ where: { memberId, deleted: false } });
-  if (!opc) {
-    opc = await prisma.opcEntity.create({
-      data: { memberId, status: 'materials' },
-    });
-    await prisma.opcProgressLog.create({
-      data: { opcId: opc.id, step: 'materials', status: 'pending', note: '等待提交资料' },
-    });
-  }
+  const opc = await ensureOpcEntityOnSign(memberId);
 
   await writeAuditLog({
     entityType: 'service_order',
@@ -133,87 +132,3 @@ async function generateContractPdf(signerName: string, orderId: string): Promise
   });
 }
 
-export async function submitOpcMaterials(
-  memberId: bigint,
-  data: {
-    idCard: string;
-    phone: string;
-    email: string;
-    businessScope: string;
-    registerAddress: string;
-  },
-  request: Request,
-) {
-  const opc = await prisma.opcEntity.findFirst({ where: { memberId, deleted: false } });
-  if (!opc) throw new Error('OPC 不存在');
-
-  await prisma.opcEntity.update({
-    where: { id: opc.id },
-    data: {
-      idCardEncrypted: encrypt(data.idCard),
-      phone: data.phone,
-      email: data.email,
-      businessScope: data.businessScope,
-      registerAddress: data.registerAddress,
-      status: 'materials',
-    },
-  });
-
-  await prisma.opcProgressLog.create({
-    data: { opcId: opc.id, step: 'materials', status: 'reviewing', note: '资料已提交，审核中' },
-  });
-
-  await writeAuditLog({
-    entityType: 'opc_entity',
-    entityId: opc.id,
-    action: 'materials.submit',
-    operatorId: memberId,
-    operatorType: 'member',
-    ip: getClientIp(request),
-  });
-
-  return serializeBigInt(opc);
-}
-
-export async function getOpcProgress(memberId: bigint) {
-  const opc = await prisma.opcEntity.findFirst({
-    where: { memberId, deleted: false },
-    include: { progressLogs: { orderBy: { createdAt: 'asc' } } },
-  });
-  if (!opc) return null;
-  return serializeBigInt(opc);
-}
-
-export async function updateOpcProgress(
-  opcId: bigint,
-  step: string,
-  status: string,
-  note: string,
-  adminId: bigint,
-) {
-  const statusMap: Record<string, string> = {
-    business: 'registering',
-    tax: 'tax',
-    bank: 'bank',
-    complete: 'active',
-  };
-  const opcStatus = statusMap[step] ?? status;
-
-  await prisma.opcEntity.update({
-    where: { id: opcId },
-    data: { status: opcStatus === 'active' ? 'active' : opcStatus },
-  });
-
-  await prisma.opcProgressLog.create({
-    data: { opcId, step, status, note, operatedBy: adminId },
-  });
-
-  await writeAuditLog({
-    entityType: 'opc_entity',
-    entityId: opcId,
-    action: 'progress.update',
-    operatorId: adminId,
-    operatorType: 'admin',
-    after: { step, status, note },
-  });
-}

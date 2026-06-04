@@ -2,6 +2,15 @@ import type { ApiResponse } from '@/lib/api/envelope';
 
 const MEMBER_TOKEN_KEY = 'member_token';
 const MEMBER_REFRESH_KEY = 'member_refresh_token';
+const GUEST_SESSION_KEY = 'diagnosis_guest_session';
+
+export const MEMBER_AUTH_CHANGED_EVENT = 'member-auth-changed';
+
+function notifyMemberAuthChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(MEMBER_AUTH_CHANGED_EVENT));
+  }
+}
 
 export function getMemberToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -11,11 +20,29 @@ export function getMemberToken(): string | null {
 export function setMemberTokens(access: string, refresh?: string) {
   localStorage.setItem(MEMBER_TOKEN_KEY, access);
   if (refresh) localStorage.setItem(MEMBER_REFRESH_KEY, refresh);
+  notifyMemberAuthChanged();
 }
 
 export function clearMemberTokens() {
   localStorage.removeItem(MEMBER_TOKEN_KEY);
   localStorage.removeItem(MEMBER_REFRESH_KEY);
+  notifyMemberAuthChanged();
+}
+
+export function getOrCreateGuestSessionId(): string {
+  if (typeof window === 'undefined') return '';
+  let id = localStorage.getItem(GUEST_SESSION_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(GUEST_SESSION_KEY, id);
+  }
+  return id;
+}
+
+export function clearGuestSessionId() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(GUEST_SESSION_KEY);
+  }
 }
 
 async function refreshMemberToken(): Promise<boolean> {

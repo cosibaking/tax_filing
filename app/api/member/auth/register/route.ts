@@ -2,17 +2,20 @@ import { jsonOk, jsonFail, handleApiError } from '@/lib/api/envelope';
 import { ErrorCodes } from '@/lib/api/constants';
 import { hashPassword, signMemberToken, getClientIp, getUserAgent } from '@/lib/auth/member';
 import { prisma } from '@/lib/db';
+import { persistClaimedGuestDiagnoses } from '@/lib/services/compliance/diagnosis/claim-guest-diagnoses';
+import { resolveGuestSessionId } from '@/lib/diagnosis/guest-session';
 
 const PHONE_RE = /^1[3-9]\d{9}$/;
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { phone, password, agreeTerms, agreePrivacy } = body as {
+    const { phone, password, agreeTerms, agreePrivacy, guestSessionId } = body as {
       phone?: string;
       password?: string;
       agreeTerms?: boolean;
       agreePrivacy?: boolean;
+      guestSessionId?: string;
     };
 
     if (!phone || !PHONE_RE.test(phone)) {
@@ -54,7 +57,10 @@ export async function POST(request: Request) {
     const accessToken = await signMemberToken({ sub, phone }, 'access');
     const refreshToken = await signMemberToken({ sub, phone }, 'refresh');
 
-    return jsonOk({ accessToken, refreshToken, memberId: sub });
+    const guestSession = resolveGuestSessionId(guestSessionId, request.headers.get('cookie'));
+    const claimedDiagnosisIds = await persistClaimedGuestDiagnoses(guestSession, member.id);
+
+    return jsonOk({ accessToken, refreshToken, memberId: sub, claimedDiagnosisIds });
   } catch (error) {
     return handleApiError(error);
   }

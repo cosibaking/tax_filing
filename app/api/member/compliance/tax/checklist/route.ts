@@ -1,14 +1,14 @@
 import { jsonOk, handleApiError } from '@/lib/api/envelope';
-import { TAX_CHECKLIST_ITEMS } from '@/lib/api/constants';
+import { getMemberFromRequest } from '@/lib/auth/member';
+import { requireActiveOpc } from '@/lib/services/compliance/ledger/income-expense-service';
+import { getMemberTaxChecklist } from '@/lib/services/compliance/ledger/tax-calendar-service';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    return jsonOk({
-      items: TAX_CHECKLIST_ITEMS.map((text, index) => ({
-        id: index + 1,
-        text,
-      })),
-    });
+    const member = await getMemberFromRequest(request);
+    const opc = await requireActiveOpc(member.id);
+    const data = await getMemberTaxChecklist(opc.id);
+    return jsonOk(data);
   } catch (error) {
     return handleApiError(error);
   }

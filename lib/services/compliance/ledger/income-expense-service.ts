@@ -1,5 +1,14 @@
 import { prisma, serializeBigInt } from '@/lib/db';
-import { EXPENSE_KEYWORD_BLACKLIST } from '@/lib/api/constants';
+import {
+  DEFAULT_EXPENSE_SORT,
+  DEFAULT_INCOME_SORT,
+  EXPENSE_KEYWORD_BLACKLIST,
+  type ExpenseSort,
+  type IncomeSort,
+  parseExpenseSort,
+  parseIncomeSort,
+} from '@/lib/api/constants';
+import type { Prisma } from '@prisma/client';
 import { writeAuditLog } from '@/lib/services/compliance/audit/audit-log';
 import {
   generateVouchersForPeriod,
@@ -7,6 +16,22 @@ import {
 } from '@/lib/services/compliance/ledger/ledger-service';
 
 const COST_THRESHOLD = parseFloat(process.env.COMPLIANCE_COST_RATIO_THRESHOLD ?? '0.8');
+
+const INCOME_ORDER_BY: Record<IncomeSort, Prisma.IncomeEntryOrderByWithRelationInput> = {
+  createdAt_desc: { createdAt: 'desc' },
+  createdAt_asc: { createdAt: 'asc' },
+  occurredAt_desc: { occurredAt: 'desc' },
+  occurredAt_asc: { occurredAt: 'asc' },
+};
+
+const EXPENSE_ORDER_BY: Record<ExpenseSort, Prisma.ExpenseEntryOrderByWithRelationInput> = {
+  createdAt_desc: { createdAt: 'desc' },
+  createdAt_asc: { createdAt: 'asc' },
+  occurredAt_desc: { occurredAt: 'desc' },
+  occurredAt_asc: { occurredAt: 'asc' },
+  amount_desc: { amount: 'desc' },
+  amount_asc: { amount: 'asc' },
+};
 
 export async function requireActiveOpc(memberId: bigint) {
   const opc = await prisma.opcEntity.findFirst({
@@ -16,14 +41,65 @@ export async function requireActiveOpc(memberId: bigint) {
   return opc;
 }
 
-export async function listIncome(opcId: bigint, year: number, month: number) {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 0, 23, 59, 59);
-  const items = await prisma.incomeEntry.findMany({
-    where: { opcId, deleted: false, occurredAt: { gte: start, lte: end } },
-    orderBy: { occurredAt: 'desc' },
+export type IncomeListFilters = {
+  dateFrom?: Date;
+  dateTo?: Date;
+  platform?: string;
+  category?: string;
+};
+
+function buildIncomeWhere(opcId: bigint, filters: IncomeListFilters): Prisma.IncomeEntryWhereInput {
+  const where: Prisma.IncomeEntryWhereInput = {
+    opcId,
+    deleted: false,
+  };
+  if (filters.dateFrom != null || filters.dateTo != null) {
+    where.occurredAt = {};
+    if (filters.dateFrom != null) where.occurredAt.gte = filters.dateFrom;
+    if (filters.dateTo != null) where.occurredAt.lte = filters.dateTo;
+  }
+  if (filters.platform) where.platform = filters.platform;
+  if (filters.category) where.category = filters.category;
+  return where;
+}
+
+export async function listIncome(
+  opcId: bigint,
+  filters: IncomeListFilters,
+  page = 1,
+  pageSize = 10,
+  sort: IncomeSort = DEFAULT_INCOME_SORT,
+) {
+  const where = buildIncomeWhere(opcId, filters);
+  const orderBy = INCOME_ORDER_BY[parseIncomeSort(sort)];
+
+  const [total, items, agg] = await Promise.all([
+    prisma.incomeEntry.count({ where }),
+    prisma.incomeEntry.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.incomeEntry.aggregate({
+      where,
+      _sum: { grossAmount: true, platformFee: true, netAmount: true },
+    }),
+  ]);
+
+  return serializeBigInt({
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
+    sort: parseIncomeSort(sort),
+    summary: {
+      grossAmount: Number(agg._sum.grossAmount ?? 0),
+      platformFee: Number(agg._sum.platformFee ?? 0),
+      netAmount: Number(agg._sum.netAmount ?? 0),
+    },
   });
-  return serializeBigInt(items);
 }
 
 export async function createIncome(
@@ -62,14 +138,61 @@ export async function createIncome(
   return serializeBigInt(entry);
 }
 
-export async function listExpense(opcId: bigint, year: number, month: number) {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 0, 23, 59, 59);
-  const items = await prisma.expenseEntry.findMany({
-    where: { opcId, deleted: false, occurredAt: { gte: start, lte: end } },
-    orderBy: { occurredAt: 'desc' },
+export type ExpenseListFilters = {
+  dateFrom?: Date;
+  dateTo?: Date;
+  category?: string;
+};
+
+function buildExpenseWhere(opcId: bigint, filters: ExpenseListFilters): Prisma.ExpenseEntryWhereInput {
+  const where: Prisma.ExpenseEntryWhereInput = {
+    opcId,
+    deleted: false,
+  };
+  if (filters.dateFrom != null || filters.dateTo != null) {
+    where.occurredAt = {};
+    if (filters.dateFrom != null) where.occurredAt.gte = filters.dateFrom;
+    if (filters.dateTo != null) where.occurredAt.lte = filters.dateTo;
+  }
+  if (filters.category) where.category = filters.category;
+  return where;
+}
+
+export async function listExpense(
+  opcId: bigint,
+  filters: ExpenseListFilters,
+  page = 1,
+  pageSize = 10,
+  sort: ExpenseSort = DEFAULT_EXPENSE_SORT,
+) {
+  const where = buildExpenseWhere(opcId, filters);
+  const orderBy = EXPENSE_ORDER_BY[parseExpenseSort(sort)];
+
+  const [total, items, agg] = await Promise.all([
+    prisma.expenseEntry.count({ where }),
+    prisma.expenseEntry.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.expenseEntry.aggregate({
+      where,
+      _sum: { amount: true },
+    }),
+  ]);
+
+  return serializeBigInt({
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
+    sort: parseExpenseSort(sort),
+    summary: {
+      totalAmount: Number(agg._sum.amount ?? 0),
+    },
   });
-  return serializeBigInt(items);
 }
 
 export async function createExpense(

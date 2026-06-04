@@ -11,7 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PLATFORMS } from '@/lib/api/constants';
-import { ApiClientError, publicFetch } from '@/lib/api/client';
+import {
+  ApiClientError,
+  getMemberToken,
+  getOrCreateGuestSessionId,
+  memberFetch,
+  publicFetch,
+} from '@/lib/api/client';
 
 const INCOME_RANGES = [
   { value: '0-2', label: '0–2 万/月' },
@@ -50,20 +56,20 @@ export default function DiagnosisPage() {
     setError(null);
     setLoading(true);
     try {
-      const data = await publicFetch<{ id: string; taxComparison?: unknown }>(
+      const payload = {
+        platforms,
+        monthlyIncomeRange,
+        annualCostEstimate: annualCostEstimate ? Number(annualCostEstimate) : 0,
+        existingEntity,
+        hasFiledTax: hasFiledTax === 'yes',
+        taxBureauContact: taxBureauContact === 'yes',
+        notes,
+        guestSessionId: getOrCreateGuestSessionId(),
+      };
+      const fetchDiagnosis = getMemberToken() ? memberFetch : publicFetch;
+      const data = await fetchDiagnosis<{ id: string; taxComparison?: unknown }>(
         '/api/site/compliance/diagnosis',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            platforms,
-            monthlyIncomeRange,
-            annualCostEstimate: annualCostEstimate ? Number(annualCostEstimate) : 0,
-            existingEntity,
-            hasFiledTax: hasFiledTax === 'yes',
-            taxBureauContact: taxBureauContact === 'yes',
-            notes,
-          }),
-        },
+        { method: 'POST', body: JSON.stringify(payload) },
       );
       sessionStorage.setItem('diagnosis_result', JSON.stringify(data));
       router.push(`/diagnosis/result?id=${data.id}`);

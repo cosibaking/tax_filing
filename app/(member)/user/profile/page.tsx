@@ -14,9 +14,11 @@ interface Profile {
 
 interface OpcInfo {
   companyName?: string;
+  proposedNamePrimary?: string;
   creditCode?: string;
   opcStatus?: string;
-  bankAccount?: string;
+  statusLabel?: string;
+  bankAccountMasked?: string;
 }
 
 export default function ProfilePage() {
@@ -78,11 +80,11 @@ export default function ProfilePage() {
           <CardDescription>您的合规服务经营主体</CardDescription>
         </CardHeader>
         <CardContent>
-          {opc?.companyName ? (
+          {opc?.companyName || opc?.proposedNamePrimary || opc?.opcStatus ? (
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">公司名称</dt>
-                <dd className="font-medium">{opc.companyName}</dd>
+                <dd className="font-medium">{opc.companyName ?? opc.proposedNamePrimary ?? '设立中'}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">统一社会信用代码</dt>
@@ -92,14 +94,14 @@ export default function ProfilePage() {
                 <dt className="text-muted-foreground">状态</dt>
                 <dd>
                   <Badge variant={opc.opcStatus === 'active' ? 'success' : 'warning'}>
-                    {opc.opcStatus === 'active' ? '已激活' : opc.opcStatus ?? '设立中'}
+                    {opc.statusLabel ?? (opc.opcStatus === 'active' ? '已激活' : '设立中')}
                   </Badge>
                 </dd>
               </div>
-              {opc.bankAccount && (
+              {opc.bankAccountMasked && (
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">对公账户</dt>
-                  <dd>{opc.bankAccount}</dd>
+                  <dd>{opc.bankAccountMasked}</dd>
                 </div>
               )}
             </dl>

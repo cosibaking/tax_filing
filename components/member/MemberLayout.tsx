@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { X } from 'lucide-react';
 import { MemberSidebar } from '@/components/member/MemberSidebar';
+import { MemberTopBar } from '@/components/member/MemberTopBar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +13,12 @@ import {
   getMemberNavItems,
   type MemberNavState,
 } from '@/lib/portal/member-nav';
-import { ApiClientError, getMemberToken, memberFetch } from '@/lib/api/client';
+import {
+  ApiClientError,
+  getMemberToken,
+  MEMBER_AUTH_CHANGED_EVENT,
+  memberFetch,
+} from '@/lib/api/client';
 
 interface MemberContext {
   hasOrder: boolean;
@@ -19,26 +26,34 @@ interface MemberContext {
 }
 
 export function MemberLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [phone, setPhone] = useState<string | null>(null);
   const [ctx, setCtx] = useState<MemberContext>({ hasOrder: false, opcActive: false });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setMounted(true);
+  const loadMemberSession = useCallback(() => {
     const token = getMemberToken();
     setIsLoggedIn(!!token);
     if (!token) {
+      setPhone(null);
+      setCtx({ hasOrder: false, opcActive: false });
       setLoading(false);
       return;
     }
-    memberFetch<{ hasOrder?: boolean; opcStatus?: string } | null>('/api/member/compliance/opc')
-      .then((data) => {
+    setLoading(true);
+    Promise.all([
+      memberFetch<{ hasOrder?: boolean; opcStatus?: string } | null>('/api/member/compliance/opc'),
+      memberFetch<{ phone?: string }>('/api/member/profile'),
+    ])
+      .then(([opcData, profile]) => {
         setCtx({
-          hasOrder: !!data?.hasOrder,
-          opcActive: data?.opcStatus === 'active',
+          hasOrder: !!opcData?.hasOrder,
+          opcActive: opcData?.opcStatus === 'active',
         });
+        setPhone(profile.phone ?? null);
       })
       .catch((err: unknown) => {
         if (
@@ -46,10 +61,25 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
           (err.status === 401 || err.status === 404)
         ) {
           setCtx({ hasOrder: false, opcActive: false });
+          setPhone(null);
         }
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    loadMemberSession();
+  }, [pathname, loadMemberSession]);
+
+  useEffect(() => {
+    const onAuthChange = () => loadMemberSession();
+    window.addEventListener(MEMBER_AUTH_CHANGED_EVENT, onAuthChange);
+    return () => window.removeEventListener(MEMBER_AUTH_CHANGED_EVENT, onAuthChange);
+  }, [loadMemberSession]);
 
   const navState: MemberNavState = {
     isLoggedIn,
@@ -62,14 +92,11 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 lg:hidden">
-        <Button variant="ghost" size="icon" onClick={() => setDrawerOpen(true)} aria-label="打开菜单">
-          <Menu className="h-5 w-5" />
-        </Button>
-        <Link href="/user/overview" className="font-semibold text-primary">
-          会员中心
-        </Link>
-      </header>
+      <MemberTopBar
+        phone={phone}
+        isLoggedIn={isLoggedIn}
+        onMenuClick={() => setDrawerOpen(true)}
+      />
 
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">

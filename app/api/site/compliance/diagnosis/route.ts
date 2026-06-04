@@ -2,6 +2,8 @@ import { jsonOk, jsonFail, handleApiError } from '@/lib/api/envelope';
 import { ErrorCodes } from '@/lib/api/constants';
 import { createDiagnosis } from '@/lib/services/compliance/diagnosis/diagnosis-service';
 import { verifyMemberToken } from '@/lib/auth/member';
+import { resolveGuestSessionId } from '@/lib/diagnosis/guest-session';
+import { isRedisConfigured } from '@/lib/redis';
 
 export async function POST(request: Request) {
   try {
@@ -13,6 +15,7 @@ export async function POST(request: Request) {
       existingEntity,
       hasFiledTax,
       taxBureauContact,
+      guestSessionId,
     } = body as {
       platforms?: string[];
       monthlyIncomeRange?: string;
@@ -20,6 +23,7 @@ export async function POST(request: Request) {
       existingEntity?: string;
       hasFiledTax?: boolean;
       taxBureauContact?: boolean;
+      guestSessionId?: string;
     };
 
     if (!platforms?.length || !monthlyIncomeRange || annualCostEstimate == null || !existingEntity) {
@@ -37,8 +41,17 @@ export async function POST(request: Request) {
       }
     }
 
+    const sessionId = resolveGuestSessionId(guestSessionId, request.headers.get('cookie'));
+    if (!memberId && !sessionId) {
+      return jsonFail(ErrorCodes.DIAGNOSIS_INVALID, '请提供访客会话标识');
+    }
+    if (!memberId && !isRedisConfigured()) {
+      return jsonFail(ErrorCodes.DIAGNOSIS_INVALID, '诊断暂存服务不可用，请稍后重试');
+    }
+
     const result = await createDiagnosis({
       memberId,
+      guestSessionId: sessionId,
       platforms,
       monthlyIncomeRange,
       annualCostEstimate,

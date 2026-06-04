@@ -1,9 +1,30 @@
 import { prisma, serializeBigInt } from '@/lib/db';
+import type { ProfitView } from '@/lib/api/constants';
 import {
   calculateCitQuarterly,
   calculateSurcharge,
   calculateVat,
 } from '@/lib/services/compliance/diagnosis/tax-calculator';
+
+export type ProfitPeriodRow = {
+  key: string;
+  label: string;
+  month?: number;
+  quarter?: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  cumulativeProfit: number;
+};
+
+export type MonthProfitDetail = {
+  year: number;
+  month: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  cumulativeProfit: number;
+};
 
 export async function generateVouchersForPeriod(opcId: bigint, period: string) {
   const [yearStr, monthStr] = period.split('-');
@@ -49,7 +70,7 @@ export async function generateVouchersForPeriod(opcId: bigint, period: string) {
   }
 }
 
-export async function recalculateProfit(opcId: bigint, year: number, month: number) {
+async function aggregateMonthProfit(opcId: bigint, year: number, month: number) {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 0, 23, 59, 59);
 
@@ -65,6 +86,108 @@ export async function recalculateProfit(opcId: bigint, year: number, month: numb
   const revenue = Number(incomeSum._sum.grossAmount ?? 0) / 1.01;
   const cost = Number(expenseSum._sum.amount ?? 0);
   const profit = revenue - cost;
+  return { revenue, cost, profit };
+}
+
+async function buildYearMonthlyProfits(opcId: bigint, year: number): Promise<MonthProfitDetail[]> {
+  const summaries = await prisma.profitSummary.findMany({
+    where: { opcId, year },
+    orderBy: { month: 'asc' },
+  });
+  const byMonth = new Map(summaries.map((s) => [s.month, s]));
+
+  const rows: MonthProfitDetail[] = [];
+  let cumulativeProfit = 0;
+
+  for (let month = 1; month <= 12; month++) {
+    const stored = byMonth.get(month);
+    let revenue: number;
+    let cost: number;
+    let profit: number;
+
+    if (stored) {
+      revenue = Number(stored.revenue);
+      cost = Number(stored.cost);
+      profit = Number(stored.profit);
+      cumulativeProfit = Number(stored.cumulativeProfit);
+    } else {
+      const live = await aggregateMonthProfit(opcId, year, month);
+      revenue = live.revenue;
+      cost = live.cost;
+      profit = live.profit;
+      cumulativeProfit += profit;
+    }
+
+    rows.push({ year, month, revenue, cost, profit, cumulativeProfit });
+  }
+
+  return rows;
+}
+
+function toMonthlyPeriodRows(monthly: MonthProfitDetail[]): ProfitPeriodRow[] {
+  return monthly
+    .filter((m) => m.revenue > 0 || m.cost > 0)
+    .map((m) => ({
+      key: `${m.year}-${String(m.month).padStart(2, '0')}`,
+      label: `${m.month}月`,
+      month: m.month,
+      revenue: m.revenue,
+      cost: m.cost,
+      profit: m.profit,
+      cumulativeProfit: m.cumulativeProfit,
+    }));
+}
+
+function toQuarterlyPeriodRows(monthly: MonthProfitDetail[]): ProfitPeriodRow[] {
+  const labels = ['第一季度', '第二季度', '第三季度', '第四季度'];
+  return [1, 2, 3, 4].map((quarter) => {
+    const months = monthly.filter((m) => Math.ceil(m.month / 3) === quarter);
+    const totals = months.reduce(
+      (acc, m) => ({
+        revenue: acc.revenue + m.revenue,
+        cost: acc.cost + m.cost,
+        profit: acc.profit + m.profit,
+      }),
+      { revenue: 0, cost: 0, profit: 0 },
+    );
+    const lastMonth = months.at(-1);
+    return {
+      key: `${monthly[0]?.year ?? new Date().getFullYear()}-Q${quarter}`,
+      label: labels[quarter - 1],
+      quarter,
+      revenue: totals.revenue,
+      cost: totals.cost,
+      profit: totals.profit,
+      cumulativeProfit: lastMonth?.cumulativeProfit ?? 0,
+    };
+  }).filter((r) => r.revenue > 0 || r.cost > 0);
+}
+
+function toYearlyPeriodRow(monthly: MonthProfitDetail[], year: number): ProfitPeriodRow[] {
+  const totals = monthly.reduce(
+    (acc, m) => ({
+      revenue: acc.revenue + m.revenue,
+      cost: acc.cost + m.cost,
+      profit: acc.profit + m.profit,
+    }),
+    { revenue: 0, cost: 0, profit: 0 },
+  );
+  const lastWithData = [...monthly].reverse().find((m) => m.revenue > 0 || m.cost > 0);
+  if (totals.revenue === 0 && totals.cost === 0) return [];
+  return [
+    {
+      key: String(year),
+      label: `${year}年度`,
+      revenue: totals.revenue,
+      cost: totals.cost,
+      profit: totals.profit,
+      cumulativeProfit: lastWithData?.cumulativeProfit ?? totals.profit,
+    },
+  ];
+}
+
+export async function recalculateProfit(opcId: bigint, year: number, month: number) {
+  const { revenue, cost, profit } = await aggregateMonthProfit(opcId, year, month);
 
   const prev = await prisma.profitSummary.findMany({
     where: { opcId, year, month: { lt: month } },
@@ -78,22 +201,52 @@ export async function recalculateProfit(opcId: bigint, year: number, month: numb
   });
 }
 
-export async function getProfitReport(opcId: bigint, year: number, month?: number) {
-  if (month) {
-    const summary = await prisma.profitSummary.findUnique({
-      where: { opcId_year_month: { opcId, year, month } },
-    });
+export async function getProfitReport(
+  opcId: bigint,
+  year: number,
+  opts?: { view?: ProfitView; month?: number },
+) {
+  if (opts?.month) {
+    const monthly = await buildYearMonthlyProfits(opcId, year);
+    const detail = monthly.find((m) => m.month === opts.month);
     const vouchers = await prisma.ledgerVoucher.findMany({
-      where: { opcId, period: `${year}-${String(month).padStart(2, '0')}` },
+      where: { opcId, period: `${year}-${String(opts.month).padStart(2, '0')}` },
       orderBy: { createdAt: 'desc' },
     });
-    return serializeBigInt({ summary, vouchers });
+    return serializeBigInt({ year, month: opts.month, detail, vouchers });
   }
-  const summaries = await prisma.profitSummary.findMany({
-    where: { opcId, year },
-    orderBy: { month: 'asc' },
+
+  const view = opts?.view ?? 'monthly';
+  const monthly = await buildYearMonthlyProfits(opcId, year);
+
+  let rows: ProfitPeriodRow[];
+  if (view === 'quarterly') {
+    rows = toQuarterlyPeriodRows(monthly);
+  } else if (view === 'yearly') {
+    rows = toYearlyPeriodRow(monthly, year);
+  } else {
+    rows = toMonthlyPeriodRows(monthly);
+  }
+
+  const yearTotal = monthly.reduce(
+    (acc, m) => ({
+      revenue: acc.revenue + m.revenue,
+      cost: acc.cost + m.cost,
+      profit: acc.profit + m.profit,
+    }),
+    { revenue: 0, cost: 0, profit: 0 },
+  );
+
+  const activeMonths = monthly.filter((m) => m.revenue > 0 || m.cost > 0);
+  const cumulativeProfit = activeMonths.at(-1)?.cumulativeProfit ?? 0;
+
+  return serializeBigInt({
+    year,
+    view,
+    rows,
+    yearTotal,
+    cumulativeProfit,
   });
-  return serializeBigInt(summaries);
 }
 
 export async function ensureTaxTasksForOpc(opcId: bigint, year: number, month: number) {
@@ -156,20 +309,6 @@ async function existingTask(opcId: bigint, taxType: string, period: string) {
   return prisma.taxFilingTask.findFirst({
     where: { opcId, taxType, period, deleted: false },
   });
-}
-
-export async function getTaxCalendar(opcId: bigint, year: number, month: number) {
-  const period = `${year}-${String(month).padStart(2, '0')}`;
-  const tasks = await prisma.taxFilingTask.findMany({
-    where: {
-      opcId,
-      deleted: false,
-      OR: [{ period }, { period: { contains: String(year) } }],
-    },
-    orderBy: { dueDate: 'asc' },
-  });
-  const nextDue = tasks.find((t) => t.status === 'pending');
-  return serializeBigInt({ tasks, nextDueDate: nextDue?.dueDate ?? null });
 }
 
 export async function markFilingFiled(

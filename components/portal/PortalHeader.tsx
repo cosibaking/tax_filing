@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { getMemberToken } from '@/lib/api/client';
+import { getMemberToken, MEMBER_AUTH_CHANGED_EVENT } from '@/lib/api/client';
 
 const navLinks = [
   { href: '/', label: '首页' },
@@ -12,10 +13,17 @@ const navLinks = [
 ];
 
 export function PortalHeader() {
+  const pathname = usePathname();
   const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     setLoggedIn(!!getMemberToken());
+  }, [pathname]);
+
+  useEffect(() => {
+    const sync = () => setLoggedIn(!!getMemberToken());
+    window.addEventListener(MEMBER_AUTH_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(MEMBER_AUTH_CHANGED_EVENT, sync);
   }, []);
 
   return (
