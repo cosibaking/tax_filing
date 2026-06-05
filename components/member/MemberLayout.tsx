@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { X } from 'lucide-react';
 import { MemberSidebar } from '@/components/member/MemberSidebar';
 import { MemberTopBar } from '@/components/member/MemberTopBar';
@@ -17,8 +17,14 @@ import {
   ApiClientError,
   getMemberToken,
   MEMBER_AUTH_CHANGED_EVENT,
+  MEMBER_PROFILE_UPDATED_EVENT,
   memberFetch,
 } from '@/lib/api/client';
+import {
+  buildLoginRedirectUrl,
+  isMemberPublicPath,
+  MEMBER_LOGIN_PATH,
+} from '@/lib/auth/login-redirect';
 
 interface MemberContext {
   hasOrder: boolean;
@@ -27,10 +33,15 @@ interface MemberContext {
 
 export function MemberLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [phone, setPhone] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [ctx, setCtx] = useState<MemberContext>({ hasOrder: false, opcActive: false });
   const [loading, setLoading] = useState(true);
 
@@ -39,6 +50,8 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
     setIsLoggedIn(!!token);
     if (!token) {
       setPhone(null);
+      setName(null);
+      setAvatarUrl(null);
       setCtx({ hasOrder: false, opcActive: false });
       setLoading(false);
       return;
@@ -46,7 +59,9 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
     setLoading(true);
     Promise.all([
       memberFetch<{ hasOrder?: boolean; opcStatus?: string } | null>('/api/member/compliance/opc'),
-      memberFetch<{ phone?: string }>('/api/member/profile'),
+      memberFetch<{ phone?: string; name?: string | null; avatarUrl?: string | null }>(
+        '/api/member/profile',
+      ),
     ])
       .then(([opcData, profile]) => {
         setCtx({
@@ -54,6 +69,8 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
           opcActive: opcData?.opcStatus === 'active',
         });
         setPhone(profile.phone ?? null);
+        setName(profile.name ?? null);
+        setAvatarUrl(profile.avatarUrl ?? null);
       })
       .catch((err: unknown) => {
         if (
@@ -62,6 +79,8 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
         ) {
           setCtx({ hasOrder: false, opcActive: false });
           setPhone(null);
+          setName(null);
+          setAvatarUrl(null);
         }
       })
       .finally(() => setLoading(false));
@@ -72,13 +91,33 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+    if (isMemberPublicPath(pathname)) {
+      setAuthReady(true);
+      return;
+    }
+    if (!getMemberToken()) {
+      const query = searchParams.toString();
+      const returnTo = query ? `${pathname}?${query}` : pathname;
+      router.replace(buildLoginRedirectUrl(MEMBER_LOGIN_PATH, returnTo));
+      return;
+    }
+    setAuthReady(true);
+  }, [mounted, pathname, searchParams, router]);
+
+  useEffect(() => {
     loadMemberSession();
   }, [pathname, loadMemberSession]);
 
   useEffect(() => {
     const onAuthChange = () => loadMemberSession();
+    const onProfileUpdate = () => loadMemberSession();
     window.addEventListener(MEMBER_AUTH_CHANGED_EVENT, onAuthChange);
-    return () => window.removeEventListener(MEMBER_AUTH_CHANGED_EVENT, onAuthChange);
+    window.addEventListener(MEMBER_PROFILE_UPDATED_EVENT, onProfileUpdate);
+    return () => {
+      window.removeEventListener(MEMBER_AUTH_CHANGED_EVENT, onAuthChange);
+      window.removeEventListener(MEMBER_PROFILE_UPDATED_EVENT, onProfileUpdate);
+    };
   }, [loadMemberSession]);
 
   const navState: MemberNavState = {
@@ -94,6 +133,8 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-muted/20">
       <MemberTopBar
         phone={phone}
+        name={name}
+        avatarUrl={avatarUrl}
         isLoggedIn={isLoggedIn}
         onMenuClick={() => setDrawerOpen(true)}
       />
@@ -133,7 +174,7 @@ export function MemberLayout({ children }: { children: React.ReactNode }) {
               </AlertDescription>
             </Alert>
           )}
-          {!mounted || loading ? (
+          {!mounted || !authReady || loading ? (
             <p className="text-sm text-muted-foreground">加载中…</p>
           ) : (
             children

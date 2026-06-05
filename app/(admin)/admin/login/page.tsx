@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getAdminCallbackFromLocation } from '@/lib/auth/login-redirect';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -26,11 +27,12 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ username, password }),
       });
       const json = await res.json();
-      if (json.code !== 0 || !json.data?.accessToken) {
+      const token = json.data?.token ?? json.data?.accessToken;
+      if (json.code !== 0 || !token) {
         throw new Error(json.message || '登录失败');
       }
-      localStorage.setItem('admin_token', json.data.accessToken);
-      router.push('/admin/compliance/customers');
+      localStorage.setItem('admin_token', token);
+      router.push(getAdminCallbackFromLocation());
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {

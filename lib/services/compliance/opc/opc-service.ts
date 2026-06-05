@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma, serializeBigInt } from '@/lib/db';
 import { encrypt, decrypt, maskIdCard, maskBankAccount } from '@/lib/crypto/encrypt';
+import { signMediaUrl, isImageMime } from '@/lib/media/signed-access';
 import { writeAuditLog } from '@/lib/services/compliance/audit/audit-log';
 import { getClientIp } from '@/lib/auth/member';
 import { BANK_OPENING_CHECKLIST, OPC_STATUS_LABELS } from './opc-constants';
@@ -106,6 +107,23 @@ export function maskOpcForResponse(opc: OpcRow, role: 'member' | 'admin') {
   }
 
   return data;
+}
+
+/** 会员资料页 OPC 主体摘要（F-86 / US-E1-03） */
+export function buildOpcProfileSummary(opc: OpcRow | null, hasOrder: boolean) {
+  if (!opc) {
+    return { hasOrder, opcStatus: null as string | null };
+  }
+  const masked = maskOpcForResponse(opc, 'member');
+  return {
+    hasOrder,
+    companyName: (masked.companyName as string | null) ?? null,
+    proposedNamePrimary: (masked.proposedNamePrimary as string | null) ?? null,
+    creditCode: (masked.creditCode as string | null) ?? null,
+    opcStatus: masked.opcStatus as string,
+    statusLabel: masked.statusLabel as string,
+    bankAccountMasked: masked.bankAccountMasked as string | undefined,
+  };
 }
 
 export function buildOpcTimeline(status: string, logs: { step: string; status: string; createdAt: Date }[]) {
@@ -292,17 +310,116 @@ export async function getOpcProgress(memberId: bigint) {
   };
 }
 
-async function loadAttachmentBrief(fileId: bigint | null) {
+async function loadAttachmentBrief(fileId: bigint | null, memberId?: bigint) {
   if (!fileId) return null;
   const file = await prisma.sysAttachment.findFirst({
     where: { id: fileId, deleted: false },
   });
   if (!file) return null;
-  return {
+  const base = {
     id: file.id.toString(),
     fileName: file.fileName,
+    mimeType: file.mimeType,
+  };
+  if (memberId && isImageMime(file.mimeType)) {
+    return {
+      ...base,
+      mediaUrl: signMediaUrl(file.id.toString(), memberId.toString()),
+    };
+  }
+  return {
+    ...base,
     downloadUrl: `/api/upload/${file.id}`,
   };
+}
+
+/** 会员查看自身 OPC 完整信息（不脱敏，F-86） */
+export async function getOpcMemberFullDetail(memberId: bigint, request: Request) {
+  const opc = await prisma.opcEntity.findFirst({
+    where: { memberId, deleted: false },
+  });
+  if (!opc) throw new Error('NOT_FOUND');
+
+  const fmtDate = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+
+  let idCard: string | null = null;
+  if (opc.idCardEncrypted) {
+    try {
+      idCard = decrypt(opc.idCardEncrypted);
+    } catch {
+      idCard = null;
+    }
+  }
+
+  let bankAccount: string | null = null;
+  if (opc.bankAccountEnc) {
+    try {
+      bankAccount = decrypt(opc.bankAccountEnc);
+    } catch {
+      bankAccount = null;
+    }
+  }
+
+  const names = opc.proposedNames as string[] | null;
+
+  const [addressProof, idFront, idBack, license, bankReceipt] = await Promise.all([
+    loadAttachmentBrief(opc.addressProofFileId, memberId),
+    loadAttachmentBrief(opc.idCardFrontFileId, memberId),
+    loadAttachmentBrief(opc.idCardBackFileId, memberId),
+    loadAttachmentBrief(opc.licenseFileId, memberId),
+    loadAttachmentBrief(opc.bankReceiptFileId, memberId),
+  ]);
+
+  await writeAuditLog({
+    entityType: 'opc_entity',
+    entityId: opc.id,
+    action: 'opc.view_full_detail',
+    operatorId: memberId,
+    operatorType: 'member',
+    ip: getClientIp(request),
+  });
+
+  return serializeBigInt({
+    companyName: opc.companyName,
+    proposedNames: names,
+    creditCode: opc.creditCode,
+    opcStatus: opc.status,
+    statusLabel: OPC_STATUS_LABELS[opc.status] ?? opc.status,
+    registeredCapital: opc.registeredCapital?.toString() ?? null,
+    capitalTermYears: opc.capitalTermYears,
+    businessTermType: opc.businessTermType,
+    businessTermEnd: fmtDate(opc.businessTermEnd),
+    businessScope: opc.businessScope,
+    registerProvince: opc.registerProvince,
+    registerCity: opc.registerCity,
+    registerDistrict: opc.registerDistrict,
+    registerAddress: opc.registerAddress,
+    legalPersonName: opc.legalPersonName,
+    idCard,
+    idCardValidFrom: fmtDate(opc.idCardValidFrom),
+    idCardValidTo: fmtDate(opc.idCardValidTo),
+    ethnicity: opc.ethnicity,
+    householdAddress: opc.householdAddress,
+    residentialAddress: opc.residentialAddress,
+    phone: opc.phone,
+    email: opc.email,
+    esignAuthorized: opc.esignAuthorized,
+    establishedAt: fmtDate(opc.establishedAt),
+    taxpayerType: opc.taxpayerType,
+    taxActivatedAt: opc.taxActivatedAt?.toISOString().slice(0, 10) ?? null,
+    bankName: opc.bankName,
+    bankAccount,
+    materialsSubmittedAt: opc.materialsSubmittedAt?.toISOString() ?? null,
+    materialsApprovedAt: opc.materialsApprovedAt?.toISOString() ?? null,
+    rejectNote: opc.status === 'materials' ? opc.rejectNote : null,
+    attachments: {
+      addressProof,
+      idCardFront: idFront,
+      idCardBack: idBack,
+      license,
+      bankReceipt,
+    },
+  });
 }
 
 export async function getOpcTaskDetail(opcId: bigint) {

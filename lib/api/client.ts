@@ -1,14 +1,26 @@
 import type { ApiResponse } from '@/lib/api/envelope';
+import {
+  buildLoginRedirectUrl,
+  getCurrentReturnPath,
+  MEMBER_LOGIN_PATH,
+} from '@/lib/auth/login-redirect';
 
 const MEMBER_TOKEN_KEY = 'member_token';
 const MEMBER_REFRESH_KEY = 'member_refresh_token';
 const GUEST_SESSION_KEY = 'diagnosis_guest_session';
 
 export const MEMBER_AUTH_CHANGED_EVENT = 'member-auth-changed';
+export const MEMBER_PROFILE_UPDATED_EVENT = 'member-profile-updated';
 
 function notifyMemberAuthChanged() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event(MEMBER_AUTH_CHANGED_EVENT));
+  }
+}
+
+export function notifyMemberProfileUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(MEMBER_PROFILE_UPDATED_EVENT));
   }
 }
 
@@ -100,7 +112,10 @@ export async function memberFetch<T>(
     } else {
       clearMemberTokens();
       if (typeof window !== 'undefined') {
-        window.location.href = '/user/login';
+        window.location.href = buildLoginRedirectUrl(
+          MEMBER_LOGIN_PATH,
+          getCurrentReturnPath(),
+        );
       }
       throw new ApiClientError('登录已过期，请重新登录', 1001, 401);
     }

@@ -16,6 +16,7 @@ import {
   publicFetch,
   setMemberTokens,
 } from '@/lib/api/client';
+import { getMemberCallbackFromLocation } from '@/lib/auth/login-redirect';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function LoginPage() {
       });
       setMemberTokens(data.accessToken, data.refreshToken);
       clearGuestSessionId();
-      router.push('/user/overview');
+      router.push(getMemberCallbackFromLocation());
     } catch (err) {
       setError(err instanceof ApiClientError ? err.message : '登录失败');
     } finally {

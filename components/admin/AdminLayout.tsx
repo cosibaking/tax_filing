@@ -1,10 +1,39 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { Button } from '@/components/ui/button';
+import { buildLoginRedirectUrl, ADMIN_LOGIN_PATH } from '@/lib/auth/login-redirect';
+
+const ADMIN_TOKEN_KEY = 'admin_token';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (!token) {
+      const query = searchParams.toString();
+      const returnTo = query ? `${pathname}?${query}` : pathname;
+      router.replace(buildLoginRedirectUrl(ADMIN_LOGIN_PATH, returnTo));
+      return;
+    }
+    setAuthReady(true);
+  }, [pathname, searchParams, router]);
+
+  if (!authReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        加载中…
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="border-b bg-background">

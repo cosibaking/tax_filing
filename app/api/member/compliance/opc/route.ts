@@ -1,7 +1,7 @@
 import { jsonOk, handleApiError } from '@/lib/api/envelope';
 import { getMemberFromRequest } from '@/lib/auth/member';
 import { prisma } from '@/lib/db';
-import { maskOpcForResponse } from '@/lib/services/compliance/opc/opc-service';
+import { buildOpcProfileSummary } from '@/lib/services/compliance/opc/opc-service';
 
 export async function GET(request: Request) {
   try {
@@ -16,16 +16,7 @@ export async function GET(request: Request) {
     const opc = await prisma.opcEntity.findFirst({
       where: { memberId: member.id, deleted: false },
     });
-    if (!opc) {
-      return jsonOk({
-        hasOrder: !!order,
-        opcStatus: null,
-      });
-    }
-    return jsonOk({
-      ...maskOpcForResponse(opc, 'member'),
-      hasOrder: !!order,
-    });
+    return jsonOk(buildOpcProfileSummary(opc, !!order));
   } catch (error) {
     return handleApiError(error);
   }
