@@ -18,6 +18,13 @@ RUN rm -rf .next
 RUN npx prisma generate
 RUN npm run build
 
+# 启动时迁移/种子脚本依赖已生成的 Prisma Client（deps 阶段仅有原始 node_modules）
+FROM base AS init
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./package.json
+RUN npx prisma generate
+
 FROM base AS runner
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
@@ -32,8 +39,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# 数据库初始化工具（迁移 + 种子脚本）
-COPY --from=deps /app/node_modules /init/node_modules
+# 数据库初始化工具（迁移 + 种子脚本，含 prisma generate 产物）
+COPY --from=init /app/node_modules /init/node_modules
 COPY --from=builder /app/prisma /init/prisma
 COPY --from=builder /app/package.json /init/package.json
 COPY docker/entrypoint.sh /entrypoint.sh
