@@ -1,0 +1,7 @@
+# 开发部署：启动时生成随机测试数据
+# 用法：docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+services:
+  app:
+    environment:
+      DEPLOY_MODE: dev
+      SMS_PROVIDER: mock

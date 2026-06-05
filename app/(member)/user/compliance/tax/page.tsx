@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { TAX_FILING_STATUS_LABELS } from '@/lib/api/constants';
 import { ApiClientError, getMemberToken, memberFetch } from '@/lib/api/client';
+import { withBasePath } from '@/lib/base-path';
 import {
   formatNextDueSummary,
   shiftCalendarMonth,
@@ -116,7 +117,7 @@ export default function TaxPage() {
 
   const downloadReceipt = async (fileId: string) => {
     const token = getMemberToken();
-    const res = await fetch(`/api/upload/${fileId}`, {
+    const res = await fetch(withBasePath(`/api/upload/${fileId}`), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!res.ok) {

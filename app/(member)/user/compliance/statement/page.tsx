@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ApiClientError, getMemberToken, memberFetch } from '@/lib/api/client';
+import { withBasePath } from '@/lib/base-path';
 import {
   formatStatementMoney,
   statementStatusBadgeVariant,
@@ -58,7 +59,7 @@ export default function StatementPage() {
     setError(null);
     try {
       const token = getMemberToken();
-      const res = await fetch(`/api/member/compliance/statements/${id}/pdf`, {
+      const res = await fetch(withBasePath(`/api/member/compliance/statements/${id}/pdf`), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) {

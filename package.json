@@ -13,6 +13,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed-random": "tsx prisma/seed-random.ts",
+    "db:deploy:seed": "prisma migrate deploy && tsx prisma/seed.ts && tsx prisma/seed-random.ts",
     "db:seed-expenses": "tsx prisma/seed-expense-samples.ts",
     "db:backfill-ledger": "tsx prisma/backfill-ledger-summaries.ts",
     "db:studio": "prisma studio"

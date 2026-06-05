@@ -62,12 +62,53 @@ npm run dev
 | `npm run build` | 生产构建 |
 | `npm test` | 单元测试 |
 | `npm run typecheck` | 类型检查 |
-| `npm run db:seed` | 初始化数据 |
+| `npm run db:seed` | 初始化基础数据（管理员、套餐、科目） |
+| `npm run db:seed-random` | 生成随机测试会员与 OPC 台账数据 |
+| `npm run db:deploy:seed` | 部署迁移 + 基础种子 + 随机测试数据 |
 
 ## MVP 闭环
 
 诊断 → 签约 → OPC 落地 → 记账 → 申报提醒 → 月度对账单
 
+## Docker 部署
+
+通过 Nginx 对外暴露，访问路径为 `http://<外网地址>/tax_filing`。
+
+### 1. 准备环境变量
+
+```bash
+cp .env.docker.example .env
+# 编辑 .env，至少修改数据库密码与 JWT/加密密钥
+```
+
+### 2. 开发模式（含随机测试数据）
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+启动后自动执行：数据库迁移 → 基础种子（管理员/套餐）→ 随机测试会员数据。
+
+默认账号：
+
+| 角色 | 账号 | 密码 |
+|------|------|------|
+| 管理员 | admin | admin123 |
+| 测试会员 | 见容器日志 | test123 |
+
+### 3. 线上模式（不生成随机测试数据）
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+启动后自动执行：数据库迁移 → 基础种子（管理员/套餐），跳过随机测试数据。
+
+### 4. 访问
+
+- 首页：`http://<外网地址>/tax_filing`
+- 健康检查：`http://<外网地址>/tax_filing/api/health`
+
 ## 环境变量
 
-见 [.env.example](.env.example)
+见 [.env.example](.env.example)（本地开发）与 [.env.docker.example](.env.docker.example)（Docker 部署）

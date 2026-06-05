@@ -1,5 +1,6 @@
 import 'server-only';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { withBasePath } from '@/lib/base-path';
 
 const DEFAULT_TTL_SEC = 3600;
 
@@ -22,7 +23,7 @@ function getAllowedOrigins(): string[] {
 export function signMediaUrl(attachmentId: string, memberId: string, ttlSec = DEFAULT_TTL_SEC): string {
   const exp = Math.floor(Date.now() / 1000) + ttlSec;
   const sig = computeMediaSignature(attachmentId, memberId, exp);
-  return `/api/media/${attachmentId}?uid=${memberId}&exp=${exp}&sig=${sig}`;
+  return withBasePath(`/api/media/${attachmentId}?uid=${memberId}&exp=${exp}&sig=${sig}`);
 }
 
 function computeMediaSignature(attachmentId: string, memberId: string, exp: number): string {

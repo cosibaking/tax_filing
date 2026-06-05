@@ -7,6 +7,8 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 FROM base AS builder
+ARG NEXT_PUBLIC_BASE_PATH=/tax_filing
+ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
@@ -16,12 +18,24 @@ FROM base AS runner
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+ARG NEXT_PUBLIC_BASE_PATH=/tax_filing
+ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-USER nextjs
+
+# 数据库初始化工具（迁移 + 种子脚本）
+COPY --from=deps /app/node_modules /init/node_modules
+COPY --from=builder /app/prisma /init/prisma
+COPY --from=builder /app/package.json /init/package.json
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
+
 EXPOSE 3000
-ENV PORT=3000
-CMD ["node", "server.js"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { withBasePath } from '@/lib/base-path';
 import { getAdminCallbackFromLocation } from '@/lib/auth/login-redirect';
 
 export default function AdminLoginPage() {
@@ -21,7 +22,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/auth/login', {
+      const res = await fetch(withBasePath('/api/admin/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

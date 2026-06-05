@@ -1,4 +1,5 @@
 import type { ApiResponse } from '@/lib/api/envelope';
+import { withBasePath } from '@/lib/base-path';
 import {
   buildLoginRedirectUrl,
   getCurrentReturnPath,
@@ -60,7 +61,7 @@ export function clearGuestSessionId() {
 async function refreshMemberToken(): Promise<boolean> {
   const refresh = localStorage.getItem(MEMBER_REFRESH_KEY);
   if (!refresh) return false;
-  const res = await fetch('/api/member/auth/refresh', {
+  const res = await fetch(withBasePath('/api/member/auth/refresh'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken: refresh }),
@@ -97,7 +98,7 @@ export async function memberFetch<T>(
   const token = getMemberToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  let res = await fetch(path, { ...init, headers });
+  let res = await fetch(withBasePath(path), { ...init, headers });
 
   if (res.status === 401) {
     const refreshed = await refreshMemberToken();
@@ -108,7 +109,7 @@ export async function memberFetch<T>(
       }
       const newToken = getMemberToken();
       if (newToken) retryHeaders.set('Authorization', `Bearer ${newToken}`);
-      res = await fetch(path, { ...init, headers: retryHeaders });
+      res = await fetch(withBasePath(path), { ...init, headers: retryHeaders });
     } else {
       clearMemberTokens();
       if (typeof window !== 'undefined') {
@@ -136,10 +137,12 @@ export async function publicFetch<T>(
   if (!headers.has('Content-Type') && init?.body) {
     headers.set('Content-Type', 'application/json');
   }
-  const res = await fetch(path, { ...init, headers });
+  const res = await fetch(withBasePath(path), { ...init, headers });
   const json = (await res.json()) as ApiResponse<T>;
   if (!res.ok || json.code !== 0) {
     throw new ApiClientError(json.message || '请求失败', json.code, res.status);
   }
   return json.data as T;
 }
+
+export { withBasePath };

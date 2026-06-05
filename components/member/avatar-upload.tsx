@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getMemberToken } from '@/lib/api/client';
+import { withBasePath } from '@/lib/base-path';
 import { ProtectedImage } from '@/components/media/protected-image';
 
 type Props = {
@@ -46,7 +47,7 @@ export function AvatarUpload({ avatarUrl, onUploaded, disabled }: Props) {
     try {
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch('/api/upload', {
+      const res = await fetch(withBasePath('/api/upload'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,

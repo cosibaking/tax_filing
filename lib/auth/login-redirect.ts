@@ -1,3 +1,5 @@
+import { stripBasePath, withBasePath } from '@/lib/base-path';
+
 export const MEMBER_LOGIN_PATH = '/user/login';
 export const ADMIN_LOGIN_PATH = '/admin/login';
 
@@ -18,7 +20,7 @@ export function isAdminPublicPath(pathname: string): boolean {
 export function buildLoginRedirectUrl(loginPath: string, returnTo: string): string {
   const params = new URLSearchParams();
   params.set('callbackUrl', returnTo);
-  return `${loginPath}?${params.toString()}`;
+  return `${withBasePath(loginPath)}?${params.toString()}`;
 }
 
 export function getSafeCallbackUrl(
@@ -27,23 +29,25 @@ export function getSafeCallbackUrl(
   fallback: string,
 ): string {
   if (!callbackUrl) return fallback;
-  if (!callbackUrl.startsWith('/') || callbackUrl.startsWith('//')) return fallback;
+  const normalized = stripBasePath(callbackUrl.split('?')[0] ?? callbackUrl);
+  const query = callbackUrl.includes('?') ? callbackUrl.slice(callbackUrl.indexOf('?')) : '';
+  if (!normalized.startsWith('/') || normalized.startsWith('//')) return fallback;
   if (
-    callbackUrl === MEMBER_LOGIN_PATH ||
-    callbackUrl === ADMIN_LOGIN_PATH ||
-    callbackUrl.startsWith(`${MEMBER_LOGIN_PATH}?`) ||
-    callbackUrl.startsWith(`${ADMIN_LOGIN_PATH}?`) ||
-    callbackUrl.startsWith('/user/register')
+    normalized === MEMBER_LOGIN_PATH ||
+    normalized === ADMIN_LOGIN_PATH ||
+    normalized.startsWith(`${MEMBER_LOGIN_PATH}?`) ||
+    normalized.startsWith(`${ADMIN_LOGIN_PATH}?`) ||
+    normalized.startsWith('/user/register')
   ) {
     return fallback;
   }
-  if (loginPath === MEMBER_LOGIN_PATH && !callbackUrl.startsWith('/user')) {
+  if (loginPath === MEMBER_LOGIN_PATH && !normalized.startsWith('/user')) {
     return fallback;
   }
-  if (loginPath === ADMIN_LOGIN_PATH && !callbackUrl.startsWith('/admin')) {
+  if (loginPath === ADMIN_LOGIN_PATH && !normalized.startsWith('/admin')) {
     return fallback;
   }
-  return callbackUrl;
+  return normalized + query;
 }
 
 export function getMemberCallbackFromLocation(

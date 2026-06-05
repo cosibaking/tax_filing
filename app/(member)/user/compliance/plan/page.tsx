@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { RISK_DISCLOSURE_ITEMS, LEGAL_DOCUMENT_VERSIONS, isDev } from '@/lib/api/constants';
 import { ApiClientError, getMemberToken, memberFetch } from '@/lib/api/client';
+import { withBasePath } from '@/lib/base-path';
 
 export default function PlanPage() {
   const [step, setStep] = useState(1);
@@ -34,7 +35,7 @@ export default function PlanPage() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/site/compliance/plans')
+    fetch(withBasePath('/api/site/compliance/plans'))
       .then((r) => r.json())
       .then((json) => {
         if (json.data?.length) setPlans(json.data);

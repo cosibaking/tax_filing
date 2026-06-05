@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { withBasePath } from '@/lib/base-path';
 
 interface OpcTask {
   id: string;
@@ -24,7 +25,7 @@ interface OpcTask {
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = localStorage.getItem('admin_token');
-  const res = await fetch(path, {
+  const res = await fetch(withBasePath(path), {
     ...init,
     headers: {
       'Content-Type': 'application/json',

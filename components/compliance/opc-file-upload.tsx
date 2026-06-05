@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getMemberToken } from '@/lib/api/client';
+import { withBasePath } from '@/lib/base-path';
 
 type Props = {
   label: string;
@@ -28,7 +29,7 @@ export function OpcFileUpload({ label, value, onChange }: Props) {
     try {
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch('/api/upload', {
+      const res = await fetch(withBasePath('/api/upload'), {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,

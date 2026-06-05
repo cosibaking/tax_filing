@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { withBasePath } from '@/lib/base-path';
 
 interface Customer {
   id: string;
@@ -16,7 +17,7 @@ interface Customer {
 
 async function adminFetch<T>(path: string): Promise<T> {
   const token = localStorage.getItem('admin_token');
-  const res = await fetch(path, {
+  const res = await fetch(withBasePath(path), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   const json = await res.json();

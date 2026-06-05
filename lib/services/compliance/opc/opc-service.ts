@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma, serializeBigInt } from '@/lib/db';
 import { encrypt, decrypt, maskIdCard, maskBankAccount } from '@/lib/crypto/encrypt';
+import { withBasePath } from '@/lib/base-path';
 import { signMediaUrl, isImageMime } from '@/lib/media/signed-access';
 import { writeAuditLog } from '@/lib/services/compliance/audit/audit-log';
 import { getClientIp } from '@/lib/auth/member';
@@ -329,7 +330,7 @@ async function loadAttachmentBrief(fileId: bigint | null, memberId?: bigint) {
   }
   return {
     ...base,
-    downloadUrl: `/api/upload/${file.id}`,
+    downloadUrl: withBasePath(`/api/upload/${file.id}`),
   };
 }
 

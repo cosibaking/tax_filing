@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { OpcAdminAction } from '@/lib/services/compliance/opc/opc-types';
+import { withBasePath } from '@/lib/base-path';
 
 type AttachmentBrief = { id: string; fileName: string; downloadUrl: string };
 
@@ -31,7 +32,7 @@ type TaskDetail = Record<string, unknown> & {
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = localStorage.getItem('admin_token');
-  const res = await fetch(path, {
+  const res = await fetch(withBasePath(path), {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -47,7 +48,7 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
 async function adminUpload(file: File): Promise<string> {
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch('/api/upload', { method: 'POST', body: form });
+  const res = await fetch(withBasePath('/api/upload'), { method: 'POST', body: form });
   const json = await res.json();
   if (json.code !== 0) throw new Error(json.message || '上传失败');
   return String(json.data.id);

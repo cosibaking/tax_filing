@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { withBasePath } from '@/lib/base-path';
 
 interface StatementJob {
   memberId: string;
@@ -16,7 +17,7 @@ interface StatementJob {
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = localStorage.getItem('admin_token');
-  const res = await fetch(path, {
+  const res = await fetch(withBasePath(path), {
     ...init,
     headers: {
       'Content-Type': 'application/json',
