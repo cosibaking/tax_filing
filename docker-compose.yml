@@ -71,6 +71,8 @@ services:
       - '${NGINX_HTTP_PORT:-80}:80'
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     depends_on:
       app:
         condition: service_healthy

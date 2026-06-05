@@ -102,6 +102,14 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
+或使用一键部署脚本（推荐在服务器上执行，含 iptables/旧栈检查与健康等待）：
+
+```bash
+chmod +x scripts/deploy-prod.sh
+./scripts/deploy-prod.sh          # 构建并启动
+./scripts/deploy-prod.sh --pull   # 先 git pull 再部署
+```
+
 启动后自动执行：数据库迁移 → 基础种子（管理员/套餐），跳过随机测试数据。
 
 ### 4. 访问
