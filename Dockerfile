@@ -11,6 +11,8 @@ ARG NEXT_PUBLIC_BASE_PATH=/tax_filing
 ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# 避免本地 .next 缓存污染镜像构建（导致 basePath 未生效）
+RUN rm -rf .next
 RUN npx prisma generate
 RUN npm run build
 

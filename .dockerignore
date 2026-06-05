@@ -1,0 +1,23 @@
+# 依赖与构建产物（Dockerfile 内重新安装/构建）
+node_modules
+.next
+out
+
+# 本地环境与密钥
+.env
+.env.*
+!.env.docker.example
+!.env.example
+
+# 开发/测试
+.git
+.gitignore
+coverage
+*.log
+uploads
+
+# IDE
+.cursor
+.vscode
+*.md
+!README.md
