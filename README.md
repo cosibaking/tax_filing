@@ -106,9 +106,12 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 ```bash
 chmod +x scripts/deploy-prod.sh
-./scripts/deploy-prod.sh          # 构建并启动
+./scripts/deploy-prod.sh          # 构建并启动；80 被占用时自动回退 8048
 ./scripts/deploy-prod.sh --pull   # 先 git pull 再部署
+./scripts/deploy-prod.sh --port 8048   # 强制使用备份端口
 ```
+
+**80 端口被占用时的备份方案**：脚本会检测 80 是否已被其它进程占用；若占用则自动改用 `8048` 端口，并同步更新 `.env` 中的 `NGINX_HTTP_PORT` 与 `NEXT_PUBLIC_APP_URL`（如 `http://<IP>:8048/tax_filing`）。请在云安全组放行 TCP 8048。
 
 启动后自动执行：数据库迁移 → 基础种子（管理员/套餐），跳过随机测试数据。
 
