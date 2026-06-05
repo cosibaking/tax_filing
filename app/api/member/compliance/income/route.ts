@@ -32,7 +32,18 @@ function startOfDay(d: Date): Date {
   return start;
 }
 
-function parseIncomeFilters(searchParams: URLSearchParams) {
+type ParseIncomeFiltersResult =
+  | { error: string }
+  | {
+      filters: {
+        dateFrom?: Date;
+        dateTo?: Date;
+        platform?: string;
+        category?: string;
+      };
+    };
+
+function parseIncomeFilters(searchParams: URLSearchParams): ParseIncomeFiltersResult {
   const dateFromStr = searchParams.get('dateFrom')?.trim() ?? '';
   const dateToStr = searchParams.get('dateTo')?.trim() ?? '';
 
