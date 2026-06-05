@@ -1,6 +1,7 @@
 FROM node:20-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
+RUN npm config set registry https://registry.npmjs.org/
 
 FROM base AS deps
 COPY package.json package-lock.json* ./
