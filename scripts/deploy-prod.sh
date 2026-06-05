@@ -78,8 +78,23 @@ load_env() {
   fi
 
   set -a
-  # shellcheck disable=SC1091
-  source .env
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -z "$line" || "$line" == \#* ]] && continue
+
+    if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
+      key="${BASH_REMATCH[1]}"
+      val="${BASH_REMATCH[2]}"
+      if [[ "$val" =~ ^\"(.*)\"$ ]]; then
+        val="${BASH_REMATCH[1]}"
+      elif [[ "$val" =~ ^\'(.*)\'$ ]]; then
+        val="${BASH_REMATCH[1]}"
+      fi
+      printf -v "$key" '%s' "$val"
+      export "$key"
+    fi
+  done < .env
   set +a
 }
 
@@ -95,10 +110,35 @@ validate_env() {
     CRON_SECRET
     NEXT_PUBLIC_APP_URL
   )
+  local missing=()
   local key
   for key in "${required[@]}"; do
-    [[ -n "${!key:-}" ]] || die ".env 缺少必填项: $key"
+    [[ -n "${!key:-}" ]] || missing+=("$key")
   done
+
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    cat >&2 <<EOF
+[deploy][ERROR] .env 缺少 Docker 部署必填项: ${missing[*]}
+
+线上 .env 须包含 MySQL 与 NEXT_PUBLIC_APP_URL 等 Docker 变量（与本地开发的 DATABASE_URL 格式不同）。
+
+修复方式（在 ~/apps/tax_filing）:
+  1. 若数据库已在运行：编辑 .env，补全缺失项，勿随意改 MYSQL_PASSWORD
+  2. 若是全新环境：cp .env.docker.example .env 后编辑
+
+示例片段:
+  MYSQL_ROOT_PASSWORD=your-root-password
+  MYSQL_DATABASE=opc_compliance
+  MYSQL_USER=tax_filing_app
+  MYSQL_PASSWORD=your-app-password
+  NEXT_PUBLIC_APP_URL=http://82.156.54.232/tax_filing
+  NEXTAUTH_SECRET=...（至少 32 字符）
+  JWT_SECRET=...
+  ENCRYPTION_KEY=...
+  CRON_SECRET=...
+EOF
+    exit 1
+  fi
 
   if [[ "${MYSQL_PASSWORD}" =~ [,@#/:] ]]; then
     die "MYSQL_PASSWORD 含 , @ # / : 等特殊字符，会导致 DATABASE_URL 解析失败"
