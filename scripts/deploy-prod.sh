@@ -71,6 +71,12 @@ detect_docker() {
 
 load_env() {
   [[ -f .env ]] || die "缺少 .env，请先执行: cp .env.docker.example .env 并编辑"
+
+  if grep -q $'\r' .env 2>/dev/null; then
+    warn ".env 含 Windows 换行符(CRLF)，正在自动转换为 LF..."
+    sed -i 's/\r$//' .env
+  fi
+
   set -a
   # shellcheck disable=SC1091
   source .env
