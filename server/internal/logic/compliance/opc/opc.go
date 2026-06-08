@@ -11,6 +11,7 @@ import (
 
 	"xygo/internal/consts"
 	"xygo/internal/library/compliancecrypto"
+	"xygo/internal/library/complianceverify"
 	"xygo/internal/library/security"
 	"xygo/internal/logic/compliance/audit"
 	"xygo/internal/model/input/compliancein"
@@ -140,7 +141,18 @@ func (s *sComplianceOpc) SubmitMaterials(ctx context.Context, in *compliancein.M
 	if !s.hasActiveOrder(ctx, in.MemberId) {
 		return nil, gerror.NewCode(consts.CodeNoPermission, "请先完成签约")
 	}
-	if err := validateMaterials(in); err != nil {
+	if err := validateMaterials(ctx, in); err != nil {
+		return nil, err
+	}
+	if err := complianceverify.VerifyMaterials(ctx, &complianceverify.MaterialsVerifyInput{
+		MemberId:          in.MemberId,
+		LegalPersonName:   in.LegalPersonName,
+		IdCard:            in.IdCard,
+		Phone:             in.Phone,
+		Email:             in.Email,
+		IdCardFrontFileId: in.IdCardFrontFileId,
+		IdCardBackFileId:  in.IdCardBackFileId,
+	}); err != nil {
 		return nil, err
 	}
 	for _, fid := range []uint64{in.AddressProofFileId, in.IdCardFrontFileId, in.IdCardBackFileId} {

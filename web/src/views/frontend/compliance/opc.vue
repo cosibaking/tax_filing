@@ -60,6 +60,12 @@
 
       <!-- Materials form -->
       <div v-if="showMaterialsForm" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
+        <div
+          v-if="verifyMock"
+          class="mb-6 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-800 font-medium"
+        >
+          开发模式：身份证 OCR、手机实名、三要素等真实性校验已 Mock，填写格式正确即可提交。
+        </div>
         <h2 class="font-heading font-black text-xl text-clay-foreground mb-6">注册资料提交</h2>
 
         <ElForm ref="formRef" :model="formData" :rules="rules" label-position="top" class="space-y-6">
@@ -254,6 +260,12 @@ import {
   type OpcProgressStep,
   type OpcStepStatus
 } from '@/api/frontend/compliance/opc'
+import {
+  ID_CARD_FORMAT_PATTERN,
+  PHONE_MOCK_PATTERN,
+  isComplianceVerifyMock
+} from '@/config/complianceVerify'
+import { validateChineseIDCard, validateEmail, validatePhone } from '@/utils/form/validator'
 import { useMemberStore } from '@/store/modules/member'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 
@@ -261,6 +273,7 @@ defineOptions({ name: 'ComplianceOpc' })
 
 const router = useRouter()
 const memberStore = useMemberStore()
+const verifyMock = isComplianceVerifyMock()
 
 const loading = ref(true)
 const submitting = ref(false)
@@ -322,7 +335,35 @@ const bankForm = reactive({
   bankReceiptFileId: '' as number | string
 })
 
-const idCardPattern = /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/
+
+function validateFormPhone(_r: unknown, value: string, cb: (err?: Error) => void) {
+  const phone = String(value ?? '').trim()
+  if (!phone) {
+    cb(new Error('请输入手机号'))
+    return
+  }
+  const ok = verifyMock ? PHONE_MOCK_PATTERN.test(phone) : validatePhone(phone)
+  cb(ok ? undefined : new Error('手机号格式不正确'))
+}
+
+function validateFormIdCard(_r: unknown, value: string, cb: (err?: Error) => void) {
+  const id = String(value ?? '').trim()
+  if (!id) {
+    cb(new Error('请输入身份证号'))
+    return
+  }
+  const ok = verifyMock ? ID_CARD_FORMAT_PATTERN.test(id) : validateChineseIDCard(id)
+  cb(ok ? undefined : new Error('身份证号格式不正确'))
+}
+
+function validateFormEmail(_r: unknown, value: string, cb: (err?: Error) => void) {
+  const email = String(value ?? '').trim()
+  if (!email) {
+    cb(new Error('请输入邮箱'))
+    return
+  }
+  cb(validateEmail(email) ? undefined : new Error('邮箱格式不正确'))
+}
 
 const rules: FormRules = {
   proposedNames: [{
@@ -350,13 +391,13 @@ const rules: FormRules = {
     trigger: 'change',
   }],
   legalPersonName: [{ required: true, min: 2, max: 20, message: '2-20 字中文姓名', trigger: 'blur' }],
-  idCardNumber: [{ pattern: idCardPattern, message: '身份证号格式不正确', trigger: 'blur' }],
+  idCardNumber: [{ validator: validateFormIdCard, trigger: 'blur' }],
   idCardValidFrom: [{ required: true, message: '请选择有效期起', trigger: 'change' }],
   idCardValidTo: [{ required: true, message: '请选择有效期止', trigger: 'change' }],
   householdAddress: [{ required: true, min: 5, message: '户籍地址至少 5 字', trigger: 'blur' }],
   residenceAddress: [{ required: true, min: 5, message: '现居地址至少 5 字', trigger: 'blur' }],
-  phone: [{ pattern: /^1\d{10}$/, message: '手机号格式不正确', trigger: 'blur' }],
-  email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }],
+  phone: [{ validator: validateFormPhone, trigger: 'blur' }],
+  email: [{ validator: validateFormEmail, trigger: 'blur' }],
   idCardFrontFileId: [{
     validator: (_r, v, cb) => (Number(v) > 0 ? cb() : cb(new Error('请上传身份证正面'))),
     trigger: 'change',

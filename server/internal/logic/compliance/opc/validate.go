@@ -9,6 +9,7 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 
+	"xygo/internal/library/complianceverify"
 	"xygo/internal/model/input/compliancein"
 )
 
@@ -25,7 +26,7 @@ var (
 	idCardCheckMap = []byte{'1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'}
 )
 
-func validateMaterials(in *compliancein.MaterialsSubmitInp) error {
+func validateMaterials(ctx context.Context, in *compliancein.MaterialsSubmitInp) error {
 	if len(in.ProposedNames) < 1 || len(in.ProposedNames) > 3 {
 		return gerror.New("备选公司名称须为1-3条")
 	}
@@ -70,7 +71,7 @@ func validateMaterials(in *compliancein.MaterialsSubmitInp) error {
 	if len([]rune(strings.TrimSpace(in.LegalPersonName))) < 2 || len([]rune(strings.TrimSpace(in.LegalPersonName))) > 20 {
 		return gerror.New("法人姓名须为2-20个中文")
 	}
-	if !validateIdCard(in.IdCard) {
+	if !validateIdCardForMode(ctx, in.IdCard) {
 		return gerror.New("身份证号格式无效")
 	}
 	if strings.TrimSpace(in.IdCardValidFrom) == "" || strings.TrimSpace(in.IdCardValidTo) == "" {
@@ -103,25 +104,29 @@ func validateMaterials(in *compliancein.MaterialsSubmitInp) error {
 	return nil
 }
 
+var idCardFormatRe = regexp.MustCompile(`^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$`)
+
+func validateIdCardForMode(ctx context.Context, id string) bool {
+	if complianceverify.IsMockMode(ctx) {
+		return validateIdCardFormat(id)
+	}
+	return validateIdCard(id)
+}
+
+func validateIdCardFormat(id string) bool {
+	return idCardFormatRe.MatchString(strings.ToUpper(strings.TrimSpace(id)))
+}
+
 func validateIdCard(id string) bool {
 	id = strings.ToUpper(strings.TrimSpace(id))
-	if len(id) != 18 {
-		return false
-	}
-	for i := 0; i < 17; i++ {
-		if id[i] < '0' || id[i] > '9' {
-			return false
-		}
-	}
-	last := id[17]
-	if (last < '0' || last > '9') && last != 'X' {
+	if !validateIdCardFormat(id) {
 		return false
 	}
 	sum := 0
 	for i := 0; i < 17; i++ {
 		sum += int(id[i]-'0') * idCardWeights[i]
 	}
-	return idCardCheckMap[sum%11] == last
+	return idCardCheckMap[sum%11] == id[17]
 }
 
 func validateCreditCode(code string) bool {

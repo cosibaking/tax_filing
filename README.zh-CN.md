@@ -2,17 +2,15 @@
   <img src="https://xygoupload.xingyunwangluo.com/gitee/%E5%8D%95%E7%8B%AClogo.png" width="200" />
 </p>
 <br />
-<h1 align="center">XYGo Admin</h1>
-<p align="center">基于 Vue3 + GoFrame 构建的通用开源中后台管理框架，内置权限管理、代码生成、系统监控等核心模块，开箱即用，快速启动你的业务开发。</p>
+<h1 align="center">主播 OPC 合规服务</h1>
+<p align="center">基于 XYGo Admin（Vue3 + GoFrame）构建的个人主播合规 SaaS，覆盖诊断、签约、OPC 落地、记账申报与对账单全链路。MVP v0.1 已验收通过。</p>
 <div align="center">简体中文 | <a href="./README.md">English</a></div>
 
 <br />
 <p align="center">
-  <a href="https://www.xygoadmin.com">官网</a> |
-  <a href="https://www.xygoadmin.com">演示</a> |
-  <a href="https://qm.qq.com/q/dwSdPBjkhU">加群</a> |
-  <a href="https://gitee.com/a751300685a/xygo-admin">Gitee仓库</a> |
-  <a href="https://github.com/z312193608/xygo-admin">GitHub仓库</a>
+  <a href="https://www.xygoadmin.com">XYGo Admin 官网</a> |
+  <a href="https://gitee.com/a751300685a/xygo-admin">Gitee</a> |
+  <a href="https://github.com/z312193608/xygo-admin">GitHub</a>
 </p>
 
 <div align="center">
@@ -20,182 +18,182 @@
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.x-42b883.svg)](https://vuejs.org/)
 [![GoFrame](https://img.shields.io/badge/GoFrame-v2-00ADD8.svg)](https://goframe.org/)
-[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8.svg)](https://golang.org/)
+[![Go](https://img.shields.io/badge/Go-1.24+-00ADD8.svg)](https://golang.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF.svg)](https://vitejs.dev/)
 [![Element Plus](https://img.shields.io/badge/Element_Plus-2.x-409EFF.svg)](https://element-plus.org/)
-[![Pinia](https://img.shields.io/badge/Pinia-2.x-F7D336.svg)](https://pinia.vuejs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4.svg)](https://tailwindcss.com/)
-[![Art Design Pro](https://img.shields.io/badge/Art_Design_Pro-UI-FF6B6B.svg)](https://github.com/Daymychen/art-design-pro)
-[![Gitee star](https://gitee.com/a751300685a/xygo-admin/badge/star.svg?theme=gvp)](https://gitee.com/a751300685a/xygo-admin/stargazers)
-[![Gitee fork](https://gitee.com/a751300685a/xygo-admin/badge/fork.svg?theme=gvp)](https://gitee.com/a751300685a/xygo-admin/members)
+[![MVP](https://img.shields.io/badge/MVP-v0.1-22c55e.svg)](./docs/03-验收记录.md)
 
 </div>
 <br />
 
 ### 介绍
 
-XYGo Admin 是一款全栈开源中后台管理框架，前端基于 [Art Design Pro](https://github.com/Daymychen/art-design-pro)（Vue3 + TypeScript + Element Plus），后端基于 [GoFrame v2](https://goframe.org/)。无需授权即可免费商用，希望能帮助开发者快速搭建企业级管理系统。
+**主播 OPC 合规服务**帮助个人主播及签约 MCN 主播，以 OPC（一人有限责任公司）为主体完成工商注册、日常记账与依法报税。本项目在 [XYGo Admin](https://www.xygoadmin.com) 通用中后台框架之上，实现了合规业务 MVP（32 项 P1 功能）。
+
+前端基于 [Art Design Pro](https://github.com/Daymychen/art-design-pro)（Vue3 + TypeScript + Element Plus），后端基于 [GoFrame v2](https://goframe.org/)。
+
+### 核心闭环
+
+```
+诊断 → 签约 → OPC 落地 → 记账 → 申报提醒 → 月度对账单
+```
+
+| 阶段 | 主播端 | 顾问端 |
+|------|--------|--------|
+| 合规诊断 | `/diagnosis` 匿名问卷 + 三方案税负对比 | — |
+| 方案签约 | `/user/compliance/plan` 风险告知 + 电子签约 | — |
+| OPC 落地 | `/user/compliance/opc` 资料提交 + 进度时间轴 | `/admin/compliance/opc-tasks` |
+| 收支台账 | `/user/compliance/income` · `expense` · `ledger` | — |
+| 申报交付 | `/user/compliance/tax` | `/admin/compliance/filing` |
+| 对账单 | `/user/compliance/statement` | `/admin/compliance/statements` |
 
 ### 主要特性
 
-**RBAC 权限体系**：角色、菜单、按钮、数据权限、字段权限，精细到列级控制，可视化管理权限分配
+**合规诊断**：匿名/登录诊断问卷，劳务 / 个体户 / OPC 三方案税负对比与推荐
 
-**可视化代码生成**：可视化设计表结构，一键生成前后端 CRUD 代码（Go API + Controller + Logic + Vue 页面），支持主子表关联，节省 80% 开发时间
+**签约留痕**：风险告知、方案确认、电子签约，`ComplianceConsent` + 审计日志全程留痕
 
-**双数据库支持**：同时兼容 MySQL 和 PostgreSQL，一套代码双库运行，切换数据库只需改一行配置
+**OPC 落地**：资料提交、进度时间轴、顾问后台推进工商 / 税务 / 银行节点
 
-**前后端分离**：前端 Vue3 SPA + 后端 GoFrame RESTful API，可独立部署，也可打包为单体二进制一键部署
+**收支台账**：收入 / 费用录入、利润预览、分录与合规规则校验
 
-**会员门户系统**：内置前台门户 + 会员中心，支持注册登录、积分签到、个人中心，门户菜单后台可视化管理
+**申报与对账单**：申报日历、顾问标记已申报、月度对账单生成与通知
 
-**文档中心**：内置 Markdown 文档管理，支持分类树、全文搜索、在线预览
+**敏感数据保护**：身份证、银行账号 AES 加密存储，接口脱敏展示
 
-**系统监控**：服务器状态监控、慢查询告警、慢接口告警、操作日志、登录日志全覆盖
-
-**消息队列**：基于 Redis 的异步任务队列，支持定时任务管理和消息推送
-
-**现代 UI**：基于 Art Design Pro，六种布局模式、明暗主题、丝滑动画交互，按钮点击、主题切换、页面过渡体验媲美商业产品
-
-**单体部署**：支持将前端打包进 Go 二进制，一个文件 + 一个配置即可部署，无需 Nginx
+**平台能力（XYGo Admin）**：RBAC 权限、代码生成、会员门户、消息队列、系统监控、单体部署
 
 ### 技术栈
 
 | 层级 | 技术 |
 |------|------|
-| 前端框架 | Vue 3、TypeScript、Vite |
-| UI 组件库 | Element Plus、Tailwind CSS |
-| 状态管理 | Pinia |
-| 后端框架 | GoFrame v2（Go 1.22+） |
-| 数据库 | MySQL 8.0+ / PostgreSQL 14+ |
-| 缓存/队列 | Redis |
-| 认证 | JWT（支持单点登录） |
+| 前端 | Vue 3、TypeScript、Vite、Element Plus、Tailwind CSS、Pinia |
+| 后端 | GoFrame v2（Go 1.24+） |
+| 数据库 | MySQL 8.0+（主）、PostgreSQL 14+（可选） |
+| 缓存 / 队列 | Redis |
+| 认证 | JWT（会员 Bearer + 管理端 Session） |
 
-### 项目预览
+### 快速开始
 
-> 演示站：[www.xygoadmin.com](https://www.xygoadmin.com)
+**环境要求**：Node.js ≥ 20.19、pnpm ≥ 8.8、Go ≥ 1.24、MySQL 8、Redis 7
 
-<table>
-  <tr>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/1.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/2.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/3.png" /></td>
-  </tr>
-  <tr>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/4.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/5.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/6.png" /></td>
-  </tr>
-  <tr>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/7.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/8.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/9.png" /></td>
-  </tr>
-</table>
+```bash
+# 1. 初始化数据库
+mysql -u root -p -e "CREATE DATABASE xygo DEFAULT CHARSET utf8mb4;"
+mysql -u root -p xygo < mysql_install.sql
 
-### 快速访问
+# 2. 后端配置与迁移
+cd server
+cp manifest/config/config.yaml.example manifest/config/config.yaml
+# 编辑 config.yaml：database.default.link、redis、auth.jwt.secret
+go run tools.go migrate up    # 执行合规 MVP 等增量迁移
+gf run main.go                # 默认 http://localhost:4096
 
-[演示站](https://www.xygoadmin.com) | [Gitee 仓库](https://gitee.com/a751300685a/xygo-admin) | [GitHub 仓库](https://github.com/z312193608/xygo-admin) | [📖 完整文档](https://www.xygoadmin.com/docs)
+# 3. 前端开发
+cd web
+pnpm install
+cp .env.development .env.local   # 按需调整 VITE_API_PROXY_URL
+pnpm dev                         # 默认 http://localhost:5173
+```
 
-### 安装使用
+**冒烟路径**（详见 [docs/03-验收记录.md](./docs/03-验收记录.md)）：
 
-详细安装步骤请查阅 **[📖 官方文档](https://www.xygoadmin.com/docs)**。
+```
+/ → /diagnosis → /diagnosis/result
+→ /user/register → /user/compliance/plan → /user/compliance/opc
+→ (admin) /admin/compliance/opc-tasks
+→ /user/compliance/income → expense → ledger → tax → statement
+```
 
-**默认账号**
+### 默认账号
 
-| 角色 | 账号 | 密码 |
-|------|------|------|
-| 超级管理员 | Super | 123456 |
+| 角色 | 账号 | 密码 | 入口 |
+|------|------|------|------|
+| 超级管理员 | Super | 123456 | `/admin` |
+| 主播（会员） | 自行注册 | — | `/user/register` |
 
 ### 项目结构
 
 ```
-xygoadmin/
-├── server/                    # 后端 GoFrame 项目
-│   ├── addons/                # 扩展包目录（*.zip）
-│   ├── api/                   # API 接口定义
-│   ├── internal/
-│   │   ├── cmd/               # 主命令入口
-│   │   ├── cmdtools/          # 工具命令逻辑（迁移、扩展、在线更新）
-│   │   ├── controller/        # 控制器（请求处理）
-│   │   ├── logic/             # 业务逻辑（核心代码在这里）
-│   │   ├── model/             # 数据模型（entity/do/input）
-│   │   ├── dao/               # 数据访问层（gf gen dao 自动生成）
-│   │   └── service/           # 服务接口（gf gen service 自动生成）
-│   ├── cmd_tools/migrate/     # 迁移 SQL 文件
-│   ├── manifest/config/       # 运行时配置文件
-│   ├── hack/config.yaml       # CLI 工具配置（build/gen）
-│   ├── resource/              # 静态资源、代码生成模板
-│   ├── main.go                # 服务启动入口（gf run main.go）
-│   └── tools.go               # 工具命令入口（go run tools.go）
-├── web/                       # 前端 Vue3 项目
-│   ├── src/
-│   │   ├── api/               # API 请求封装
-│   │   ├── views/             # 页面组件（backend/frontend）
-│   │   ├── router/            # 路由（静态 + 动态加载）
-│   │   ├── store/             # Pinia 状态管理
-│   │   └── components/        # 通用组件
-│   └── ...
-├── mysql_install.sql           # MySQL 初始化脚本
-├── pgsql_install.sql           # PostgreSQL 初始化脚本
-└── version.json                # 版本信息（用于在线更新）
+xygo-admin/
+├── docs/                              # 设计与验收文档
+│   ├── 01-技术选型与架构设计.md
+│   ├── 02-多Agent开发编排.md
+│   ├── 03-验收记录.md
+│   └── modules/                       # M0–M8 模块设计
+├── server/                            # GoFrame 后端
+│   ├── api/
+│   │   ├── site/site_compliance.go    # 匿名合规 API
+│   │   ├── member/member_compliance.go
+│   │   └── admin/admin_compliance.go
+│   ├── internal/logic/compliance/     # 合规领域逻辑
+│   │   ├── diagnosis/  order/  opc/
+│   │   ├── ledger/     tax/    statement/
+│   │   └── audit/      notice/ dashboard/
+│   ├── internal/library/complianceverify/  # OPC 资料校验
+│   ├── cmd_tools/migrate/             # 数据库迁移（含 1.4.x 合规表）
+│   └── manifest/config/config.yaml.example
+├── web/                               # Vue3 前端
+│   ├── src/views/frontend/compliance/ # 主播合规页面
+│   ├── src/views/backend/compliance/  # 顾问后台页面
+│   └── src/config/complianceVerify.ts # 前端 Mock 开关
+├── 主播OPC合规服务-产品文档.md
+├── 主播OPC合规服务-MVP开发Backlog.md
+├── mysql_install.sql
+└── version.json
 ```
+
+### 配置说明
+
+**OPC 资料真实性校验（开发 Mock）**
+
+MVP 阶段身份证 OCR、三要素、手机实名等第三方校验暂未接入，前后端均以 Mock 放行：
+
+| 端 | 配置项 | 开发默认值 |
+|----|--------|-----------|
+| 后端 | `compliance.verifyProvider`（`config.yaml`） | `mock` |
+| 前端 | `VITE_COMPLIANCE_VERIFY_MOCK`（`.env.development`） | `true` |
+
+生产接入第三方后：后端改为 `aliyun` 等并实现 `VerifyMaterials`，前端设 `VITE_COMPLIANCE_VERIFY_MOCK=false`。
+
+### 文档索引
+
+| 文档 | 说明 |
+|------|------|
+| [主播OPC合规服务-产品文档.md](./主播OPC合规服务-产品文档.md) | PRD、用户旅程、功能清单 |
+| [主播OPC合规服务-MVP开发Backlog.md](./主播OPC合规服务-MVP开发Backlog.md) | P1 Story、Sprint 排期 |
+| [docs/01-技术选型与架构设计.md](./docs/01-技术选型与架构设计.md) | 架构、API 契约、安全设计 |
+| [docs/03-验收记录.md](./docs/03-验收记录.md) | AC 验收清单、冒烟路径 |
+| [docs/modules/](./docs/modules/) | M0–M8 模块详细设计 |
+| [XYGo Admin 官方文档](https://www.xygoadmin.com/docs) | 框架通用能力 |
+
+### MVP 已知限制
+
+- 无真实电子税务局 API（顾问人工申报 + 系统记录）
+- 无腾讯电子签（姓名确认 + PDF 存档）
+- 无在线支付（后台手动开通订单）
+- 流水导入仅支持 CSV（无 OCR）
+- OPC 资料校验为 Mock（见上方配置说明）
 
 ### 工具命令
 
-在 `server/` 目录下通过 `go run tools.go` 使用：
+在 `server/` 目录下执行：
 
 | 命令 | 说明 |
 |------|------|
 | `go run tools.go` | 交互式菜单 |
 | `go run tools.go migrate up` | 执行数据库迁移 |
 | `go run tools.go migrate status` | 查看迁移状态 |
-| `go run tools.go migrate history` | 查看迁移历史 |
-| `go run tools.go check-tpl` | 检查模板语法 |
-| `go run tools.go update` | 在线更新 |
-| `go run tools.go addon install tenant` | 安装扩展 |
-| `go run tools.go addon uninstall tenant` | 卸载扩展 |
-
-### 联系我们
-
-- 演示站：[www.xygoadmin.com](https://www.xygoadmin.com)
-- GitHub：[github.com/z312193608/xygo-admin](https://github.com/z312193608/xygo-admin)
-- Gitee：[gitee.com/a751300685a/xygo-admin](https://gitee.com/a751300685a/xygo-admin)
-- QQ：751300685
-- QQ群：[963636900](https://qm.qq.com/q/dwSdPBjkhU)
-
-### 浏览器兼容性
-
-支持 Chrome、Safari、Firefox、Edge 等现代主流浏览器。
+| `gf gen dao` | 根据数据库表生成 DAO |
+| `gf gen service` | 根据 Logic 生成 Service 接口 |
 
 ### 特别鸣谢
 
-感谢以下开源项目提供的基础支持：
-
-- [GoFrame](https://goframe.org/) - Go 语言 Web 框架
-- [Art Design Pro](https://github.com/Daymychen/art-design-pro) - Vue3 后台模板
-- [Vue](https://vuejs.org/) / [Element Plus](https://element-plus.org/) / [Vite](https://vitejs.dev/) / [Pinia](https://pinia.vuejs.org/)
-- [Tailwind CSS](https://tailwindcss.com/) / [TypeScript](https://www.typescriptlang.org/)
+- [XYGo Admin](https://www.xygoadmin.com) — 基础中后台框架
+- [GoFrame](https://goframe.org/) — Go Web 框架
+- [Art Design Pro](https://github.com/Daymychen/art-design-pro) — Vue3 后台模板
 
 ### 开源协议
 
-[MIT](./LICENSE) - 无需授权，免费商用。
-
-### 支持项目
-
-如果觉得项目不错，请到 [GitHub](https://github.com/z312193608/xygo-admin) 或 [Gitee](https://gitee.com/a751300685a/xygo-admin) 点个 Star，这是对我们最大的鼓励。
-
-### 赞助支持
-
-如果 XYGo Admin 对你有帮助，欢迎请作者喝杯咖啡 ☕，你的支持是项目持续迭代的最大动力！
-
-<table>
-  <tr>
-    <td align="center"><b>支付宝</b></td>
-    <td align="center"><b>微信支付</b></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://xygoupload.xingyunwangluo.com/gitee/alipay.jpg" width="200" /></td>
-    <td align="center"><img src="https://xygoupload.xingyunwangluo.com/gitee/wechatpay.jpg" width="200" /></td>
-  </tr>
-</table>
+[MIT](./LICENSE) — 基于 XYGo Admin 开源协议，可免费商用。

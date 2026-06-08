@@ -2,15 +2,13 @@
   <img src="https://xygoupload.xingyunwangluo.com/gitee/%E5%8D%95%E7%8B%AClogo.png" width="200" />
 </p>
 <br />
-<h1 align="center">XYGo Admin</h1>
-<p align="center">An open-source full-stack admin framework built with Vue3 + GoFrame. Includes RBAC permissions, code generation, system monitoring and more — ready to use out of the box.</p>
+<h1 align="center">Streamer OPC Compliance Service</h1>
+<p align="center">A compliance SaaS for individual streamers built on XYGo Admin (Vue3 + GoFrame). Covers diagnosis, onboarding, OPC setup, bookkeeping, tax filing, and monthly statements. MVP v0.1 accepted.</p>
 <div align="center">English | <a href="./README.zh-CN.md">简体中文</a></div>
 
 <br />
 <p align="center">
-  <a href="https://www.xygoadmin.com">Website</a> |
-  <a href="https://www.xygoadmin.com">Demo</a> |
-  <a href="https://qm.qq.com/q/dwSdPBjkhU">Join QQ Group</a> |
+  <a href="https://www.xygoadmin.com">XYGo Admin</a> |
   <a href="https://gitee.com/a751300685a/xygo-admin">Gitee</a> |
   <a href="https://github.com/z312193608/xygo-admin">GitHub</a>
 </p>
@@ -20,182 +18,182 @@
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.x-42b883.svg)](https://vuejs.org/)
 [![GoFrame](https://img.shields.io/badge/GoFrame-v2-00ADD8.svg)](https://goframe.org/)
-[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8.svg)](https://golang.org/)
+[![Go](https://img.shields.io/badge/Go-1.24+-00ADD8.svg)](https://golang.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF.svg)](https://vitejs.dev/)
 [![Element Plus](https://img.shields.io/badge/Element_Plus-2.x-409EFF.svg)](https://element-plus.org/)
-[![Pinia](https://img.shields.io/badge/Pinia-2.x-F7D336.svg)](https://pinia.vuejs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4.svg)](https://tailwindcss.com/)
-[![Art Design Pro](https://img.shields.io/badge/Art_Design_Pro-UI-FF6B6B.svg)](https://github.com/Daymychen/art-design-pro)
-[![Gitee star](https://gitee.com/a751300685a/xygo-admin/badge/star.svg?theme=gvp)](https://gitee.com/a751300685a/xygo-admin/stargazers)
-[![Gitee fork](https://gitee.com/a751300685a/xygo-admin/badge/fork.svg?theme=gvp)](https://gitee.com/a751300685a/xygo-admin/members)
+[![MVP](https://img.shields.io/badge/MVP-v0.1-22c55e.svg)](./docs/03-验收记录.md)
 
 </div>
 <br />
 
 ### Overview
 
-XYGo Admin is a full-stack open-source admin framework. The frontend is based on [Art Design Pro](https://github.com/Daymychen/art-design-pro) (Vue3 + TypeScript + Element Plus), and the backend is powered by [GoFrame v2](https://goframe.org/). Free for commercial use without any authorization required.
+**Streamer OPC Compliance Service** helps individual streamers and MCN-signed creators operate through an OPC (One-Person Company) entity — covering business registration, daily bookkeeping, and lawful tax filing. Built on the [XYGo Admin](https://www.xygoadmin.com) full-stack admin framework, it implements the compliance MVP (32 P1 features).
+
+Frontend: [Art Design Pro](https://github.com/Daymychen/art-design-pro) (Vue3 + TypeScript + Element Plus). Backend: [GoFrame v2](https://goframe.org/).
+
+### Core Loop
+
+```
+Diagnosis → Sign-up → OPC Setup → Bookkeeping → Filing Reminders → Monthly Statements
+```
+
+| Stage | Streamer Portal | Advisor Console |
+|-------|-----------------|-----------------|
+| Compliance Diagnosis | `/diagnosis` — anonymous questionnaire + 3-way tax comparison | — |
+| Plan & Sign-up | `/user/compliance/plan` — risk disclosure + e-sign | — |
+| OPC Setup | `/user/compliance/opc` — materials + progress timeline | `/admin/compliance/opc-tasks` |
+| Ledger | `/user/compliance/income` · `expense` · `ledger` | — |
+| Tax Filing | `/user/compliance/tax` | `/admin/compliance/filing` |
+| Statements | `/user/compliance/statement` | `/admin/compliance/statements` |
 
 ### Key Features
 
-**RBAC Permission System**: Roles, menus, buttons, data scope, and field-level permissions with visual management
+**Compliance Diagnosis**: Anonymous or logged-in questionnaire with labor / sole proprietorship / OPC tax comparison and recommendations
 
-**Visual Code Generator**: Design table structures visually, generate full CRUD code (Go API + Controller + Logic + Vue pages) with one click, saving 80% of development time
+**Consent & Audit Trail**: Risk disclosure, plan confirmation, e-sign — all recorded in `ComplianceConsent` and audit logs
 
-**Dual Database Support**: Compatible with both MySQL and PostgreSQL from a single codebase — switch databases by changing one config line
+**OPC Setup**: Material submission, progress timeline, advisor-driven business / tax / bank milestones
 
-**Frontend-Backend Separation**: Vue3 SPA + GoFrame RESTful API, deployable independently or as a single binary
+**Income & Expense Ledger**: Entry, profit preview, vouchers, and compliance rule validation
 
-**Member Portal**: Built-in frontend portal with member center, registration, login, check-in, and profile management
+**Filing & Statements**: Filing calendar, advisor mark-as-filed, monthly statement generation and notifications
 
-**Document Center**: Built-in Markdown documentation with category tree, full-text search, and online preview
+**Sensitive Data Protection**: AES encryption for ID numbers and bank accounts; masked display in APIs
 
-**System Monitoring**: Server status, slow query alerts, slow API alerts, operation logs, and login logs
-
-**Message Queue**: Redis-based async task queue with scheduled task management and message push
-
-**Modern UI**: Based on Art Design Pro with 6 layout modes, light/dark themes, and smooth animations
-
-**Single Binary Deploy**: Bundle frontend into Go binary — deploy with just one file + one config, no Nginx needed
+**Platform Capabilities (XYGo Admin)**: RBAC, code generator, member portal, message queue, system monitoring, single-binary deploy
 
 ### Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Vue 3, TypeScript, Vite |
-| UI Library | Element Plus, Tailwind CSS |
-| State Management | Pinia |
-| Backend | GoFrame v2 (Go 1.22+) |
-| Database | MySQL 8.0+ / PostgreSQL 14+ |
-| Cache/Queue | Redis |
-| Auth | JWT (single sign-on support) |
+| Frontend | Vue 3, TypeScript, Vite, Element Plus, Tailwind CSS, Pinia |
+| Backend | GoFrame v2 (Go 1.24+) |
+| Database | MySQL 8.0+ (primary), PostgreSQL 14+ (optional) |
+| Cache / Queue | Redis |
+| Auth | JWT (member Bearer + admin session) |
 
-### Preview
+### Quick Start
 
-> Live Demo: [www.xygoadmin.com](https://www.xygoadmin.com)
+**Requirements**: Node.js ≥ 20.19, pnpm ≥ 8.8, Go ≥ 1.24, MySQL 8, Redis 7
 
-<table>
-  <tr>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/1.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/2.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/3.png" /></td>
-  </tr>
-  <tr>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/4.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/5.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/6.png" /></td>
-  </tr>
-  <tr>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/7.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/8.png" /></td>
-    <td><img src="https://xygoupload.xingyunwangluo.com/gitee/9.png" /></td>
-  </tr>
-</table>
+```bash
+# 1. Initialize database
+mysql -u root -p -e "CREATE DATABASE xygo DEFAULT CHARSET utf8mb4;"
+mysql -u root -p xygo < mysql_install.sql
 
-### Quick Access
+# 2. Backend config & migrations
+cd server
+cp manifest/config/config.yaml.example manifest/config/config.yaml
+# Edit config.yaml: database.default.link, redis, auth.jwt.secret
+go run tools.go migrate up    # Apply compliance MVP migrations (1.4.x)
+gf run main.go                # Default http://localhost:4096
 
-[Live Demo](https://www.xygoadmin.com) | [Gitee](https://gitee.com/a751300685a/xygo-admin) | [GitHub](https://github.com/z312193608/xygo-admin) | [📖 Documentation](https://www.xygoadmin.com/docs)
+# 3. Frontend dev server
+cd web
+pnpm install
+cp .env.development .env.local   # Adjust VITE_API_PROXY_URL if needed
+pnpm dev                         # Default http://localhost:5173
+```
 
-### Installation
+**Smoke test path** (see [docs/03-验收记录.md](./docs/03-验收记录.md)):
 
-For detailed installation instructions, please refer to the **[📖 Official Documentation](https://www.xygoadmin.com/docs)**.
+```
+/ → /diagnosis → /diagnosis/result
+→ /user/register → /user/compliance/plan → /user/compliance/opc
+→ (admin) /admin/compliance/opc-tasks
+→ /user/compliance/income → expense → ledger → tax → statement
+```
 
-**Default Account**
+### Default Accounts
 
-| Role | Username | Password |
-|------|----------|----------|
-| Super Admin | Super | 123456 |
+| Role | Username | Password | Entry |
+|------|----------|----------|-------|
+| Super Admin | Super | 123456 | `/admin` |
+| Streamer (member) | Self-register | — | `/user/register` |
 
 ### Project Structure
 
 ```
-xygoadmin/
-├── server/                    # Backend GoFrame project
-│   ├── addons/                # Addon packages (*.zip)
-│   ├── api/                   # API definitions
-│   ├── internal/
-│   │   ├── cmd/               # Main command entry
-│   │   ├── cmdtools/          # Tool command logic (migrate, addon, updater)
-│   │   ├── controller/        # Controllers (request handling)
-│   │   ├── logic/             # Business logic (core code here)
-│   │   ├── model/             # Data models (entity/do/input)
-│   │   ├── dao/               # Data access (auto-generated by gf gen dao)
-│   │   └── service/           # Service interfaces (auto-generated by gf gen service)
-│   ├── cmd_tools/migrate/     # Migration SQL files
-│   ├── manifest/config/       # Runtime config
-│   ├── hack/config.yaml       # CLI tool config (build/gen)
-│   ├── resource/              # Static assets, code gen templates
-│   ├── main.go                # Server entry (gf run main.go)
-│   └── tools.go               # Tools entry (go run tools.go)
-├── web/                       # Frontend Vue3 project
-│   ├── src/
-│   │   ├── api/               # API request wrappers
-│   │   ├── views/             # Page components (backend/frontend)
-│   │   ├── router/            # Routes (static + dynamic loading)
-│   │   ├── store/             # Pinia state management
-│   │   └── components/        # Shared components
-│   └── ...
-├── mysql_install.sql           # MySQL init script
-├── pgsql_install.sql           # PostgreSQL init script
-└── version.json                # Version info (for online updates)
+xygo-admin/
+├── docs/                              # Design & acceptance docs
+│   ├── 01-技术选型与架构设计.md
+│   ├── 02-多Agent开发编排.md
+│   ├── 03-验收记录.md
+│   └── modules/                       # M0–M8 module specs
+├── server/                            # GoFrame backend
+│   ├── api/
+│   │   ├── site/site_compliance.go    # Public compliance APIs
+│   │   ├── member/member_compliance.go
+│   │   └── admin/admin_compliance.go
+│   ├── internal/logic/compliance/     # Compliance domain logic
+│   │   ├── diagnosis/  order/  opc/
+│   │   ├── ledger/     tax/    statement/
+│   │   └── audit/      notice/ dashboard/
+│   ├── internal/library/complianceverify/  # OPC material verification
+│   ├── cmd_tools/migrate/             # DB migrations (incl. 1.4.x compliance)
+│   └── manifest/config/config.yaml.example
+├── web/                               # Vue3 frontend
+│   ├── src/views/frontend/compliance/ # Streamer compliance pages
+│   ├── src/views/backend/compliance/  # Advisor console pages
+│   └── src/config/complianceVerify.ts # Frontend mock toggle
+├── 主播OPC合规服务-产品文档.md
+├── 主播OPC合规服务-MVP开发Backlog.md
+├── mysql_install.sql
+└── version.json
 ```
+
+### Configuration
+
+**OPC Material Verification (Dev Mock)**
+
+Third-party ID OCR, three-factor verification, and phone real-name checks are not wired in for MVP — both sides use mock mode:
+
+| Side | Setting | Dev default |
+|------|---------|-------------|
+| Backend | `compliance.verifyProvider` in `config.yaml` | `mock` |
+| Frontend | `VITE_COMPLIANCE_VERIFY_MOCK` in `.env.development` | `true` |
+
+For production: set backend provider to `aliyun` (or other) and implement `VerifyMaterials`; set frontend `VITE_COMPLIANCE_VERIFY_MOCK=false`.
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [主播OPC合规服务-产品文档.md](./主播OPC合规服务-产品文档.md) | PRD, user journey, feature list |
+| [主播OPC合规服务-MVP开发Backlog.md](./主播OPC合规服务-MVP开发Backlog.md) | P1 stories, sprint plan |
+| [docs/01-技术选型与架构设计.md](./docs/01-技术选型与架构设计.md) | Architecture, API contract, security |
+| [docs/03-验收记录.md](./docs/03-验收记录.md) | Acceptance checklist, smoke path |
+| [docs/modules/](./docs/modules/) | M0–M8 module design |
+| [XYGo Admin Docs](https://www.xygoadmin.com/docs) | Framework general capabilities |
+
+### MVP Limitations
+
+- No real e-tax bureau API (advisor files manually + system records)
+- No Tencent e-sign (name confirmation + PDF archive only)
+- No online payment (orders activated manually in admin)
+- CSV import only for bank statements (no OCR)
+- OPC material verification in mock mode (see Configuration above)
 
 ### Tools
 
-All tools are accessed via `go run tools.go` in the `server/` directory:
+Run from `server/`:
 
 | Command | Description |
 |---------|-------------|
 | `go run tools.go` | Interactive menu |
 | `go run tools.go migrate up` | Run database migrations |
 | `go run tools.go migrate status` | View migration status |
-| `go run tools.go migrate history` | View migration history |
-| `go run tools.go check-tpl` | Check template syntax |
-| `go run tools.go update` | Online update |
-| `go run tools.go addon install tenant` | Install addon |
-| `go run tools.go addon uninstall tenant` | Uninstall addon |
-
-### Contact
-
-- Demo: [www.xygoadmin.com](https://www.xygoadmin.com)
-- GitHub: [github.com/z312193608/xygo-admin](https://github.com/z312193608/xygo-admin)
-- Gitee: [gitee.com/a751300685a/xygo-admin](https://gitee.com/a751300685a/xygo-admin)
-- QQ: 751300685
-- QQ Group: [963636900](https://qm.qq.com/q/dwSdPBjkhU)
-
-### Browser Compatibility
-
-Supports Chrome, Safari, Firefox, Edge, and other modern browsers.
+| `gf gen dao` | Generate DAO from database tables |
+| `gf gen service` | Generate service interfaces from logic |
 
 ### Acknowledgements
 
-Thanks to these open-source projects:
-
-- [GoFrame](https://goframe.org/) - Go web framework
-- [Art Design Pro](https://github.com/Daymychen/art-design-pro) - Vue3 admin template
-- [Vue](https://vuejs.org/) / [Element Plus](https://element-plus.org/) / [Vite](https://vitejs.dev/) / [Pinia](https://pinia.vuejs.org/)
-- [Tailwind CSS](https://tailwindcss.com/) / [TypeScript](https://www.typescriptlang.org/)
+- [XYGo Admin](https://www.xygoadmin.com) — base admin framework
+- [GoFrame](https://goframe.org/) — Go web framework
+- [Art Design Pro](https://github.com/Daymychen/art-design-pro) — Vue3 admin template
 
 ### License
 
-[MIT](./LICENSE) - Free for commercial use, no authorization required.
-
-### Support
-
-If you find this project helpful, please give us a Star on [GitHub](https://github.com/z312193608/xygo-admin) or [Gitee](https://gitee.com/a751300685a/xygo-admin). It means a lot to us.
-
-### Sponsor
-
-If XYGo Admin has been helpful to you, feel free to buy the author a coffee ☕. Your support keeps the project going!
-
-<table>
-  <tr>
-    <td align="center"><b>Alipay</b></td>
-    <td align="center"><b>WeChat Pay</b></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://xygoupload.xingyunwangluo.com/gitee/alipay.jpg" width="200" /></td>
-    <td align="center"><img src="https://xygoupload.xingyunwangluo.com/gitee/wechatpay.jpg" width="200" /></td>
-  </tr>
-</table>
+[MIT](./LICENSE) — inherits XYGo Admin license; free for commercial use.

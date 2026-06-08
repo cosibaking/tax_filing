@@ -95,6 +95,10 @@ queue:
   driver: "redis"                # 驱动：redis（生产推荐）或 disk（无Redis时兜底）
   diskPath: "storage/queue"      # disk 驱动的本地存储路径
 
+# 合规真实性校验（OPC 资料 OCR / 三要素 / 手机实名等）
+compliance:
+  verifyProvider: mock           # mock=跳过第三方校验；生产接入后改为 aliyun 等
+
 # 代码生成器配置
 xygen:
   allowedIPs: ["127.0.0.1", "*"]                                       # 允许使用代码生成的IP白名单，*代表所有
