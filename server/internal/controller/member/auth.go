@@ -94,11 +94,13 @@ func (c *ControllerV1) Refresh(ctx context.Context, req *member.RefreshReq) (res
 // Register 会员注册
 func (c *ControllerV1) Register(ctx context.Context, req *member.RegisterReq) (res *member.RegisterRes, err error) {
 	input := &memberin.RegisterInput{
-		Username: req.Username,
-		Password: req.Password,
-		Mobile:   req.Mobile,
-		Email:    req.Email,
-		Code:     req.Code,
+		Username:     req.Username,
+		Password:     req.Password,
+		Mobile:       req.Mobile,
+		Email:        req.Email,
+		Code:         req.Code,
+		AgreeTerms:   req.AgreeTerms,
+		AgreePrivacy: req.AgreePrivacy,
 	}
 
 	output, err := service.MemberAuth().Register(ctx, input)
@@ -107,7 +109,11 @@ func (c *ControllerV1) Register(ctx context.Context, req *member.RegisterReq) (r
 	}
 
 	return &member.RegisterRes{
-		Id: output.Id,
+		Id:               output.Id,
+		Token:            output.Token,
+		ExpiresIn:        output.ExpiresIn,
+		RefreshToken:     output.RefreshToken,
+		RefreshExpiresIn: output.RefreshExpiresIn,
 	}, nil
 }
 

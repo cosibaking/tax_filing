@@ -262,7 +262,7 @@ function handleLoginStatus(
     // 已登录会员访问登录/注册页时，重定向到用户中心（避免重复登录）
     const memberAuthPages = ['/user/login', '/user/register']
     if (memberAuthPages.includes(to.path) && memberStore.isLogin) {
-      const redirect = (to.query.redirect as string) || '/user'
+      const redirect = (to.query.redirect as string) || '/user/overview'
       next({ path: redirect, replace: true })
       return false
     }

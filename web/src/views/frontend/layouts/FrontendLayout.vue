@@ -258,15 +258,15 @@
           <div>
             <h4 class="font-heading font-bold text-clay-foreground mb-6">产品</h4>
             <ul class="space-y-3">
-              <li><RouterLink to="/docs" class="text-clay-muted hover:text-clay-accent transition-colors">文档中心</RouterLink></li>
-              <li><a href="https://www.xygoadmin.com" target="_blank" class="text-clay-muted hover:text-clay-accent transition-colors">在线演示</a></li>
+              <li><RouterLink to="/diagnosis" class="text-clay-muted hover:text-clay-accent transition-colors">免费诊断</RouterLink></li>
+              <li><RouterLink to="/pricing" class="text-clay-muted hover:text-clay-accent transition-colors">服务价格</RouterLink></li>
             </ul>
           </div>
           <div>
             <h4 class="font-heading font-bold text-clay-foreground mb-6">资源</h4>
             <ul class="space-y-3">
-              <li><a href="https://github.com/z312193608/xygo-admin" target="_blank" class="text-clay-muted hover:text-clay-accent transition-colors">GitHub</a></li>
-              <li><a href="https://gitee.com/a751300685a/xygo-admin" target="_blank" class="text-clay-muted hover:text-clay-accent transition-colors">Gitee</a></li>
+              <li><RouterLink to="/legal/privacy" class="text-clay-muted hover:text-clay-accent transition-colors">隐私政策</RouterLink></li>
+              <li><RouterLink to="/legal/terms" class="text-clay-muted hover:text-clay-accent transition-colors">用户协议</RouterLink></li>
             </ul>
           </div>
         </div>
@@ -374,11 +374,17 @@ function handleNavTargetClick(c: NavTarget) {
   router.push(c.url)
 }
 
+const hiddenNavNames = new Set(['docs', 'cases', 'community', 'changelog'])
+
+const diagnosisNavUrl = computed(() => (isLoggedIn.value ? '/diagnosis' : '/'))
+
 const navEntries = computed<NavEntry[]>(() => {
   const list: NavEntry[] = [
-    { key: 'nav-home', mode: 'link', name: '首页', icon: 'ri:home-4-line', url: '/', isExternal: false },
+    { key: 'nav-diagnosis', mode: 'link', name: '免费诊断', icon: 'ri:shield-check-line', url: diagnosisNavUrl.value, isExternal: false },
+    { key: 'nav-pricing', mode: 'link', name: '服务价格', icon: 'ri:price-tag-3-line', url: '/pricing', isExternal: false },
   ]
   for (const m of mainNavMenus.value) {
+    if (hiddenNavNames.has(m.name)) continue
     const { url, isExternal } = memberMenuHref(m)
     const key = `nav-main-${m.id}`
     const icon = m.icon || ''
@@ -389,20 +395,15 @@ const navEntries = computed<NavEntry[]>(() => {
       list.push({ key, mode: 'link', name: m.title, icon, url, isExternal })
     }
   }
-  list.push({
-    key: 'nav-qq',
-    mode: 'link',
-    name: '加入QQ群',
-    icon: 'ri:qq-line',
-    url: 'https://qm.qq.com/q/dwSdPBjkhU',
-    isExternal: true,
-  })
   return list
 })
 
 function isActiveNav(url: string) {
   if (!url || url === '#') return false
   if (url === '/') return route.path === '/'
+  if (url === '/diagnosis' || url === diagnosisNavUrl.value) {
+    return route.path === '/diagnosis' || (!isLoggedIn.value && route.path === '/')
+  }
   return route.path === url || route.path.startsWith(`${url}/`)
 }
 
@@ -467,7 +468,7 @@ const toggleLang = () => {
 const handleUserCommand = async (command: string) => {
   switch (command) {
     case 'user':
-      router.push('/user')
+      router.push('/user/overview')
       break
     case 'logout':
       try {

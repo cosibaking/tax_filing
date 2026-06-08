@@ -8,6 +8,7 @@ import (
 	_ "xygo/internal/logic/admin"
 	_ "xygo/internal/logic/chat"
 	_ "xygo/internal/logic/cmsdoc"
+	_ "xygo/internal/logic/compliance"
 	_ "xygo/internal/logic/cron"
 	_ "xygo/internal/logic/dept"
 	_ "xygo/internal/logic/gencodes"

@@ -28,7 +28,8 @@ export interface ClickCaptchaResult {
  */
 export function getClickCaptcha() {
   return api.get<ClickCaptchaResult>({
-    url: '/captcha/click'
+    url: '/captcha/click',
+    showErrorMessage: false,
   })
 }
 

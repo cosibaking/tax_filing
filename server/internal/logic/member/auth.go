@@ -16,6 +16,7 @@ import (
 
 	"xygo/internal/consts"
 	"xygo/internal/dao"
+	"xygo/internal/logic/compliance/audit"
 	"xygo/internal/library/captcha"
 	"xygo/internal/library/token"
 	"xygo/internal/model"
@@ -58,9 +59,9 @@ func (s *sMemberAuth) Login(ctx context.Context, in *memberin.LoginInput) (out *
 
 	// 点选验证码校验（验证码与登录强关联，在登录接口内部校验）
 	if in.CaptchaId != "" && in.Captcha != "" {
-		if !captcha.VerifyClick(ctx, in.CaptchaId, in.Captcha) {
+		if err := captcha.VerifyClickErr(ctx, in.CaptchaId, in.Captcha); err != nil {
 			recordLog(0, in.Username, 0, "验证码错误")
-			return nil, gerror.NewCode(consts.CodeBusinessError, "验证码错误或已过期，请重试")
+			return nil, gerror.NewCode(consts.CodeBusinessError, err.Error())
 		}
 	}
 
@@ -133,8 +134,15 @@ func (s *sMemberAuth) Login(ctx context.Context, in *memberin.LoginInput) (out *
 	}, nil
 }
 
+const consentTable = "xy_compliance_consent"
+const consentDocVersion = "1.0"
+
 // Register 会员注册
 func (s *sMemberAuth) Register(ctx context.Context, in *memberin.RegisterInput) (out *memberin.RegisterOutput, err error) {
+	if !in.AgreeTerms || !in.AgreePrivacy {
+		return nil, gerror.NewCode(consts.CodeBusinessError, "请先同意用户协议和隐私政策")
+	}
+
 	// 1. 检查用户名是否已存在
 	count, err := dao.Member.Ctx(ctx).
 		Where("username", in.Username).
@@ -180,9 +188,91 @@ func (s *sMemberAuth) Register(ctx context.Context, in *memberin.RegisterInput) 
 	}
 
 	id, _ := result.LastInsertId()
+	memberId := uint64(id)
+
+	ip := getClientIP(ctx)
+	ua := ""
+	if r := ghttp.RequestFromCtx(ctx); r != nil {
+		ua = r.Header.Get("User-Agent")
+	}
+	now := gtime.Now().Unix()
+
+	_, err = g.DB().Model(consentTable).Ctx(ctx).Data([]g.Map{
+		{
+			"member_id":        memberId,
+			"order_id":         0,
+			"type":             "terms",
+			"document_version": consentDocVersion,
+			"ip":               ip,
+			"user_agent":       ua,
+			"agreed_at":        now,
+			"create_time":      now,
+		},
+		{
+			"member_id":        memberId,
+			"order_id":         0,
+			"type":             "privacy",
+			"document_version": consentDocVersion,
+			"ip":               ip,
+			"user_agent":       ua,
+			"agreed_at":        now,
+			"create_time":      now,
+		},
+	}).Insert()
+	if err != nil {
+		return nil, gerror.NewCode(consts.CodeServerError, "注册失败，请稍后重试")
+	}
+
+	_ = audit.WriteAudit(ctx, "member", memberId, "consent.terms", memberId, "member", nil,
+		g.Map{"type": "terms", "documentVersion": consentDocVersion}, ip)
+	_ = audit.WriteAudit(ctx, "member", memberId, "consent.privacy", memberId, "member", nil,
+		g.Map{"type": "privacy", "documentVersion": consentDocVersion}, ip)
+
+	memberUser := model.MemberUser{
+		Id:       memberId,
+		Username: in.Username,
+		Nickname: in.Username,
+		Email:    in.Email,
+		Mobile:   in.Mobile,
+		Level:    1,
+		GroupId:  1,
+		LoginAt:  now,
+	}
+
+	accessToken, refreshToken, expiresIn, refreshExpiresIn, err := token.GenerateMember(ctx, memberUser)
+	if err != nil {
+		return nil, gerror.NewCode(consts.CodeServerError, "注册成功但自动登录失败，请手动登录")
+	}
+
+	_, _ = dao.Member.Ctx(ctx).
+		Where("id", memberId).
+		Data(map[string]interface{}{
+			"last_login_at": now,
+			"last_login_ip": ip,
+			"login_count":   1,
+		}).
+		Update()
+
+	go func() {
+		_, logErr := dao.MemberLoginLog.Ctx(context.Background()).Data(g.Map{
+			"member_id":  memberId,
+			"username":   in.Username,
+			"ip":         ip,
+			"user_agent": ua,
+			"status":     1,
+			"message":    "注册并自动登录",
+		}).Insert()
+		if logErr != nil {
+			g.Log().Errorf(context.Background(), "记录会员注册登录日志失败: %v", logErr)
+		}
+	}()
 
 	return &memberin.RegisterOutput{
-		Id: uint64(id),
+		Id:               memberId,
+		Token:            accessToken,
+		ExpiresIn:        expiresIn,
+		RefreshToken:     refreshToken,
+		RefreshExpiresIn: refreshExpiresIn,
 	}, nil
 }
 

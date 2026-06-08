@@ -108,9 +108,10 @@ type UploadFileReq struct {
 
 // UploadFileRes 上传响应
 type UploadFileRes struct {
-	Url  string `json:"url"`
-	Name string `json:"name"`
-	Size int64  `json:"size"`
+	Url          string `json:"url"`
+	Name         string `json:"name"`
+	Size         int64  `json:"size"`
+	AttachmentId uint64 `json:"attachmentId"`
 }
 
 // ==================== 每日签到 ====================

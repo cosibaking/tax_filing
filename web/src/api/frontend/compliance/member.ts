@@ -1,0 +1,961 @@
+/**
+
+ * 会员合规 API（需登录，Xy-User-Token）
+
+ * @module api/frontend/compliance/member
+
+ */
+
+import { memberRequest } from '@/utils/http'
+
+import type { RecommendedPlan, TaxComparison } from './diagnosis'
+
+import type { CompliancePlanState, OpcStatus } from '@/config/complianceMenu'
+
+import { getOpcEntity } from './opc'
+import { getActiveOrder } from './order'
+
+
+
+/** 诊断历史项 */
+
+export interface DiagnosisHistoryItem {
+
+  id: number
+
+  platforms: string[]
+
+  monthlyIncomeRange: string
+
+  annualCostEstimate: number
+
+  existingEntity: string
+
+  hasFiledTax: string
+
+  taxBureauContact: boolean
+
+  recommendedPlan: RecommendedPlan
+
+  taxComparison: TaxComparison
+
+  createdAt: string
+
+}
+
+
+
+/** 诊断历史分页响应 */
+
+export interface DiagnosisHistoryResult {
+
+  list: DiagnosisHistoryItem[]
+
+  page: number
+
+  pageSize: number
+
+  total: number
+
+}
+
+
+
+/** 直播平台 */
+
+export const INCOME_PLATFORMS = [
+
+  { value: '', label: '全部' },
+
+  { value: 'douyin', label: '抖音' },
+
+  { value: 'kuaishou', label: '快手' },
+
+  { value: 'bilibili', label: 'B站' },
+
+  { value: 'channels', label: '视频号' },
+
+  { value: 'xiaohongshu', label: '小红书' }
+
+] as const
+
+
+
+export type IncomePlatform = (typeof INCOME_PLATFORMS)[number]['value']
+
+
+
+/** 收入类型（F-27） */
+
+export const INCOME_CATEGORIES = [
+
+  { value: 'tip', label: '打赏' },
+
+  { value: 'commission', label: '带货佣金' },
+
+  { value: 'ad', label: '广告' },
+
+  { value: 'slot_fee', label: '坑位费' },
+
+  { value: 'offline', label: '线下活动' },
+
+  { value: 'other', label: '其他' }
+
+] as const
+
+
+
+export type IncomeCategory = (typeof INCOME_CATEGORIES)[number]['value']
+
+
+
+/** 收入台账项 */
+
+export interface IncomeEntry {
+
+  id: number | string
+
+  occurredAt: string
+
+  platform: string
+
+  category: string
+
+  grossAmount: number
+
+  platformFee: number
+
+  netAmount: number
+
+  source?: string
+
+}
+
+
+
+/** 收入列表查询 */
+
+export interface IncomeListParams {
+
+  month?: string
+
+  platform?: string
+
+  page?: number
+
+  pageSize?: number
+
+}
+
+
+
+/** 收入列表响应 */
+
+export interface IncomeListResult {
+
+  list: IncomeEntry[]
+
+  total: number
+
+  page: number
+
+  pageSize: number
+
+  summary?: {
+
+    grossTotal: number
+
+    netTotal: number
+
+  }
+
+}
+
+
+
+/** 新增收入参数 */
+
+export interface IncomeCreateParams {
+
+  occurredAt: string
+
+  platform: string
+
+  category: string
+
+  grossAmount: number
+
+  platformFee: number
+
+}
+
+
+
+/** CSV 导入预览行 */
+
+export interface IncomeImportPreviewRow {
+
+  row: number
+
+  occurredAt: string
+
+  platform: string
+
+  category: string
+
+  grossAmount: number
+
+  platformFee: number
+
+  valid: boolean
+
+  error?: string
+
+}
+
+
+
+/** CSV 导入预览响应 */
+
+export interface IncomeImportPreviewResult {
+
+  rows: IncomeImportPreviewRow[]
+
+  validCount: number
+
+  invalidCount: number
+
+}
+
+
+
+/** 银行流水未匹配项 */
+
+export interface BankUnmatchedItem {
+
+  id: number | string
+
+  occurredAt: string
+
+  amount: number
+
+  description?: string
+
+}
+
+
+
+/** 费用发票类型 */
+
+export const INVOICE_TYPES = [
+
+  { value: 'general', label: '普票' },
+
+  { value: 'special', label: '专票' },
+
+  { value: 'none', label: '无票' }
+
+] as const
+
+
+
+/** 费用类型（F-37） */
+
+export interface ExpenseCategory {
+
+  code: string
+
+  name: string
+
+  voucherHint: string
+
+}
+
+
+
+/** 费用台账项 */
+
+export interface ExpenseEntry {
+
+  id: number | string
+
+  occurredAt: string
+
+  category: string
+
+  categoryName?: string
+
+  amount: number
+
+  invoiceType: string
+
+  attachmentId?: string
+
+  description?: string
+
+  warningFlag?: boolean
+
+}
+
+
+
+/** 费用列表查询 */
+
+export interface ExpenseListParams {
+
+  month?: string
+
+  page?: number
+
+  pageSize?: number
+
+}
+
+
+
+/** 费用列表响应 */
+
+export interface ExpenseListResult {
+
+  list: ExpenseEntry[]
+
+  total: number
+
+  page: number
+
+  pageSize: number
+
+  summary?: {
+
+    totalAmount: number
+
+    incomeTotal?: number
+
+    costRatio?: number
+
+  }
+
+}
+
+
+
+/** 新增费用参数 */
+
+export interface ExpenseCreateParams {
+
+  occurredAt: string
+
+  category: string
+
+  amount: number
+
+  invoiceType: string
+
+  attachmentId?: string
+
+  description?: string
+
+  costRatioAck?: boolean
+
+}
+
+
+
+/** 虚增拦截关键词（F-38） */
+
+export const EXPENSE_BLACKLIST_KEYWORDS = ['咨询费', '服务费', '借款', '赠与']
+
+
+
+/** 利润表周期 */
+
+export type ProfitPeriodType = 'month' | 'quarter' | 'year'
+
+
+
+/** 利润表摘要 */
+
+export interface ProfitSummary {
+
+  period: string
+
+  periodType: ProfitPeriodType
+
+  revenue: number
+
+  cost: number
+
+  profit: number
+
+  cumulativeProfit: number
+
+}
+
+
+
+/** 会计分录 */
+
+export interface LedgerVoucher {
+
+  id: number | string
+
+  occurredAt: string
+
+  summary: string
+
+  debitAccount: string
+
+  creditAccount: string
+
+  amount: number
+
+}
+
+
+
+/** 税种任务状态 */
+
+export type TaxTaskStatus = 'pending' | 'filed' | 'overdue'
+
+
+
+/** 税种类型 */
+
+export type TaxType = 'vat' | 'cit_quarterly' | 'cit_annual' | 'surcharge'
+
+
+
+/** 申报任务 */
+
+export interface TaxTask {
+
+  id: number | string
+
+  taxType: TaxType
+
+  taxTypeLabel: string
+
+  period: string
+
+  dueDate: string
+
+  status: TaxTaskStatus
+
+  calculatedAmount: number
+
+  filedAmount?: number
+
+  receiptUrl?: string
+
+  detail?: TaxTaskDetail
+
+}
+
+
+
+/** 任务计算明细 */
+
+export interface TaxTaskDetail {
+
+  revenueExTax: number
+
+  vat: number
+
+  surcharge: number
+
+  cit: number
+
+  total: number
+
+}
+
+
+
+/** 申报日历 */
+
+export interface TaxCalendarResult {
+
+  year: number
+
+  month: number
+
+  nextDueDate?: string
+
+  daysUntilDue?: number
+
+  dueDates: string[]
+
+  tasks: TaxTask[]
+
+}
+
+
+
+/** 自查清单项（F-69） */
+
+export interface TaxChecklistItem {
+
+  key: string
+
+  label: string
+
+  checked: boolean
+
+}
+
+
+
+/** 月度对账单 */
+
+export interface StatementItem {
+
+  id: number | string
+
+  period: string
+
+  revenue: number
+
+  cost: number
+
+  profit: number
+
+  prepaidTax: number
+
+  cumulativeProfit: number
+
+  filingStatus: string
+
+  status: 'draft' | 'completed'
+
+  pdfUrl?: string
+
+}
+
+
+
+/** 对账单列表响应 */
+
+export interface StatementListResult {
+
+  list: StatementItem[]
+
+  total: number
+
+}
+
+
+
+/** 报税前自查清单九项 */
+
+export const TAX_CHECKLIST_ITEMS: { key: string; label: string }[] = [
+
+  { key: 'income_match', label: '收入流水是否与平台数据一致？' },
+
+  { key: 'invoice_filed', label: '是否有该申报未申报的发票？' },
+
+  { key: 'cost_booked', label: '成本费用发票是否已入账？' },
+
+  { key: 'salary_tax', label: 'OPC 是否有员工要报工资个税？' },
+
+  { key: 'vat_filed', label: '本季度增值税申报了吗？' },
+
+  { key: 'cit_prepaid', label: '企业所得税预缴了吗？' },
+
+  { key: 'social_insurance', label: '有员工的话，社保申报了吗？' },
+
+  { key: 'other_platform', label: '主播是否还有其他平台收入要合并计算？' },
+
+  { key: 'prev_correction', label: '上一期申报是否有错误要更正？' }
+
+]
+
+
+
+export const TAX_TYPE_LABELS: Record<TaxType, string> = {
+
+  vat: '增值税（小规模）',
+
+  cit_quarterly: '企税季度预缴',
+
+  cit_annual: '企税年度汇算',
+
+  surcharge: '附加税费'
+
+}
+
+
+
+export const TAX_STATUS_LABELS: Record<TaxTaskStatus, string> = {
+
+  pending: '待申报',
+
+  filed: '已申报',
+
+  overdue: '已逾期'
+
+}
+
+
+
+/** 获取会员诊断历史 */
+
+export function getDiagnosisHistory(params?: { page?: number; pageSize?: number }) {
+
+  return memberRequest.get<DiagnosisHistoryResult>({
+
+    url: '/compliance/diagnosis',
+
+    params
+
+  })
+
+}
+
+
+
+/**
+
+ * 获取合规套餐/订单状态（驱动侧栏可见性）
+
+ */
+
+export async function getCompliancePlanState(): Promise<CompliancePlanState> {
+  try {
+    const order = await getActiveOrder()
+    if (!order || order.status === 'cancelled') {
+      return { hasActiveOrder: false, opcStatus: 'none', hasPendingOrder: false }
+    }
+    if (order.status === 'pending') {
+      return { hasActiveOrder: false, opcStatus: 'none', hasPendingOrder: true }
+    }
+
+    let opcStatus: OpcStatus = 'pending'
+    try {
+      const entity = await getOpcEntity()
+      if (entity?.status === 'active') {
+        opcStatus = 'active'
+      } else if (entity?.status && entity.status !== 'unsigned') {
+        opcStatus = entity.status as OpcStatus
+      }
+    } catch {
+      /* ignore */
+    }
+    return { hasActiveOrder: true, opcStatus, hasPendingOrder: false }
+  } catch {
+    return { hasActiveOrder: false, opcStatus: 'none', hasPendingOrder: false }
+  }
+}
+
+
+
+/** 收入台账列表 */
+
+export function getIncomeList(params: IncomeListParams) {
+
+  return memberRequest.get<IncomeListResult>({
+
+    url: '/compliance/income',
+
+    params
+
+  })
+
+}
+
+
+
+/** 新增收入 */
+
+export function createIncome(data: IncomeCreateParams) {
+
+  return memberRequest.post<IncomeEntry>({
+
+    url: '/compliance/income',
+
+    data
+
+  })
+
+}
+
+
+
+/** 删除收入 */
+
+export function deleteIncome(id: number | string) {
+
+  return memberRequest.request<void>({
+
+    url: '/compliance/income',
+
+    method: 'DELETE',
+
+    params: { id }
+
+  })
+
+}
+
+
+
+/** CSV 导入预览 */
+
+export function previewIncomeImport(file: File) {
+
+  const formData = new FormData()
+
+  formData.append('file', file)
+
+  return memberRequest.post<IncomeImportPreviewResult>({
+
+    url: '/compliance/income/import/preview',
+
+    data: formData
+
+  })
+
+}
+
+
+
+/** 确认 CSV 导入 */
+
+export function confirmIncomeImport(file: File) {
+
+  const formData = new FormData()
+
+  formData.append('file', file)
+
+  return memberRequest.post<{ imported: number }>({
+
+    url: '/compliance/income/import',
+
+    data: formData
+
+  })
+
+}
+
+
+
+/** 银行流水未匹配列表 */
+
+export function getBankUnmatched(params?: { month?: string }) {
+
+  return memberRequest.get<{ list: BankUnmatchedItem[]; count: number }>({
+
+    url: '/compliance/bank/unmatched',
+
+    params
+
+  })
+
+}
+
+
+
+/** 费用类型库 */
+
+export function getExpenseCategories() {
+
+  return memberRequest.get<{ list: ExpenseCategory[] }>({
+
+    url: '/compliance/expense/categories'
+
+  })
+
+}
+
+
+
+/** 费用台账列表 */
+
+export function getExpenseList(params: ExpenseListParams) {
+
+  return memberRequest.get<ExpenseListResult>({
+
+    url: '/compliance/expense',
+
+    params
+
+  })
+
+}
+
+
+
+/** 新增费用 */
+
+export function createExpense(data: ExpenseCreateParams) {
+
+  return memberRequest.post<ExpenseEntry>({
+
+    url: '/compliance/expense',
+
+    data
+
+  })
+
+}
+
+
+
+/** 删除费用 */
+
+export function deleteExpense(id: number | string) {
+
+  return memberRequest.request<void>({
+
+    url: '/compliance/expense',
+
+    method: 'DELETE',
+
+    params: { id }
+
+  })
+
+}
+
+
+
+/** 利润表摘要 */
+
+export function getProfitSummary(params: { period: string; periodType: ProfitPeriodType }) {
+
+  return memberRequest.get<ProfitSummary>({
+
+    url: '/compliance/ledger/profit',
+
+    params
+
+  })
+
+}
+
+
+
+/** 会计分录列表 */
+
+export function getLedgerVouchers(params: { period: string }) {
+
+  return memberRequest.get<{ list: LedgerVoucher[] }>({
+
+    url: '/compliance/ledger/vouchers',
+
+    params
+
+  })
+
+}
+
+
+
+/** 申报日历与任务 */
+
+export function getTaxCalendar(params: { year: number; month: number }) {
+
+  return memberRequest.get<TaxCalendarResult>({
+
+    url: '/compliance/tax/calendar',
+
+    params
+
+  })
+
+}
+
+
+
+/** 报税前自查清单 */
+
+export function getTaxChecklist(params?: { period?: string }) {
+
+  return memberRequest.get<{ items: TaxChecklistItem[] }>({
+
+    url: '/compliance/tax/checklist',
+
+    params
+
+  })
+
+}
+
+
+
+/** 申报任务详情 */
+
+export function getTaxTaskDetail(id: number | string) {
+
+  return memberRequest.get<TaxTask>({
+
+    url: '/compliance/tax/tasks/detail',
+
+    params: { id }
+
+  })
+
+}
+
+
+
+/** 月度对账单列表 */
+
+export function getStatementList(params?: { page?: number; pageSize?: number }) {
+
+  return memberRequest.get<StatementListResult>({
+
+    url: '/compliance/statements',
+
+    params
+
+  })
+
+}
+
+
+
+/** 对账单 PDF 下载地址 */
+
+export function getStatementPdfUrl(id: number | string) {
+
+  return memberRequest.get<{ url: string }>({
+
+    url: `/compliance/statements/${id}/pdf`
+
+  })
+
+}
+
+
+
+/** 平台中文 */
+
+export function platformLabel(code: string) {
+
+  return INCOME_PLATFORMS.find(p => p.value === code)?.label || code
+
+}
+
+
+
+/** 收入类型中文 */
+
+export function incomeCategoryLabel(code: string) {
+
+  return INCOME_CATEGORIES.find(c => c.value === code)?.label || code
+
+}
+
+
+
+/** 金额格式化 */
+
+export function formatMoney(amount: number | undefined | null) {
+
+  if (amount == null) return '—'
+
+  return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+}
+
+

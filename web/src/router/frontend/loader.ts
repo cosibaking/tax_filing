@@ -25,6 +25,9 @@ import { useMemberMenuStore } from '@/store/modules/memberMenu'
 // 用 import.meta.glob 扫描所有前台页面组件
 const viewModules = import.meta.glob('/src/views/frontend/**/*.vue')
 
+// 已从门户导航移除的菜单（不再注册动态路由）
+const hiddenNavNames = new Set(['docs', 'cases', 'community', 'changelog'])
+
 // 标记是否已注册
 let isRegistered = false
 // 存储已注册的路由名称（用于卸载）
@@ -51,6 +54,7 @@ export async function loadFrontendRoutes(router: Router): Promise<boolean> {
 
     // 3. 注册动态路由
     for (const item of allItems) {
+      if (hiddenNavNames.has(item.name)) continue
       if (!item.component && item.type === 'button') continue
       if (!item.path) continue
 

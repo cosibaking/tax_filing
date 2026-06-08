@@ -24,67 +24,7 @@
     </div>
   </main>
 
-  <main v-else class="pt-12 pb-8 px-6 max-w-7xl mx-auto min-h-[calc(100vh-128px)] flex flex-col">
-    <div class="grid lg:grid-cols-12 gap-8 items-stretch flex-1">
-
-      <!-- ===== 左侧侧边栏 ===== -->
-      <aside class="lg:col-span-3 flex flex-col gap-6">
-        <!-- 用户信息卡片 -->
-        <div class="bg-white/70 backdrop-blur-xl rounded-[40px] shadow-clay-card border border-[#d1d9e6]/40 p-8 text-center relative overflow-hidden group">
-          <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-blue-500/5 blur-2xl group-hover:scale-150 transition-transform"></div>
-          <div class="relative inline-block mb-4">
-            <div class="w-24 h-24 rounded-[32px] bg-white shadow-clay-btn p-1 animate-breathe">
-              <ElAvatar :size="88" :src="userInfo.avatar" class="!rounded-[28px] !w-full !h-full">
-                {{ userInfo.nickname?.charAt(0) || 'U' }}
-              </ElAvatar>
-            </div>
-            <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-clay-accent shadow-clay-btn flex items-center justify-center text-white">
-              <ArtSvgIcon icon="ri:camera-line" class="text-sm" />
-            </div>
-          </div>
-          <h2 class="font-heading font-black text-xl text-clay-foreground mb-1">{{ userInfo.nickname || userInfo.username }}</h2>
-          <div class="flex justify-center gap-3 mt-4">
-            <div class="px-3 py-1.5 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed text-xs font-bold text-clay-muted">
-              积分 <span class="text-clay-accent">{{ userInfo.score ?? 0 }}</span>
-            </div>
-            <div class="px-3 py-1.5 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed text-xs font-bold text-clay-muted">
-              余额 <span class="text-clay-accent">{{ formatMoney(userInfo.money) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 侧边菜单（BuildAdmin 模式：menu_dir 渲染为分组标题，menu 渲染为可点击项） -->
-        <nav class="bg-white/70 backdrop-blur-xl rounded-[40px] shadow-clay-card border border-[#d1d9e6]/40 p-4 overflow-hidden flex-1">
-          <template v-for="group in menuTree" :key="group.id">
-            <div class="px-4 py-3 mb-2" :class="{ 'mt-4': group !== menuTree[0] }">
-              <span class="text-xs font-black text-clay-muted uppercase tracking-widest">{{ group.name }}</span>
-            </div>
-            <ul class="space-y-2">
-              <li v-for="item in group.children" :key="item.id">
-                <a
-                  href="javascript:;"
-                  @click="activeMenu = item.id"
-                  class="flex items-center gap-4 px-6 py-4 rounded-[24px] transition-all duration-300 group"
-                  :class="activeMenu === item.id
-                    ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn'
-                    : 'text-clay-foreground hover:bg-white hover:shadow-clay-card'"
-                >
-                  <ArtSvgIcon
-                    :icon="item.icon"
-                    class="text-xl"
-                    :class="activeMenu === item.id ? 'text-white' : 'text-clay-accent opacity-70 group-hover:opacity-100'"
-                  />
-                  <span class="font-bold text-sm">{{ item.name }}</span>
-                  <ArtSvgIcon v-if="activeMenu === item.id" icon="ri:arrow-right-s-line" class="text-base ml-auto" />
-                </a>
-              </li>
-            </ul>
-          </template>
-        </nav>
-      </aside>
-
-      <!-- ===== 右侧主内容区 ===== -->
-      <div class="lg:col-span-9">
+  <div v-else>
 
         <!-- 1. 账户概览（对齐 homesite/user-dashboard.html） -->
         <div v-if="activeMenu === 'overview'" class="h-full flex flex-col gap-8">
@@ -102,10 +42,10 @@
                   </div>
                 </div>
               </div>
-              <button @click="activeMenu = 'profile'" class="px-8 py-3 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all duration-300 font-bold text-clay-foreground flex items-center gap-2">
+              <RouterLink to="/user/profile" class="px-8 py-3 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all duration-300 font-bold text-clay-foreground flex items-center gap-2">
                 <ArtSvgIcon icon="ri:user-line" class="text-lg" />
                 个人资料
-              </button>
+              </RouterLink>
             </div>
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
               <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
@@ -133,6 +73,96 @@
                 </div>
               </div>
             </div>
+          </section>
+
+          <!-- 合规仪表盘（P-07） -->
+          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10 relative overflow-hidden">
+            <div class="flex justify-between items-center mb-8">
+              <div>
+                <h3 class="font-heading font-black text-xl text-clay-foreground">合规服务概览</h3>
+                <p class="text-xs text-clay-muted mt-1">OPC 状态与本月经营摘要</p>
+              </div>
+            </div>
+
+            <!-- 未签约空态 -->
+            <div v-if="!complianceState.hasActiveOrder" class="py-12 text-center">
+              <div class="w-20 h-20 rounded-[24px] bg-[#f0f3f8] shadow-clay-pressed flex items-center justify-center mx-auto mb-6">
+                <ArtSvgIcon icon="ri:shield-check-line" class="text-[36px] text-clay-accent" />
+              </div>
+              <p class="text-clay-muted font-bold mb-6">
+                {{ complianceState.hasPendingOrder
+                  ? '您已选择套餐，请继续完成风险告知与电子签约'
+                  : '尚未签约合规服务，完成免费诊断后可选择方案签约' }}
+              </p>
+              <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <RouterLink
+                  to="/user/compliance/plan"
+                  class="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-bold shadow-clay-btn"
+                >
+                  {{ complianceState.hasPendingOrder ? '继续签约' : '方案与签约' }}
+                  <ArtSvgIcon icon="ri:arrow-right-line" />
+                </RouterLink>
+                <RouterLink
+                  v-if="!complianceState.hasPendingOrder"
+                  to="/diagnosis"
+                  class="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-white font-bold text-clay-foreground shadow-clay-btn"
+                >
+                  开始免费诊断
+                </RouterLink>
+              </div>
+            </div>
+
+            <template v-else>
+              <div class="grid sm:grid-cols-3 gap-6 mb-8">
+                <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
+                  <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">OPC 状态</span>
+                  <span class="text-xl font-black" :class="complianceState.opcStatus === 'active' ? 'text-clay-success' : 'text-clay-accent'">
+                    {{ opcStatusLabel }}
+                  </span>
+                </div>
+                <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
+                  <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">本月收入</span>
+                  <span class="text-xl font-black text-clay-foreground">¥ {{ formatComplianceMoney(monthSummary.revenue) }}</span>
+                </div>
+                <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
+                  <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">本月利润</span>
+                  <span class="text-xl font-black text-clay-success">¥ {{ formatComplianceMoney(monthSummary.profit) }}</span>
+                </div>
+              </div>
+
+              <!-- 待办列表 -->
+              <div v-if="todoList.length > 0" class="mb-8">
+                <h4 class="text-sm font-black text-clay-muted uppercase tracking-widest mb-4">待办事项</h4>
+                <ul class="space-y-3">
+                  <li
+                    v-for="(todo, idx) in todoList"
+                    :key="idx"
+                    class="flex items-center justify-between gap-4 p-4 rounded-2xl"
+                    :class="todo.urgent ? 'bg-red-50 border border-red-100' : 'bg-[#f0f3f8] shadow-clay-pressed'"
+                  >
+                    <div class="flex items-center gap-3">
+                      <ArtSvgIcon :icon="todo.urgent ? 'ri:error-warning-line' : 'ri:checkbox-circle-line'" :class="todo.urgent ? 'text-red-500' : 'text-clay-accent'" />
+                      <span class="font-bold text-sm text-clay-foreground">{{ todo.text }}</span>
+                    </div>
+                    <RouterLink v-if="todo.path" :to="todo.path" class="text-xs font-bold text-clay-accent hover:underline shrink-0">
+                      去处理 →
+                    </RouterLink>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- 快捷入口 -->
+              <div class="flex flex-wrap gap-3">
+                <RouterLink
+                  v-for="entry in quickEntries"
+                  :key="entry.path"
+                  :to="entry.path"
+                  class="px-5 py-2.5 rounded-xl bg-white shadow-clay-btn text-sm font-bold text-clay-foreground hover:shadow-clay-btn-hover transition-all"
+                >
+                  {{ entry.label }}
+                </RouterLink>
+              </div>
+            </template>
           </section>
 
           <!-- 增长趋势统计图表（对齐 homesite） -->
@@ -427,14 +457,11 @@
           </section>
         </div>
 
-      </div>
-    </div>
-  </main>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { useMemberStore } from '@/store/modules/member'
-import { useMemberMenuStore } from '@/store/modules/memberMenu'
 import { useSiteStore } from '@/store/modules/site'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import {
@@ -445,12 +472,20 @@ import {
   getNoticeList, markNoticeRead, markAllNoticeRead,
 } from '@/api/frontend'
 import type { CheckinDayItem, ScoreLogItem, MoneyLogItem, NoticeItem } from '@/api/frontend'
+import {
+  getCompliancePlanState,
+  getProfitSummary,
+  getTaxCalendar,
+  getBankUnmatched,
+  formatMoney as formatComplianceMoney,
+} from '@/api/frontend/compliance/member'
+import type { CompliancePlanState } from '@/config/complianceMenu'
 import { formatTimestamp } from '@/utils/time'
 
 defineOptions({ name: 'UserCenter' })
 
+const route = useRoute()
 const memberStore = useMemberStore()
-const memberMenuStore = useMemberMenuStore()
 const siteStore = useSiteStore()
 const siteName = computed(() => siteStore.getSiteName())
 const userInfo = computed(() => memberStore.getMemberInfo)
@@ -468,67 +503,149 @@ onMounted(async () => {
     memberStore.logOut()
     return
   }
-  // 拉取菜单（menuStore 无持久化，刷新后必须重新拉取）
-  try { await memberMenuStore.fetchMenus() } catch { /* ignore */ }
+  loadComplianceOverview()
+  loadGrowthChart()
 })
 
-// 菜单树：menu_dir 为分组标题，menu 为可点击项（对齐 BuildAdmin 模式）
-interface MenuGroup {
-  id: string
-  name: string
-  children: { id: string; name: string; icon: string }[]
+// 路由驱动当前面板（/user/overview → overview）
+const activeMenu = computed(() => {
+  const seg = route.path.replace(/^\/user\/?/, '').split('/')[0]
+  return seg || 'overview'
+})
+
+// ===== 合规概览数据（P-07） =====
+const complianceState = ref<CompliancePlanState>({ hasActiveOrder: false, opcStatus: 'none' })
+const monthSummary = reactive({ revenue: 0, profit: 0 })
+const todoList = ref<{ text: string; path?: string; urgent?: boolean }[]>([])
+
+const opcStatusLabel = computed(() => {
+  if (complianceState.value.opcStatus === 'active') return '已激活'
+  if (complianceState.value.hasActiveOrder) return '设立中'
+  return '未签约'
+})
+
+const quickEntries = computed(() => {
+  if (complianceState.value.opcStatus === 'active') {
+    return [
+      { label: '记收入', path: '/user/compliance/income' },
+      { label: '记费用', path: '/user/compliance/expense' },
+      { label: '看对账单', path: '/user/compliance/statement' },
+    ]
+  }
+  if (complianceState.value.hasActiveOrder) {
+    return [{ label: '查看 OPC 进度', path: '/user/compliance/opc' }]
+  }
+  if (complianceState.value.hasPendingOrder) {
+    return [{ label: '继续签约', path: '/user/compliance/plan' }]
+  }
+  return [{ label: '方案与签约', path: '/user/compliance/plan' }]
+})
+
+async function loadComplianceOverview() {
+  try {
+    complianceState.value = await getCompliancePlanState()
+    if (!complianceState.value.hasActiveOrder) return
+
+    const now = new Date()
+    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const todos: typeof todoList.value = []
+
+    if (complianceState.value.opcStatus === 'active') {
+      try {
+        const profit = await getProfitSummary({ period, periodType: 'month' })
+        monthSummary.revenue = profit?.revenue ?? 0
+        monthSummary.profit = profit?.profit ?? 0
+      } catch { /* ignore */ }
+
+      try {
+        const tax = await getTaxCalendar({ year: now.getFullYear(), month: now.getMonth() + 1 })
+        for (const task of tax?.tasks || []) {
+          if (task.status === 'pending' || task.status === 'overdue') {
+            todos.push({
+              text: `${task.taxTypeLabel}申报（截止 ${task.dueDate}）`,
+              path: '/user/compliance/tax',
+              urgent: task.status === 'overdue',
+            })
+          }
+        }
+      } catch { /* ignore */ }
+
+      try {
+        const bank = await getBankUnmatched({ month: period })
+        if (bank?.count > 0) {
+          todos.push({
+            text: `有 ${bank.count} 笔银行流水待匹配入账`,
+            path: '/user/compliance/income',
+            urgent: true,
+          })
+        }
+      } catch { /* ignore */ }
+    }
+
+    todoList.value = todos
+  } catch { /* ignore */ }
 }
 
-const activeMenu = ref('')
+// ===== 图表数据（最近 7 天积分/余额增长） =====
+const chartDays = ref<string[]>([])
+const chartScoreHeights = ref<number[]>([])
+const chartScoreValues = ref<number[]>([])
+const chartMoneyHeights = ref<number[]>([])
+const chartMoneyValues = ref<number[]>([])
 
-// 纯动态菜单树，由后端权限驱动，不做硬编码兜底
-const menuTree = computed<MenuGroup[]>(() => {
-  const raw = memberMenuStore.getCenterMenus
-  if (raw.length === 0) return []
+async function loadGrowthChart() {
+  const days: string[] = []
+  const scoreByDay: number[] = []
+  const moneyByDay: number[] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
-  const dirs = raw.filter((m) => m.type === 'menu_dir')
-  const items = raw.filter((m) => m.type === 'menu')
-
-  if (dirs.length === 0) {
-    return [{
-      id: 'default',
-      name: '我的账户',
-      children: items.map((m) => ({
-        id: m.name || String(m.id),
-        name: m.title,
-        icon: m.icon || 'ri:menu-line',
-      })),
-    }]
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    days.push(`${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
+    scoreByDay.push(0)
+    moneyByDay.push(0)
   }
 
-  return dirs.map((dir) => ({
-    id: dir.name || String(dir.id),
-    name: dir.title,
-    children: items
-      .filter((m) => m.pid === dir.id)
-      .map((m) => ({
-        id: m.name || String(m.id),
-        name: m.title,
-        icon: m.icon || 'ri:menu-line',
-      })),
-  })).filter((g) => g.children.length > 0)
-})
+  try {
+    const [scoreRes, moneyRes] = await Promise.all([
+      getScoreLogList({ page: 1, pageSize: 200 }),
+      getMoneyLogList({ page: 1, pageSize: 200 }),
+    ])
+    const dayKey = (ts: string) => {
+      const d = new Date(ts)
+      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
+    const scoreMap = new Map(days.map((d) => [d, 0]))
+    const moneyMap = new Map(days.map((d) => [d, 0]))
 
-// 菜单加载后自动选中第一个可点击项；若当前选中项已不在菜单中则重置
-watch(menuTree, (tree) => {
-  if (tree.length === 0) return
-  const allIds = tree.flatMap((g) => g.children.map((c) => c.id))
-  if (!activeMenu.value || !allIds.includes(activeMenu.value)) {
-    activeMenu.value = tree[0].children[0]?.id || ''
-  }
-}, { immediate: true })
+    for (const item of scoreRes?.list || []) {
+      if (item.score <= 0) continue
+      const key = dayKey(item.createdAt)
+      if (scoreMap.has(key)) scoreMap.set(key, (scoreMap.get(key) || 0) + item.score)
+    }
+    for (const item of moneyRes?.list || []) {
+      if (item.money <= 0) continue
+      const key = dayKey(item.createdAt)
+      if (moneyMap.has(key)) moneyMap.set(key, (moneyMap.get(key) || 0) + item.money / 100)
+    }
 
-// ===== 图表数据（对齐 homesite 柱状图，暂用静态数据） =====
-const chartDays = ['02-01', '02-02', '02-03', '02-04', '02-05', '02-06', '02-07']
-const chartScoreHeights = [40, 70, 45, 90, 85, 60, 95]
-const chartScoreValues = [12, 25, 15, 32, 28, 18, 35]
-const chartMoneyHeights = [30, 50, 60, 40, 70, 55, 45]
-const chartMoneyValues = [5, 12, 18, 8, 20, 15, 10]
+    days.forEach((d, i) => {
+      scoreByDay[i] = scoreMap.get(d) || 0
+      moneyByDay[i] = moneyMap.get(d) || 0
+    })
+  } catch { /* ignore */ }
+
+  const maxScore = Math.max(...scoreByDay, 1)
+  const maxMoney = Math.max(...moneyByDay, 1)
+
+  chartDays.value = days
+  chartScoreValues.value = scoreByDay
+  chartMoneyValues.value = moneyByDay.map((v) => Math.round(v))
+  chartScoreHeights.value = scoreByDay.map((v) => Math.max(8, Math.round((v / maxScore) * 100)))
+  chartMoneyHeights.value = moneyByDay.map((v) => Math.max(8, Math.round((v / maxMoney) * 100)))
+}
 
 // ===== 签到数据 =====
 const checkinData = reactive({
@@ -674,8 +791,12 @@ const noticeTypeLabel = (type: string) => {
   return map[type] || type
 }
 
-// ===== 菜单切换时按需加载数据 =====
+// ===== 路由切换时按需加载数据 =====
 watch(activeMenu, (menu) => {
+  if (menu === 'overview') {
+    loadComplianceOverview()
+    loadGrowthChart()
+  }
   if (menu === 'checkin') loadCheckinInfo()
   if (menu === 'points') loadScoreLog(1)
   if (menu === 'balance') loadMoneyLog(1)

@@ -39,17 +39,23 @@ type RefreshRes struct {
 
 // RegisterReq 会员注册请求
 type RegisterReq struct {
-	g.Meta   `path:"/auth/register" method:"post" tags:"会员认证" summary:"会员注册"`
-	Username string `json:"username" v:"required|length:4,20#请输入用户名|用户名长度4-20位"`
-	Password string `json:"password" v:"required|length:6,32#请输入密码|密码长度6-32位"`
-	Mobile   string `json:"mobile" v:"required|phone#请输入手机号|手机号格式不正确"`
-	Email    string `json:"email" v:"email#邮箱格式不正确"`
-	Code     string `json:"code"` // 验证码（可选）
+	g.Meta       `path:"/auth/register" method:"post" tags:"会员认证" summary:"会员注册"`
+	Username     string `json:"username" v:"required|length:4,20#请输入用户名|用户名长度4-20位"`
+	Password     string `json:"password" v:"required|length:6,32#请输入密码|密码长度6-32位"`
+	Mobile       string `json:"mobile" v:"required|phone#请输入手机号|手机号格式不正确"`
+	Email        string `json:"email" v:"email#邮箱格式不正确"`
+	Code         string `json:"code"` // 验证码（可选）
+	AgreeTerms   bool   `json:"agreeTerms"`
+	AgreePrivacy bool   `json:"agreePrivacy"`
 }
 
 // RegisterRes 会员注册响应
 type RegisterRes struct {
-	Id uint64 `json:"id"`
+	Id               uint64 `json:"id"`
+	Token            string `json:"token"`
+	ExpiresIn        int64  `json:"expiresIn"`
+	RefreshToken     string `json:"refreshToken"`
+	RefreshExpiresIn int64  `json:"refreshExpiresIn"`
 }
 
 // ==================== 退出登录 ====================

@@ -65,7 +65,7 @@ func resReadFile(path string) ([]byte, error) {
 type ClickConfig struct {
 	Mode          []string // text / icon
 	Length        int      // 需要点击的数量
-	ConfuseLength int     // 干扰元素数量
+	ConfuseLength int      // 干扰元素数量
 	Alpha         float64  // 透明度 0~100
 	Expire        int64    // 过期时间（秒）
 }
@@ -121,6 +121,7 @@ type ClickCaptchaResult struct {
 // ==================== 数据库操作 ====================
 
 const captchaTable = "xy_captcha"
+const clickTolerance = 6 // 点击容差（像素），提升点选命中率
 
 func md5Str(s string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(s)))
@@ -138,7 +139,7 @@ func cleanExpired(ctx context.Context) {
 }
 
 // saveCaptcha 存储验证码到数据库（兼容 MySQL/PG）
-func saveCaptcha(ctx context.Context, id string, textHints []string, captchaJSON string) {
+func saveCaptcha(ctx context.Context, id string, textHints []string, captchaJSON string) error {
 	now := time.Now().Unix()
 	key := md5Str(id)
 	code := md5Str(strings.Join(textHints, ","))
@@ -154,7 +155,9 @@ func saveCaptcha(ctx context.Context, id string, textHints []string, captchaJSON
 	}).Insert()
 	if err != nil {
 		g.Log().Errorf(ctx, "存储验证码失败: %v", err)
+		return fmt.Errorf("验证码服务暂不可用，请检查数据库连接")
 	}
+	return nil
 }
 
 // loadCaptcha 从数据库读取验证码（兼容 MySQL/PG）
@@ -272,7 +275,9 @@ func GenerateClick(ctx context.Context) (*ClickCaptchaResult, error) {
 	captchaId := guid.S()
 	captchaDataObj := clickCaptchaData{Text: answerPoints, Width: imgW, Height: imgH}
 	dataBytes, _ := json.Marshal(captchaDataObj)
-	saveCaptcha(ctx, captchaId, textHints, string(dataBytes))
+	if err := saveCaptcha(ctx, captchaId, textHints, string(dataBytes)); err != nil {
+		return nil, err
+	}
 
 	return &ClickCaptchaResult{
 		Id: captchaId, Text: textHints, Base64: base64Img,
@@ -282,32 +287,37 @@ func GenerateClick(ctx context.Context) (*ClickCaptchaResult, error) {
 
 // VerifyClick 校验点选验证码（校验后自动删除，一次性）
 func VerifyClick(ctx context.Context, captchaId string, info string) bool {
+	return VerifyClickErr(ctx, captchaId, info) == nil
+}
+
+// VerifyClickErr 校验点选验证码，返回具体错误原因
+func VerifyClickErr(ctx context.Context, captchaId string, info string) error {
 	if captchaId == "" || info == "" {
-		return false
+		return fmt.Errorf("验证码参数缺失")
 	}
 
 	captchaJSON, ok := loadCaptcha(ctx, captchaId)
 	if !ok {
-		return false
+		return fmt.Errorf("验证码已失效，请刷新后重试")
 	}
-
-	// 校验后立即删除（对齐 BuildAdmin unset 逻辑）
-	deleteCaptcha(ctx, captchaId)
 
 	var captchaData clickCaptchaData
 	if err := json.Unmarshal([]byte(captchaJSON), &captchaData); err != nil {
-		return false
+		deleteCaptcha(ctx, captchaId)
+		return fmt.Errorf("验证码数据异常，请刷新后重试")
 	}
 
 	// 解析 info: "x1,y1-x2,y2;width;height"
 	parts := strings.Split(info, ";")
 	if len(parts) != 3 {
-		return false
+		deleteCaptcha(ctx, captchaId)
+		return fmt.Errorf("验证码格式错误，请刷新后重试")
 	}
 	displayW, _ := strconv.ParseFloat(parts[1], 64)
 	displayH, _ := strconv.ParseFloat(parts[2], 64)
 	if displayW == 0 || displayH == 0 {
-		return false
+		deleteCaptcha(ctx, captchaId)
+		return fmt.Errorf("验证码格式错误，请刷新后重试")
 	}
 
 	xPro := displayW / float64(captchaData.Width)
@@ -315,13 +325,15 @@ func VerifyClick(ctx context.Context, captchaId string, info string) bool {
 
 	xyPairs := strings.Split(parts[0], "-")
 	if len(xyPairs) != len(captchaData.Text) {
-		return false
+		deleteCaptcha(ctx, captchaId)
+		return fmt.Errorf("验证码点击数量不正确，请刷新后重试")
 	}
 
 	for k, pair := range xyPairs {
 		coords := strings.Split(pair, ",")
 		if len(coords) != 2 {
-			return false
+			deleteCaptcha(ctx, captchaId)
+			return fmt.Errorf("验证码格式错误，请刷新后重试")
 		}
 		clickX, _ := strconv.ParseFloat(coords[0], 64)
 		clickY, _ := strconv.ParseFloat(coords[1], 64)
@@ -329,8 +341,9 @@ func VerifyClick(ctx context.Context, captchaId string, info string) bool {
 
 		// X 轴
 		realX := clickX / xPro
-		if realX < float64(point.X) || realX > float64(point.X+point.Width) {
-			return false
+		if realX < float64(point.X-clickTolerance) || realX > float64(point.X+point.Width+clickTolerance) {
+			deleteCaptcha(ctx, captchaId)
+			return fmt.Errorf("验证码错误，请重试")
 		}
 		// Y 轴（图标和文字坐标系不同）
 		realY := clickY / yPro
@@ -342,11 +355,15 @@ func VerifyClick(ctx context.Context, captchaId string, info string) bool {
 			phStart = float64(point.Y - point.Height)
 			phEnd = float64(point.Y)
 		}
-		if realY < phStart || realY > phEnd {
-			return false
+		if realY < phStart-float64(clickTolerance) || realY > phEnd+float64(clickTolerance) {
+			deleteCaptcha(ctx, captchaId)
+			return fmt.Errorf("验证码错误，请重试")
 		}
 	}
-	return true
+
+	// 校验成功后再删除（对齐 BuildAdmin unset 逻辑）
+	deleteCaptcha(ctx, captchaId)
+	return nil
 }
 
 // ==================== 内部方法（与之前相同） ====================

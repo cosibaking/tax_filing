@@ -61,9 +61,9 @@ func (c *ControllerV1) Login(ctx context.Context, req *api.LoginReq) (res *api.L
 
 	// ✨ 点选验证码校验（验证码与登录强关联）
 	if req.CaptchaId != "" && req.CaptchaInfo != "" {
-		if !captchaLib.VerifyClick(ctx, req.CaptchaId, req.CaptchaInfo) {
+		if err := captchaLib.VerifyClickErr(ctx, req.CaptchaId, req.CaptchaInfo); err != nil {
 			recordLog(0, req.Username, 0, "验证码错误")
-			return nil, gerror.New("验证码错误或已过期，请重试")
+			return nil, err
 		}
 	}
 

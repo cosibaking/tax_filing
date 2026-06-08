@@ -74,15 +74,23 @@
           </ElFormItem>
 
           <!-- 协议 -->
-          <div class="px-1 pt-2">
-            <ElCheckbox v-model="formData.agree">
-              <span class="text-xs text-clay-muted">
-                我已阅读并同意
-                <a href="javascript:;" class="text-clay-accent font-bold">服务条款</a>
-                和
-                <a href="javascript:;" class="text-clay-accent font-bold">隐私政策</a>
-              </span>
-            </ElCheckbox>
+          <div class="space-y-3 px-1 pt-2">
+            <ElFormItem prop="agreeTerms" class="!mb-0">
+              <ElCheckbox v-model="formData.agreeTerms" class="!text-clay-muted">
+                <span class="text-xs font-bold text-clay-muted">
+                  我已阅读并同意
+                  <RouterLink to="/legal/terms" target="_blank" class="text-clay-accent hover:underline">用户协议</RouterLink>
+                </span>
+              </ElCheckbox>
+            </ElFormItem>
+            <ElFormItem prop="agreePrivacy" class="!mb-0">
+              <ElCheckbox v-model="formData.agreePrivacy" class="!text-clay-muted">
+                <span class="text-xs font-bold text-clay-muted">
+                  我已阅读并同意
+                  <RouterLink to="/legal/privacy" target="_blank" class="text-clay-accent hover:underline">隐私政策</RouterLink>
+                </span>
+              </ElCheckbox>
+            </ElFormItem>
           </div>
 
           <!-- 提交按钮 -->
@@ -114,13 +122,18 @@
 
 <script setup lang="ts">
 import { useSiteStore } from '@/store/modules/site'
+import { useMemberStore } from '@/store/modules/member'
+import { useMemberMenuStore } from '@/store/modules/memberMenu'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { memberRegister } from '@/api/frontend'
+import { memberRegister, getMemberInfo } from '@/api/frontend'
 
 defineOptions({ name: 'UserRegister' })
 
 const router = useRouter()
+const route = useRoute()
 const siteStore = useSiteStore()
+const memberStore = useMemberStore()
+const memberMenuStore = useMemberMenuStore()
 const siteName = computed(() => siteStore.getSiteName())
 const memberCenterOpen = computed(() => siteStore.isUserCenterEnabled())
 
@@ -130,7 +143,8 @@ const formData = reactive({
   password: '',
   confirmPassword: '',
   mobile: '',
-  agree: false
+  agreeTerms: false,
+  agreePrivacy: false
 })
 
 const rules: FormRules = {
@@ -158,6 +172,22 @@ const rules: FormRules = {
   mobile: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  agreeTerms: [
+    {
+      validator: (_rule: any, value: boolean, callback: any) => {
+        value ? callback() : callback(new Error('请先同意用户协议'))
+      },
+      trigger: 'change'
+    }
+  ],
+  agreePrivacy: [
+    {
+      validator: (_rule: any, value: boolean, callback: any) => {
+        value ? callback() : callback(new Error('请先同意隐私政策'))
+      },
+      trigger: 'change'
+    }
   ]
 }
 
@@ -168,20 +198,28 @@ const handleSubmit = async () => {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
-  if (!formData.agree) {
-    ElMessage.warning('请先同意服务条款和隐私政策')
-    return
-  }
-
   loading.value = true
   try {
-    await memberRegister({
+    const res = await memberRegister({
       username: formData.username,
       password: formData.password,
-      mobile: formData.mobile
+      mobile: formData.mobile,
+      agreeTerms: formData.agreeTerms,
+      agreePrivacy: formData.agreePrivacy
     })
-    ElMessage.success('注册成功，请登录')
-    router.push('/user/login')
+
+    if (!res.token) {
+      throw new Error('注册成功但未获取登录凭证')
+    }
+
+    memberStore.setToken(res.token, res.refreshToken)
+    const info = await getMemberInfo()
+    memberStore.setMemberInfo(info)
+    await memberMenuStore.fetchMenus()
+
+    ElMessage.success('注册成功，已自动登录')
+    const redirect = route.query.redirect as string
+    router.push(redirect || '/user/overview')
   } catch {
     // 错误已由拦截器处理
   } finally {

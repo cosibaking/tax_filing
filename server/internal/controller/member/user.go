@@ -12,6 +12,9 @@ package member
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
+	"io"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -26,11 +29,14 @@ import (
 	"xygo/internal/consts"
 	"xygo/internal/dao"
 	"xygo/internal/library/contexts"
+	"xygo/internal/model/do"
+	"xygo/internal/model/entity"
 	"xygo/internal/model/input/memberin"
 	"xygo/internal/service"
+	"xygo/utility"
 )
 
-// UploadFile 会员端文件上传（简化版，仅支持图片，存本地）
+// UploadFile 会员端文件上传（图片/PDF，写入附件表供合规资料引用）
 func (c *ControllerV1) UploadFile(ctx context.Context, req *member.UploadFileReq) (res *member.UploadFileRes, err error) {
 	memberId := contexts.GetMemberId(ctx)
 	if memberId == 0 {
@@ -43,20 +49,27 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *member.UploadFileReq
 		return nil, gerror.New("未选择文件")
 	}
 
-	// 限制 2MB + 仅图片
-	if upFile.Size > 2*1024*1024 {
-		return nil, gerror.New("文件大小不能超过 2MB")
+	if upFile.Size > 10*1024*1024 {
+		return nil, gerror.New("文件大小不能超过 10MB")
 	}
 	ext := strings.ToLower(filepath.Ext(upFile.Filename))
 	if ext == "" {
 		ext = ".jpg"
 	}
-	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
+	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true, ".pdf": true}
 	if !allowed[ext] {
-		return nil, gerror.New("仅支持 jpg/png/gif/webp 格式")
+		return nil, gerror.New("仅支持 jpg/png/pdf 格式")
 	}
 
-	// 保存到本地 resource/public/attachment/upload/日期/uuid.ext
+	mimeMap := map[string]string{
+		".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+		".gif": "image/gif", ".webp": "image/webp", ".pdf": "application/pdf",
+	}
+	mimetype := mimeMap[ext]
+	if mimetype == "" {
+		mimetype = "application/octet-stream"
+	}
+
 	subdir := gtime.Now().Format("Ymd")
 	name := uuid.New().String() + ext
 	savePath := filepath.Join("resource", "public", "attachment", "upload", subdir, name)
@@ -72,11 +85,56 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *member.UploadFileReq
 	}
 
 	url := "/attachment/upload/" + subdir + "/" + name
+	sha1sum := ""
+	if f, openErr := upFile.Open(); openErr == nil {
+		if b, readErr := io.ReadAll(f); readErr == nil {
+			sum := sha1.Sum(b)
+			sha1sum = hex.EncodeToString(sum[:])
+		}
+		_ = f.Close()
+	}
+
+	attachmentId, err := saveMemberAttachment(ctx, memberId, url, upFile.Filename, upFile.Size, mimetype, sha1sum)
+	if err != nil {
+		return nil, gerror.Wrap(err, "保存附件记录失败")
+	}
+
 	return &member.UploadFileRes{
-		Url:  url,
-		Name: upFile.Filename,
-		Size: upFile.Size,
+		Url:          url,
+		Name:         name,
+		Size:         upFile.Size,
+		AttachmentId: attachmentId,
 	}, nil
+}
+
+func saveMemberAttachment(ctx context.Context, memberId uint64, url, originalName string, size int64, mimetype, sha1sum string) (uint64, error) {
+	now := uint(utility.NowUnix())
+	_, err := dao.SysAttachment.Ctx(ctx).Data(do.SysAttachment{
+		Topic:      "member",
+		UserId:     memberId,
+		Url:        url,
+		Name:       originalName,
+		Size:       uint64(size),
+		Mimetype:   mimetype,
+		Quote:      1,
+		Storage:    "local",
+		Sha1:       sha1sum,
+		CreateTime: now,
+		UpdateTime: now,
+	}).Insert()
+	if err != nil {
+		return 0, err
+	}
+	var record entity.SysAttachment
+	err = dao.SysAttachment.Ctx(ctx).
+		Where(dao.SysAttachment.Columns().Url, url).
+		Where(dao.SysAttachment.Columns().UserId, memberId).
+		OrderDesc(dao.SysAttachment.Columns().Id).
+		Scan(&record)
+	if err != nil || record.Id == 0 {
+		return 0, gerror.New("获取附件ID失败")
+	}
+	return record.Id, nil
 }
 
 // ==================== 签到 ====================

@@ -18,7 +18,7 @@
       <div v-if="visible" class="click-captcha-dialog">
         <div class="click-captcha-card">
           <!-- Loading -->
-          <div v-if="loading" class="captcha-loading">
+          <div v-if="loading" class="captcha-loading" :style="{ width: `${captchaData.width}px`, height: `${captchaData.height}px` }">
             <ArtSvgIcon icon="ri:loader-4-line" class="text-2xl animate-spin text-clay-accent" />
             <span class="ml-2 text-sm text-clay-muted font-bold">加载中...</span>
           </div>
@@ -28,6 +28,7 @@
               ref="captchaImgRef"
               class="captcha-img"
               :src="captchaData.base64"
+              :style="{ width: `${captchaData.width}px`, height: `${captchaData.height}px` }"
               alt="验证码"
               @click.prevent="onImageClick"
             />
@@ -75,6 +76,7 @@
 
 <script setup lang="ts">
 import { getClickCaptcha } from '@/api/common/captcha'
+import { HttpError } from '@/utils/http/error'
 
 defineOptions({ name: 'ArtClickCaptcha' })
 
@@ -119,8 +121,8 @@ const loadCaptcha = async () => {
     captchaData.base64 = data.base64
     captchaData.width = data.width
     captchaData.height = data.height
-  } catch {
-    tipMsg.value = '验证码加载失败'
+  } catch (error) {
+    tipMsg.value = error instanceof HttpError ? error.message : '验证码加载失败'
     tipSuccess.value = false
   } finally {
     loading.value = false
@@ -142,8 +144,8 @@ const onImageClick = (event: MouseEvent) => {
 
     const captchaInfo = [
       clickPoints.value.map(p => `${p.x},${p.y}`).join('-'),
-      img.width,
-      img.height,
+      img.clientWidth,
+      img.clientHeight,
     ].join(';')
 
     // 直接回调（由业务登录接口统一校验）
@@ -200,8 +202,6 @@ defineExpose({ open, close: handleClose })
 }
 
 .captcha-loading {
-  width: 350px;
-  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -215,7 +215,6 @@ defineExpose({ open, close: handleClose })
     border: none;
     cursor: pointer;
     border-radius: 6px;
-    max-width: 100%;
   }
 
   .captcha-step {

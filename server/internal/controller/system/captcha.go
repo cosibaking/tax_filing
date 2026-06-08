@@ -13,8 +13,6 @@ package system
 import (
 	"context"
 
-	"github.com/gogf/gf/v2/errors/gerror"
-
 	api "xygo/api/system"
 	"xygo/internal/library/captcha"
 )
@@ -36,8 +34,8 @@ func (c *ControllerV1) ClickCaptcha(ctx context.Context, req *api.ClickCaptchaRe
 
 // CheckClickCaptcha 校验点选验证码
 func (c *ControllerV1) CheckClickCaptcha(ctx context.Context, req *api.CheckClickCaptchaReq) (res *api.CheckClickCaptchaRes, err error) {
-	if !captcha.VerifyClick(ctx, req.Id, req.Info) {
-		return nil, gerror.New("验证失败，请重试")
+	if err = captcha.VerifyClickErr(ctx, req.Id, req.Info); err != nil {
+		return nil, err
 	}
 	return &api.CheckClickCaptchaRes{}, nil
 }

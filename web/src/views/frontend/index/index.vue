@@ -25,13 +25,20 @@
             基于 Vue3 + GoFrame 构建的通用开源中后台管理框架。内置权限管理、代码生成、系统监控等核心模块，开箱即用，快速启动你的业务开发。
           </p>
           <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6">
-            <a
-              :href="'/#' + ADMIN_BASE_PATH"
+            <RouterLink
+              to="/diagnosis"
               class="w-full sm:w-auto px-10 py-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-lg font-bold shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1 active:scale-95 active:shadow-clay-pressed transition-all duration-300 flex items-center justify-center gap-2"
             >
-              <span>进入后台</span>
-              <ArtSvgIcon icon="ri:arrow-right-line" class="text-lg" />
-            </a>
+              <span>免费诊断</span>
+              <ArtSvgIcon icon="ri:shield-check-line" class="text-lg" />
+            </RouterLink>
+            <RouterLink
+              to="/pricing"
+              class="w-full sm:w-auto px-10 py-4 rounded-full bg-white text-clay-foreground text-lg font-bold shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <span>服务价格</span>
+              <ArtSvgIcon icon="ri:price-tag-3-line" class="text-lg" />
+            </RouterLink>
           </div>
         </div>
 
@@ -164,8 +171,6 @@
 </template>
 
 <script setup lang="ts">
-import { ADMIN_BASE_PATH } from '@/router/routesAlias'
-
 defineOptions({ name: 'FrontendHome' })
 
 const features = [

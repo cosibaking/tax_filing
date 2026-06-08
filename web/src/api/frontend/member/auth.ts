@@ -28,11 +28,17 @@ export interface MemberRegisterParams {
   mobile?: string
   email?: string
   code?: string
+  agreeTerms: boolean
+  agreePrivacy: boolean
 }
 
 /** 注册响应 */
 export interface MemberRegisterResult {
   id: number
+  token: string
+  expiresIn: number
+  refreshToken: string
+  refreshExpiresIn: number
 }
 
 /**

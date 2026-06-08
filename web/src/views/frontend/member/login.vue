@@ -172,7 +172,7 @@ const onCaptchaSuccess = async (captchaId: string, captchaInfo: string) => {
 
     ElMessage.success('登录成功')
     const redirect = route.query.redirect as string
-    router.push(redirect || '/user')
+    router.push(redirect || '/user/overview')
   } catch {
     // 错误已由拦截器处理
   } finally {

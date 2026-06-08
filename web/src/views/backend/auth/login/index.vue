@@ -158,7 +158,7 @@
     try {
       const { username, password } = formData
       const { accessToken, token, refreshToken } = await fetchLogin({
-        userName: username,
+        username,
         password,
         captchaId,
         captchaInfo,

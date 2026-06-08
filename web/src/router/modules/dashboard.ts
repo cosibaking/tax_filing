@@ -1,13 +1,3 @@
-// +----------------------------------------------------------------------
-// | XYGo Admin [ Vue3 + GoFrame 企业级中后台管理系统 ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2026 大连星韵网络科技有限公司 All rights reserved.
-// +----------------------------------------------------------------------
-// | Licensed ( https://opensource.org/licenses/MIT )
-// +----------------------------------------------------------------------
-// | Author: 喜羊羊 <751300685@qq.com>
-// +----------------------------------------------------------------------
-
 import { AppRouteRecord } from '@/types/router'
 
 export const dashboardRoutes: AppRouteRecord = {
@@ -26,29 +16,8 @@ export const dashboardRoutes: AppRouteRecord = {
       component: '/dashboard/console',
       meta: {
         title: 'menus.dashboard.console',
-        icon: 'ri:home-smile-2-line',
         keepAlive: false,
         fixedTab: true
-      }
-    },
-    {
-      path: 'analysis',
-      name: 'Analysis',
-      component: '/dashboard/analysis',
-      meta: {
-        title: 'menus.dashboard.analysis',
-        icon: 'ri:align-item-bottom-line',
-        keepAlive: false
-      }
-    },
-    {
-      path: 'ecommerce',
-      name: 'Ecommerce',
-      component: '/dashboard/ecommerce',
-      meta: {
-        title: 'menus.dashboard.ecommerce',
-        icon: 'ri:bar-chart-box-line',
-        keepAlive: false
       }
     }
   ]

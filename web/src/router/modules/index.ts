@@ -1,16 +1,10 @@
-// +----------------------------------------------------------------------
-// | XYGo Admin [ Vue3 + GoFrame 企业级中后台管理系统 ]
-// +----------------------------------------------------------------------
-// | Copyright (c) 2026 大连星韵网络科技有限公司 All rights reserved.
-// +----------------------------------------------------------------------
-// | Licensed ( https://opensource.org/licenses/MIT )
-// +----------------------------------------------------------------------
-// | Author: 喜羊羊 <751300685@qq.com>
-// +----------------------------------------------------------------------
+import { AppRouteRecord } from '@/types/router'
+import { dashboardRoutes } from './dashboard'
+import { systemRoutes } from './system'
+import { safeguardRoutes } from '../backend/safeguard'
 
-/**
- * @deprecated 请使用 '@/router/backend' 代替
- * 此文件保留以兼容旧代码
- */
-export * from '../backend'
-export { backendRoutes as routeModules } from '../backend'
+export const routeModules: AppRouteRecord[] = [
+  dashboardRoutes,
+  systemRoutes,
+  safeguardRoutes
+]

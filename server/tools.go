@@ -128,7 +128,7 @@ func runCommand(cmd, sub string) {
 	case "migrate":
 		switch sub {
 		case "up":
-			_ = migrate.RunUp(ctx)
+			_ = migrate.RunUp(ctx, false)
 		case "status":
 			_ = migrate.RunStatus(ctx)
 		case "history":
