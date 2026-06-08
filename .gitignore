@@ -11,3 +11,23 @@ server/addons/*/
 server/addons/.backup/
 server/addons/*.zip
 web/src/addons/tenant/
+
+# 用户上传（运行时数据，保留 .gitkeep 维持目录）
+server/resource/public/attachment/upload/*
+!server/resource/public/attachment/upload/.gitkeep
+
+# 前端构建产物（嵌入 Go 静态目录，可 pnpm build 重建）
+server/resource/public/dist/
+
+# 运行时日志与队列存储
+server/logs/
+server/storage/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.settings/
+Thumbs.db
+Desktop.ini
+.DS_Store
