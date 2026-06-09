@@ -1,162 +1,189 @@
 <!-- P-05 方案确认与签约 -->
 <template>
-  <section class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-12">        <!-- Header -->
-        <div class="text-center mb-10">
-          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 border border-white/50 shadow-sm mb-6">
-            <ArtSvgIcon icon="ri:file-text-line" class="text-lg text-clay-accent" />
-            <span class="text-sm font-bold text-clay-muted">方案确认与签约</span>
-          </div>
-          <h1 class="font-heading font-black text-3xl text-clay-foreground mb-2">完成服务签约</h1>
-          <p class="text-clay-muted font-medium">选择套餐 → 风险告知 → 电子签约</p>
+  <div class="plan-page">
+    <section class="overview-panel">
+      <div class="overview-panel__head">
+        <div>
+          <h2 class="overview-panel__section-title">完成服务签约</h2>
+          <p class="overview-panel__section-desc">选择套餐 → 风险告知 → 电子签约</p>
         </div>
+      </div>
 
-        <!-- Step indicator -->
-        <div class="flex items-center justify-between mb-10 px-2">
-          <div v-for="(label, idx) in stepLabels" :key="idx" class="flex flex-col items-center flex-1">
-            <div
-              class="w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm transition-all duration-300"
-              :class="currentStep > idx + 1
-                ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn'
-                : currentStep === idx + 1
-                  ? 'bg-white text-clay-accent shadow-clay-card border-2 border-clay-accent'
-                  : 'bg-[#f0f3f8] text-clay-muted shadow-clay-pressed'"
-            >
-              <ArtSvgIcon v-if="currentStep > idx + 1" icon="ri:check-line" class="text-lg" />
-              <span v-else>{{ idx + 1 }}</span>
-            </div>
-            <span class="text-[10px] font-bold mt-2 text-center" :class="currentStep === idx + 1 ? 'text-clay-accent' : 'text-clay-muted'">{{ label }}</span>
+      <!-- 步骤指示 -->
+      <div class="plan-steps">
+        <div
+          v-for="(label, idx) in stepLabels"
+          :key="idx"
+          class="plan-step"
+          :class="{
+            'is-done': currentStep > idx + 1,
+            'is-current': currentStep === idx + 1,
+          }"
+        >
+          <div class="plan-step__index">
+            <ArtSvgIcon v-if="currentStep > idx + 1" icon="ri:check-line" />
+            <span v-else>{{ idx + 1 }}</span>
           </div>
+          <span class="plan-step__label">{{ label }}</span>
         </div>
+      </div>
 
-        <div v-if="apiError" class="mb-6 p-4 rounded-2xl bg-orange-50 border border-orange-200 flex items-start gap-3">
-          <ArtSvgIcon icon="ri:error-warning-line" class="text-xl text-orange-500 shrink-0 mt-0.5" />
-          <p class="text-sm font-bold text-orange-700">{{ apiError }}</p>
-        </div>
+      <div v-if="apiError" class="plan-alert plan-alert--error">
+        <ArtSvgIcon icon="ri:error-warning-line" />
+        <p>{{ apiError }}</p>
+      </div>
 
-        <div v-if="pendingOrderHint" class="mb-6 p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-start gap-3">
-          <ArtSvgIcon icon="ri:information-line" class="text-xl text-clay-accent shrink-0 mt-0.5" />
-          <p class="text-sm font-medium text-clay-foreground">{{ pendingOrderHint }}</p>
+      <div v-if="pendingOrderHint" class="plan-alert plan-alert--info">
+        <ArtSvgIcon icon="ri:information-line" />
+        <p>{{ pendingOrderHint }}</p>
+      </div>
+
+      <!-- Step 1: 选择套餐 -->
+      <div v-show="currentStep === 1" class="plan-body">
+        <div v-if="plansLoading" class="overview-empty">
+          <ArtSvgIcon icon="ri:loader-4-line" class="overview-empty__icon plan-loading" />
+          <p>加载套餐中...</p>
         </div>
-        <!-- Step 1: 选择套餐 -->
-        <div v-show="currentStep === 1" class="space-y-4">
-          <div v-if="plansLoading" class="text-center py-12">
-            <ArtSvgIcon icon="ri:loader-4-line" class="text-3xl text-clay-accent animate-spin mx-auto" />
-          </div>
-          <div v-else class="space-y-4">
-            <div
-              v-for="plan in displayPlans"
-              :key="plan.tier"
-              class="p-5 rounded-2xl border-2 cursor-pointer transition-all"
-              :class="selectedPlanTier === plan.tier
-                ? 'border-clay-accent bg-blue-50/50 shadow-clay-card'
-                : 'border-transparent bg-[#f0f3f8] shadow-clay-pressed hover:shadow-clay-card'"
-              @click="selectedPlanTier = plan.tier"
-            >
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="font-heading font-black text-lg text-clay-foreground">{{ plan.name }}</h3>
-                  <p class="text-clay-accent font-black text-xl mt-1">{{ plan.priceLabel }}<span v-if="plan.monthlyPrice" class="text-sm text-clay-muted ml-1">/月起</span></p>
-                </div>
-                <div
-                  class="w-6 h-6 rounded-full border-2 flex items-center justify-center"
-                  :class="selectedPlanTier === plan.tier ? 'border-clay-accent bg-clay-accent' : 'border-clay-muted'"
-                >
-                  <ArtSvgIcon v-if="selectedPlanTier === plan.tier" icon="ri:check-line" class="text-white text-sm" />
-                </div>
+        <ul v-else class="plan-list">
+          <li
+            v-for="plan in displayPlans"
+            :key="plan.tier"
+            class="plan-card"
+            :class="{ 'is-selected': selectedPlanTier === plan.tier }"
+            @click="selectedPlanTier = plan.tier"
+          >
+            <div class="plan-card__head">
+              <div>
+                <h3 class="plan-card__title">{{ plan.name }}</h3>
+                <p class="plan-card__price">
+                  {{ plan.priceLabel }}
+                  <span v-if="plan.monthlyPrice" class="plan-card__unit">/月起</span>
+                </p>
               </div>
-              <ul class="mt-3 space-y-1">
-                <li v-for="(feat, i) in plan.features.slice(0, 3)" :key="i" class="text-xs text-clay-muted font-medium">· {{ feat }}</li>
-              </ul>
+              <div class="plan-card__radio" :class="{ 'is-checked': selectedPlanTier === plan.tier }">
+                <ArtSvgIcon v-if="selectedPlanTier === plan.tier" icon="ri:check-line" />
+              </div>
             </div>
+            <ul class="plan-card__features">
+              <li v-for="(feat, i) in plan.features.slice(0, 3)" :key="i">{{ feat }}</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Step 2: 风险告知 -->
+      <div v-show="currentStep === 2" class="plan-body">
+        <p class="plan-body__hint">请仔细阅读以下风险告知，全部勾选后方可继续：</p>
+        <ul class="plan-risk-list">
+          <li v-for="(item, idx) in riskItems" :key="idx" class="plan-risk-item">
+            <ElCheckbox v-model="item.checked" class="plan-checkbox">
+              <span>{{ item.text }}</span>
+            </ElCheckbox>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Step 3: 签约 -->
+      <div v-show="currentStep === 3" class="plan-body">
+        <h3 class="plan-subtitle">方案摘要</h3>
+        <div class="plan-summary">
+          <div class="plan-field">
+            <span class="plan-field__label">服务套餐</span>
+            <span class="plan-field__value">{{ selectedPlan?.name }}（{{ selectedPlan?.priceLabel }}）</span>
+          </div>
+          <div v-if="diagnosisId" class="plan-field">
+            <span class="plan-field__label">关联诊断</span>
+            <span class="plan-field__value">#{{ diagnosisId }}</span>
+          </div>
+          <div class="plan-field">
+            <span class="plan-field__label">推荐方案</span>
+            <span class="plan-field__value">{{ recommendedPlanLabel }}</span>
+          </div>
+          <div v-if="diagnosisSummary.monthlyIncome" class="plan-field">
+            <span class="plan-field__label">月收入区间</span>
+            <span class="plan-field__value">{{ diagnosisSummary.monthlyIncome }}</span>
+          </div>
+          <div v-if="diagnosisSummary.annualCost" class="plan-field">
+            <span class="plan-field__label">年成本估算</span>
+            <span class="plan-field__value">{{ diagnosisSummary.annualCost }} 元</span>
           </div>
         </div>
 
-        <!-- Step 2: 风险告知 -->
-        <div v-show="currentStep === 2" class="space-y-4">
-          <p class="text-sm font-bold text-clay-foreground mb-2">请仔细阅读以下风险告知，全部勾选后方可继续：</p>
-          <ElCheckbox v-for="(item, idx) in riskItems" :key="idx" v-model="item.checked" class="!mr-0 clay-checkbox w-full">
-            <span class="text-sm font-medium text-clay-foreground leading-relaxed">{{ item.text }}</span>
-          </ElCheckbox>
+        <h3 class="plan-subtitle">服务协议预览</h3>
+        <div
+          ref="pdfContainerRef"
+          class="plan-agreement"
+          @scroll="onPdfScroll"
+        >
+          <h4>税务合规服务协议（摘要）</h4>
+          <p>第一条 服务内容：本协议约定乙方为甲方提供主体设立代办、记账、申报等合规服务。</p>
+          <p>第二条 服务费用：按所选套餐标准收取，具体以订单确认金额为准。</p>
+          <p>第三条 甲方义务：如实提供注册资料，配合工商、税务、银行开户流程。</p>
+          <p>第四条 合规声明：本服务为合法合规方案，不提供逃税、虚开发票等违法服务。</p>
+          <p>第五条 责任限制：乙方不承诺「包不被查」，税负取决于甲方真实收入与成本。</p>
+          <p>第六条 隐私保护：甲方敏感信息加密存储，仅用于合规服务目的。</p>
+          <p>第七条 协议生效：甲方完成电子签名确认后本协议生效。</p>
+          <p class="plan-agreement__note">（完整协议 PDF 将在签约后存档）</p>
         </div>
+        <p v-if="!pdfScrolledToBottom" class="plan-scroll-hint">请滚动阅读完整协议</p>
 
-        <!-- Step 3: 签约 -->
-        <div v-show="currentStep === 3" class="space-y-6">
-          <!-- 方案摘要 -->
-          <div class="p-5 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed">
-            <h3 class="font-heading font-black text-sm text-clay-muted mb-3">方案摘要</h3>
-            <div class="space-y-2 text-sm font-medium text-clay-foreground">
-              <p>服务套餐：<strong>{{ selectedPlan?.name }}</strong>（{{ selectedPlan?.priceLabel }}）</p>
-              <p v-if="diagnosisId">关联诊断：#{{ diagnosisId }}</p>
-              <p>推荐方案：一人有限责任公司（小微公司）</p>
-            </div>
+        <div class="plan-sign-form">
+          <div class="plan-sign-row">
+            <ElCheckbox v-model="agreementAccepted" class="plan-checkbox">
+              <span>我已阅读并同意服务协议</span>
+            </ElCheckbox>
           </div>
-
-          <!-- PDF 预览占位 -->
-          <div>
-            <label class="block text-sm font-bold text-clay-foreground mb-3 ml-1">服务协议预览</label>
-            <div
-              ref="pdfContainerRef"
-              class="h-48 overflow-y-auto rounded-2xl bg-[#f0f3f8] shadow-clay-pressed p-5 text-xs text-clay-muted leading-relaxed"
-              @scroll="onPdfScroll"
-            >
-              <h4 class="font-black text-clay-foreground text-sm mb-3">税务合规服务协议（摘要）</h4>
-              <p class="mb-2">第一条 服务内容：本协议约定乙方为甲方提供主体设立代办、记账、申报等合规服务。</p>
-              <p class="mb-2">第二条 服务费用：按所选套餐标准收取，具体以订单确认金额为准。</p>
-              <p class="mb-2">第三条 甲方义务：如实提供注册资料，配合工商、税务、银行开户流程。</p>
-              <p class="mb-2">第四条 合规声明：本服务为合法合规方案，不提供逃税、虚开发票等违法服务。</p>
-              <p class="mb-2">第五条 责任限制：乙方不承诺「包不被查」，税负取决于甲方真实收入与成本。</p>
-              <p class="mb-2">第六条 隐私保护：甲方敏感信息加密存储，仅用于合规服务目的。</p>
-              <p class="mb-2">第七条 协议生效：甲方完成电子签名确认后本协议生效。</p>
-              <p>（完整协议 PDF 将在签约后存档）</p>
-            </div>
-            <p v-if="!pdfScrolledToBottom" class="text-xs text-orange-500 font-bold mt-2 ml-1">请滚动阅读完整协议</p>
+          <div class="plan-sign-row">
+            <label class="plan-label">
+              电子签名（输入姓名确认） <span class="plan-required">*</span>
+            </label>
+            <ElInput
+              v-model.trim="signerName"
+              placeholder="请输入您的真实姓名"
+              size="large"
+              class="plan-input"
+            />
           </div>
-
-          <ElCheckbox v-model="agreementAccepted" class="clay-checkbox">
-            <span class="text-sm font-bold text-clay-foreground">我已阅读并同意服务协议</span>
-          </ElCheckbox>
-
-          <ElFormItem class="!mb-0">
-            <label class="block text-sm font-bold text-clay-foreground mb-3 ml-1">电子签名（输入姓名确认） <span class="text-red-400">*</span></label>
-            <ElInput v-model.trim="signerName" placeholder="请输入您的真实姓名" size="large" class="clay-input" />
-          </ElFormItem>
         </div>
+      </div>
 
-        <!-- Actions -->
-        <div class="flex gap-4 mt-10">
-          <button
-            v-if="currentStep > 1"
-            type="button"
-            class="flex-1 h-14 rounded-2xl bg-white text-clay-foreground font-black shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all"
-            :disabled="submitting"
-            @click="prevStep"
-          >
-            上一步
-          </button>
-          <button
-            v-if="currentStep < 3"
-            type="button"
-            class="flex-1 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all disabled:opacity-50"
-            :disabled="!canNext || submitting"
-            @click="nextStep"
-          >
-            下一步
-          </button>
-          <button
-            v-else
-            type="button"
-            class="flex-1 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            :disabled="!canSign || submitting"
-            @click="handleSign"
-          >
-            <ArtSvgIcon v-if="submitting" icon="ri:loader-4-line" class="text-xl animate-spin" />
-            {{ submitting ? '签约中...' : '完成签约' }}
-          </button>
-        </div>
-  </section>
+      <!-- 操作按钮 -->
+      <div class="plan-actions">
+        <button
+          v-if="currentStep > 1"
+          type="button"
+          class="overview-btn overview-btn--ghost"
+          :disabled="submitting"
+          @click="prevStep"
+        >
+          上一步
+        </button>
+        <button
+          v-if="currentStep < 3"
+          type="button"
+          class="overview-btn overview-btn--primary plan-actions__main"
+          :disabled="!canNext || submitting"
+          @click="nextStep"
+        >
+          下一步
+        </button>
+        <button
+          v-else
+          type="button"
+          class="overview-btn overview-btn--primary plan-actions__main"
+          :disabled="!canSign || submitting"
+          @click="handleSign"
+        >
+          <ArtSvgIcon v-if="submitting" icon="ri:loader-4-line" class="plan-loading" />
+          {{ submitting ? '签约中...' : '完成签约' }}
+        </button>
+      </div>
+    </section>
+  </div>
 </template>
+
 <script setup lang="ts">
-import { fetchServicePlans, type ServicePlan } from '@/api/frontend/compliance/diagnosis'
+import { fetchServicePlans, type ServicePlan, type RecommendedPlan } from '@/api/frontend/compliance/diagnosis'
 import {
   createComplianceOrder,
   getActiveOrder,
@@ -164,7 +191,7 @@ import {
   signAgreement,
   type RiskAcknowledgments
 } from '@/api/frontend/compliance/order'
-import { getCompliancePlanState } from '@/api/frontend/compliance/member'
+import { getCompliancePlanState, getDiagnosisDetail } from '@/api/frontend/compliance/member'
 import { useMemberStore } from '@/store/modules/member'
 import { requireLogin } from '@/utils/auth/requireLogin'
 import { sanitizeErrorMessage } from '@/utils/http/error'
@@ -187,6 +214,8 @@ const plans = ref<ServicePlan[]>([])
 const selectedPlanTier = ref('basic')
 const orderId = ref<number | string>('')
 const pendingOrderHint = ref('')
+const recommendedPlanLabel = ref('一人有限责任公司（小微公司）')
+const diagnosisSummary = ref<{ monthlyIncome?: string; annualCost?: string }>({})
 
 const diagnosisId = computed(() => route.query.diagnosisId as string | undefined)
 const riskItems = ref([
@@ -200,6 +229,14 @@ const pdfContainerRef = ref<HTMLElement>()
 const pdfScrolledToBottom = ref(false)
 const agreementAccepted = ref(false)
 const signerName = ref('')
+
+const PLAN_LABEL_MAP: Record<RecommendedPlan, string> = {
+  opc: '一人有限责任公司（小微公司）',
+  individual: '个体工商户',
+  labor: '劳务报酬',
+  transitional: '过渡期方案',
+  none: '待评估',
+}
 
 const FALLBACK_PLANS: ServicePlan[] = [
   { id: 1, name: '基础版', tier: 'basic', monthlyPrice: 299, priceLabel: '¥299', features: ['主体注册代办', '月度记账', '季度申报'] },
@@ -227,6 +264,22 @@ function onPdfScroll() {
   if (!el) return
   if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) {
     pdfScrolledToBottom.value = true
+  }
+}
+
+async function loadDiagnosis() {
+  if (!diagnosisId.value) return
+  try {
+    const detail = await getDiagnosisDetail(diagnosisId.value)
+    recommendedPlanLabel.value = PLAN_LABEL_MAP[detail.recommendedPlan] || detail.recommendedPlan
+    diagnosisSummary.value = {
+      monthlyIncome: (detail as { monthlyIncomeRange?: string }).monthlyIncomeRange,
+      annualCost: detail.taxComparison?.annualCost
+        ? String(Math.round(detail.taxComparison.annualCost))
+        : undefined,
+    }
+  } catch {
+    /* ignore */
   }
 }
 
@@ -333,6 +386,7 @@ async function nextStep() {
     submitting.value = false
   }
 }
+
 function prevStep() {
   if (currentStep.value > 1) currentStep.value--
 }
@@ -343,17 +397,13 @@ async function handleSign() {
   submitting.value = true
   try {
     await ensureOrder()
-    const res = await signAgreement({
+    await signAgreement({
       orderId: orderId.value,
       legalName: signerName.value,
     })
     sessionStorage.removeItem(PENDING_ORDER_KEY)
     ElMessage.success('签约成功，即将进入主体设立流程')
-    if (res.opcId) {
-      router.push('/user/compliance/opc')
-    } else {
-      router.push('/user/compliance/opc')
-    }
+    router.push('/user/compliance/opc')
   } catch (e: unknown) {
     const msg = sanitizeErrorMessage(e instanceof Error ? e.message : '签约失败，请检查信息后重试')
     apiError.value = msg
@@ -366,7 +416,7 @@ async function handleSign() {
 onMounted(async () => {
   if (!requireLogin({ redirect: route.fullPath })) return
   restoreOrderId()
-  await loadPlans()
+  await Promise.all([loadPlans(), loadDiagnosis()])
 
   try {
     const state = await getCompliancePlanState()
@@ -378,47 +428,441 @@ onMounted(async () => {
 
   await restorePendingOrder()
   nextTick(() => onPdfScroll())
-})</script>
+})
+</script>
 
 <style lang="scss" scoped>
-.text-clay-foreground { color: #32325d; }
-.text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.border-clay-accent { border-color: #5a8dee; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-
-.shadow-clay-deep {
-  box-shadow: 30px 30px 60px #d1d9e6, -30px -30px 60px #ffffff,
-    inset 10px 10px 20px rgba(90, 141, 238, 0.05), inset -10px -10px 20px rgba(255, 255, 255, 0.8);
-}
-.shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
-}
-.shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
-}
-.shadow-clay-btn-hover {
-  box-shadow: 16px 16px 32px rgba(90, 141, 238, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.5),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
-}
-.shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
+.plan-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-:deep(.clay-input) {
-  .el-input__wrapper {
-    height: 48px; padding: 0 16px; border-radius: 16px; background: #f0f3f8;
-    box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
-    border: none;
+.overview-panel {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.overview-panel__head {
+  margin-bottom: 20px;
+}
+
+.overview-panel__section-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.overview-panel__section-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.plan-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.plan-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+
+  &.is-done {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+
+    .plan-step__index {
+      background: #2563eb;
+      color: #fff;
+    }
   }
-  .el-input__inner { font-weight: 500; color: #32325d; }
+
+  &.is-current {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px #2563eb;
+  }
 }
 
-:deep(.clay-checkbox) {
-  padding: 12px 16px; border-radius: 16px; background: #f0f3f8;
-  box-shadow: inset 6px 6px 12px #e0e5ec, inset -6px -6px 12px #ffffff;
-  margin-right: 0 !important; height: auto; width: 100%;
+.plan-step__index {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plan-step__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.plan-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 600;
+
+  p { margin: 0; }
+
+  &--error {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #c2410c;
+  }
+
+  &--info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+  }
+}
+
+.plan-body {
+  margin-bottom: 24px;
+}
+
+.plan-body__hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.overview-empty {
+  padding: 32px 16px;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+  }
+}
+
+.overview-empty__icon {
+  font-size: 40px;
+  color: #2563eb;
+  margin-bottom: 16px;
+}
+
+.plan-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-card {
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: #bfdbfe;
+  }
+
+  &.is-selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 1px #2563eb;
+  }
+}
+
+.plan-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.plan-card__title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.plan-card__price {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.plan-card__unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.plan-card__radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #fff;
+
+  &.is-checked {
+    border-color: #2563eb;
+    background: #2563eb;
+  }
+}
+
+.plan-card__features {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.6;
+
+    &::before {
+      content: '· ';
+    }
+  }
+}
+
+.plan-risk-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-risk-item {
+  padding: 12px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.plan-subtitle {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.plan-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.plan-field__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.plan-field__value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1f36;
+}
+
+.plan-agreement {
+  height: 200px;
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #64748b;
+
+  h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 0 0 8px;
+  }
+
+  &__note {
+    color: #94a3b8;
+    font-size: 12px;
+  }
+}
+
+.plan-scroll-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ea580c;
+}
+
+.plan-sign-form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plan-sign-row {
+  padding: 12px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.plan-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.plan-required {
+  color: #ef4444;
+}
+
+:deep(.plan-checkbox) {
+  height: auto;
+  align-items: flex-start;
+
+  .el-checkbox__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    line-height: 1.6;
+    white-space: normal;
+  }
+}
+
+:deep(.plan-input) {
+  .el-input__wrapper {
+    border-radius: 8px;
+    box-shadow: 0 0 0 1px #d8dee9 inset;
+    background: #fff;
+  }
+
+  .el-input__inner {
+    font-weight: 600;
+    color: #1a1f36;
+  }
+}
+
+.plan-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.plan-actions__main {
+  flex: 1;
+}
+
+.overview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &--primary {
+    color: #fff;
+    background: #2563eb;
+
+    &:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &--ghost {
+    color: #334155;
+    background: #fff;
+    border: 1px solid #d8dee9;
+
+    &:hover:not(:disabled) {
+      background: #f8fafc;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.plan-loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 640px) {
+  .plan-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-summary {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
