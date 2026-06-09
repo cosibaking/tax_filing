@@ -291,6 +291,39 @@ func (c *ControllerV1) ComplianceAuditExport(ctx context.Context, req *api.Compl
 	return &api.ComplianceAuditExportRes{}, nil
 }
 
+// ComplianceSocialConsultList 社保咨询工单列表
+func (c *ControllerV1) ComplianceSocialConsultList(ctx context.Context, req *api.ComplianceSocialConsultListReq) (res *api.ComplianceSocialConsultListRes, err error) {
+	out, err := service.ComplianceSocial().ListAdminConsults(ctx, &compliancein.AdminSocialConsultListInp{
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Status:   req.Status,
+		Query:    req.Query,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceSocialConsultListRes{AdminSocialConsultListModel: out}, nil
+}
+
+// ComplianceSocialConsultReply 回复或关闭社保咨询
+func (c *ControllerV1) ComplianceSocialConsultReply(ctx context.Context, req *api.ComplianceSocialConsultReplyReq) (res *api.ComplianceSocialConsultReplyRes, err error) {
+	ip := ""
+	if r := ghttp.RequestFromCtx(ctx); r != nil {
+		ip = r.GetClientIp()
+	}
+	out, err := service.ComplianceSocial().ReplyConsult(ctx, &compliancein.AdminSocialConsultReplyInp{
+		Id:      req.Id,
+		Reply:   req.Reply,
+		Action:  req.Action,
+		AdminId: contexts.GetUserId(ctx),
+		Ip:      ip,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceSocialConsultReplyRes{AdminSocialConsultReplyModel: out}, nil
+}
+
 // ComplianceDashboard 合规工作台概览
 func (c *ControllerV1) ComplianceDashboard(ctx context.Context, req *api.ComplianceDashboardReq) (res *api.ComplianceDashboardRes, err error) {
 	out, err := service.ComplianceDashboard().GetOverview(ctx)

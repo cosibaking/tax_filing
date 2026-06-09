@@ -88,6 +88,17 @@ type (
 	IComplianceDashboard interface {
 		GetOverview(ctx context.Context) (*compliancein.DashboardOverviewModel, error)
 	}
+
+	IComplianceSocial interface {
+		GetEmployment(ctx context.Context, memberId uint64) (*compliancein.EmploymentStatusModel, error)
+		SetEmployment(ctx context.Context, in *compliancein.EmploymentStatusInp) (*compliancein.EmploymentStatusModel, error)
+		ListGuides(ctx context.Context) (*compliancein.SocialGuideListModel, error)
+		GetGuide(ctx context.Context, in *compliancein.SocialGuideDetailInp) (*compliancein.SocialGuideDetailModel, error)
+		CreateConsult(ctx context.Context, in *compliancein.SocialConsultCreateInp) (*compliancein.SocialConsultCreateModel, error)
+		ListMemberConsults(ctx context.Context, in *compliancein.SocialConsultListInp) (*compliancein.SocialConsultListModel, error)
+		ListAdminConsults(ctx context.Context, in *compliancein.AdminSocialConsultListInp) (*compliancein.AdminSocialConsultListModel, error)
+		ReplyConsult(ctx context.Context, in *compliancein.AdminSocialConsultReplyInp) (*compliancein.AdminSocialConsultReplyModel, error)
+	}
 )
 
 var (
@@ -100,6 +111,7 @@ var (
 	localComplianceStatement  IComplianceStatement
 	localComplianceAudit      IComplianceAudit
 	localComplianceDashboard  IComplianceDashboard
+	localComplianceSocial     IComplianceSocial
 )
 
 func ComplianceDiagnosis() IComplianceDiagnosis {
@@ -199,4 +211,15 @@ func ComplianceDashboard() IComplianceDashboard {
 
 func RegisterComplianceDashboard(i IComplianceDashboard) {
 	localComplianceDashboard = i
+}
+
+func ComplianceSocial() IComplianceSocial {
+	if localComplianceSocial == nil {
+		panic("implement not found for interface IComplianceSocial, forgot register?")
+	}
+	return localComplianceSocial
+}
+
+func RegisterComplianceSocial(i IComplianceSocial) {
+	localComplianceSocial = i
 }

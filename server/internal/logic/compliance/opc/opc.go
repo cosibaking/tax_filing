@@ -67,13 +67,24 @@ func (s *sComplianceOpc) GetSummary(ctx context.Context, memberId uint64) (*comp
 		creditCode = maskCreditCode(creditCode)
 	}
 
+	empStatus := row.EmploymentStatus
+	if empStatus == "" {
+		empStatus = "unknown"
+	}
+	var empConfirmed string
+	if row.EmploymentConfirmedAt > 0 {
+		empConfirmed = utility.UnixToGTime(int64(row.EmploymentConfirmedAt)).Format("Y-m-d H:i:s")
+	}
+
 	return &compliancein.OpcSummaryModel{
-		OpcId:       row.Id,
-		Status:      row.Status,
-		CompanyName: row.CompanyName,
-		CreditCode:  creditCode,
-		PlanTier:    planTier,
-		IsActive:    row.Status == opcActive,
+		OpcId:                 row.Id,
+		Status:                row.Status,
+		CompanyName:           row.CompanyName,
+		CreditCode:            creditCode,
+		PlanTier:              planTier,
+		IsActive:              row.Status == opcActive,
+		EmploymentStatus:      empStatus,
+		EmploymentConfirmedAt: empConfirmed,
 	}, nil
 }
 
@@ -741,8 +752,10 @@ type opcRow struct {
 	BankName             string  `json:"bank_name"`
 	BankAccountEnc       string  `json:"bank_account_enc"`
 	BankReceiptFileId    uint64  `json:"bank_receipt_file_id"`
-	Status               string  `json:"status"`
-	MaterialsSubmittedAt uint64  `json:"materials_submitted_at"`
+	Status                 string  `json:"status"`
+	EmploymentStatus       string  `json:"employment_status"`
+	EmploymentConfirmedAt  uint64  `json:"employment_confirmed_at"`
+	MaterialsSubmittedAt   uint64  `json:"materials_submitted_at"`
 }
 
 type memberBrief struct {

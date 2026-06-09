@@ -113,6 +113,19 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *member.UploadFileReq
 	}, nil
 }
 
+// AttachmentAccessURL 刷新当前会员可访问的附件签名链接
+func (c *ControllerV1) AttachmentAccessURL(ctx context.Context, req *member.AttachmentAccessURLReq) (res *member.AttachmentAccessURLRes, err error) {
+	memberId := contexts.GetMemberId(ctx)
+	if memberId == 0 {
+		return nil, gerror.NewCode(consts.CodeNotAuthorized, "请先登录")
+	}
+	accessURL, err := attachmentaccess.BuildSignedURL(ctx, memberId, req.FileId, 0)
+	if err != nil {
+		return nil, err
+	}
+	return &member.AttachmentAccessURLRes{Url: accessURL}, nil
+}
+
 func saveMemberAttachment(ctx context.Context, memberId uint64, url, originalName string, size int64, mimetype, sha1sum string) (uint64, error) {
 	now := uint(utility.NowUnix())
 	_, err := dao.SysAttachment.Ctx(ctx).Data(do.SysAttachment{

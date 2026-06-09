@@ -21,7 +21,7 @@ import (
 	"xygo/internal/model/entity"
 )
 
-const defaultSignedTTL = 30 * time.Minute
+const defaultSignedTTL = 48 * time.Hour
 
 type attachmentRecord struct {
 	Id       uint64 `json:"id"`

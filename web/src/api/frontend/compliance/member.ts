@@ -501,6 +501,10 @@ export interface TaxChecklistItem {
 
   checked: boolean
 
+  na?: boolean
+
+  hint?: string
+
 }
 
 
@@ -555,7 +559,7 @@ export const TAX_CHECKLIST_ITEMS: { key: string; label: string }[] = [
 
   { key: 'cost_booked', label: '成本费用发票是否已入账？' },
 
-  { key: 'salary_tax', label: 'OPC 是否有员工要报工资个税？' },
+  { key: 'payroll_tax', label: 'OPC 是否有员工要报工资个税？' },
 
   { key: 'vat_filed', label: '本季度增值税申报了吗？' },
 
@@ -565,7 +569,7 @@ export const TAX_CHECKLIST_ITEMS: { key: string; label: string }[] = [
 
   { key: 'other_platform', label: '主播是否还有其他平台收入要合并计算？' },
 
-  { key: 'prev_correction', label: '上一期申报是否有错误要更正？' }
+  { key: 'prior_correction', label: '上一期申报是否有错误要更正？' }
 
 ]
 

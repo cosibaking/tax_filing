@@ -15,9 +15,13 @@
         v-for="item in FILING_CHECKLIST_ITEMS"
         :key="item.key"
         class="flex items-start gap-2 text-sm"
+        :class="{ 'text-gray-400': isNA(item.key) }"
       >
-        <ElCheckbox v-model="checklist[item.key]" />
-        <span>{{ item.label }}</span>
+        <ElCheckbox v-model="checklist[item.key]" :disabled="isNA(item.key)" />
+        <span>
+          {{ item.label }}
+          <span v-if="isNA(item.key)" class="text-xs">（不适用：无雇员）</span>
+        </span>
       </label>
     </div>
 
@@ -41,7 +45,7 @@
 
 <script setup lang="ts">
 import ArtFileUpload from '@/components/core/forms/art-file-upload/index.vue'
-import { markFilingFiled, FILING_CHECKLIST_ITEMS, type FilingTaskItem } from '@/api/backend/compliance'
+import { markFilingFiled, FILING_CHECKLIST_ITEMS, isChecklistItemNA, type FilingTaskItem } from '@/api/backend/compliance'
 import { ElMessage } from 'element-plus'
 
 interface Props {
@@ -63,12 +67,20 @@ const checklist = reactive<Record<string, boolean>>(
   Object.fromEntries(FILING_CHECKLIST_ITEMS.map(i => [i.key, false]))
 )
 
-const allChecked = computed(() => FILING_CHECKLIST_ITEMS.every(i => checklist[i.key]))
+function isNA(key: string) {
+  return isChecklistItemNA(key, props.task?.employmentStatus)
+}
+
+const allChecked = computed(() =>
+  FILING_CHECKLIST_ITEMS.every(i => isNA(i.key) || checklist[i.key])
+)
 const canSubmit = computed(() => allChecked.value && !!receiptFileId.value)
 
 watch(() => props.visible, (val) => {
   if (val) {
-    FILING_CHECKLIST_ITEMS.forEach(i => { checklist[i.key] = false })
+    FILING_CHECKLIST_ITEMS.forEach(i => {
+      checklist[i.key] = isChecklistItemNA(i.key, props.task?.employmentStatus)
+    })
     receiptFileId.value = ''
     filedAmount.value = props.task?.calculatedAmount
   }

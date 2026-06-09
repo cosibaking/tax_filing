@@ -248,3 +248,28 @@ type ComplianceDashboardRes struct {
 	*compliancein.DashboardOverviewModel
 }
 
+// ComplianceSocialConsultListReq 社保咨询工单列表
+type ComplianceSocialConsultListReq struct {
+	g.Meta   `path:"/admin/compliance/social-consults" method:"get" tags:"合规服务" summary:"社保咨询工单列表"`
+	Page     int    `p:"page" json:"page" d:"1"`
+	PageSize int    `p:"pageSize" json:"pageSize" d:"20"`
+	Status   string `p:"status" json:"status"`
+	Query    string `p:"q" json:"q"`
+}
+
+type ComplianceSocialConsultListRes struct {
+	*compliancein.AdminSocialConsultListModel
+}
+
+// ComplianceSocialConsultReplyReq 回复或关闭社保咨询
+type ComplianceSocialConsultReplyReq struct {
+	g.Meta `path:"/admin/compliance/social-consults/{id}" method:"patch" tags:"合规服务" summary:"回复或关闭社保咨询"`
+	Id     uint64 `p:"id" in:"path" json:"id" v:"required|min:1#请指定工单"`
+	Reply  string `json:"reply"`
+	Action string `json:"action" d:"reply" v:"in:reply,close#操作无效"`
+}
+
+type ComplianceSocialConsultReplyRes struct {
+	*compliancein.AdminSocialConsultReplyModel
+}
+

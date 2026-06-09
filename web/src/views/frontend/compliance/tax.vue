@@ -1,6 +1,9 @@
 <!-- P-11 申报日历 -->
 <template>
-  <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
+  <div>
+    <EmploymentStatusCard only-when-unknown class="mb-6" @saved="loadChecklist" />
+
+    <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
       <div>
         <h2 class="font-heading font-black text-2xl text-clay-foreground">申报管理</h2>
@@ -78,10 +81,15 @@
           <label
             v-for="item in checklist"
             :key="item.key"
-            class="flex items-start gap-3 text-sm font-medium text-clay-foreground"
+            class="flex items-start gap-3 text-sm font-medium"
+            :class="item.na ? 'text-clay-muted' : 'text-clay-foreground'"
           >
             <ElCheckbox :model-value="item.checked" disabled class="mt-0.5" />
-            <span>{{ item.label }}</span>
+            <span>
+              {{ item.label }}
+              <span v-if="item.na" class="text-xs text-clay-muted">（不适用）</span>
+              <span v-else-if="item.hint" class="block text-xs text-clay-muted mt-0.5">{{ item.hint }}</span>
+            </span>
           </label>
         </div>
         <p class="text-xs text-clay-muted mt-4">由顾问在申报前勾选确认，此处为只读展示</p>
@@ -129,10 +137,12 @@
         </div>
       </template>
     </ElDrawer>
-  </section>
+    </section>
+  </div>
 </template>
 
 <script setup lang="ts">
+import EmploymentStatusCard from '@/components/member/EmploymentStatusCard.vue'
 import {
   getTaxCalendar,
   getTaxChecklist,
@@ -191,16 +201,24 @@ function nextMonth() {
   loadData()
 }
 
-async function loadData() {
-  loading.value = true
+async function loadChecklist() {
   try {
-    calendar.value = await getTaxCalendar({ year: viewYear.value, month: viewMonth.value })
-    tasks.value = calendar.value?.tasks || []
     const period = `${viewYear.value}-${String(viewMonth.value).padStart(2, '0')}`
     const cl = await getTaxChecklist({ period })
     checklist.value = cl.items?.length
       ? cl.items
       : TAX_CHECKLIST_ITEMS.map(i => ({ ...i, checked: false }))
+  } catch {
+    checklist.value = TAX_CHECKLIST_ITEMS.map(i => ({ ...i, checked: false }))
+  }
+}
+
+async function loadData() {
+  loading.value = true
+  try {
+    calendar.value = await getTaxCalendar({ year: viewYear.value, month: viewMonth.value })
+    tasks.value = calendar.value?.tasks || []
+    await loadChecklist()
   } catch {
     calendar.value = null
     tasks.value = []

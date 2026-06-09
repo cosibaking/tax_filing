@@ -153,11 +153,16 @@ export interface OpcBankReceiptParams {
 
 /** OPC 主体信息 */
 export interface OpcEntityInfo {
-  id: number | string
+  opcId?: number | string
+  id?: number | string
   companyName?: string
   creditCode?: string
   status: OpcStatus
   bankAccountMasked?: string
+  employmentStatus?: 'unknown' | 'no_employee' | 'has_employee'
+  employmentConfirmedAt?: string
+  planTier?: string
+  isActive?: boolean
 }
 
 /** 获取 OPC 进度与时间轴 */

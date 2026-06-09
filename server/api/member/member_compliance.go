@@ -623,4 +623,65 @@ type ComplianceStatementPdfRes struct {
 	Url string `json:"url"`
 }
 
+// ComplianceEmploymentGetReq 获取用工状态
+type ComplianceEmploymentGetReq struct {
+	g.Meta `path:"/compliance/employment" method:"get" tags:"会员合规" summary:"获取用工状态"`
+}
+
+type ComplianceEmploymentGetRes struct {
+	*compliancein.EmploymentStatusModel
+}
+
+// ComplianceEmploymentSetReq 设置用工状态
+type ComplianceEmploymentSetReq struct {
+	g.Meta           `path:"/compliance/employment" method:"put" tags:"会员合规" summary:"设置用工状态"`
+	EmploymentStatus string `json:"employmentStatus" v:"required|in:no_employee,has_employee#请选择用工状态|用工状态无效"`
+}
+
+type ComplianceEmploymentSetRes struct {
+	*compliancein.EmploymentStatusModel
+}
+
+// ComplianceSocialGuidesReq 社保指引列表
+type ComplianceSocialGuidesReq struct {
+	g.Meta `path:"/compliance/social/guides" method:"get" tags:"会员合规" summary:"社保指引列表"`
+}
+
+type ComplianceSocialGuidesRes struct {
+	*compliancein.SocialGuideListModel
+}
+
+// ComplianceSocialGuideDetailReq 社保指引详情
+type ComplianceSocialGuideDetailReq struct {
+	g.Meta `path:"/compliance/social/guides/{slug}" method:"get" tags:"会员合规" summary:"社保指引详情"`
+	Slug   string `p:"slug" in:"path" json:"slug" v:"required#请指定指引文章"`
+}
+
+type ComplianceSocialGuideDetailRes struct {
+	*compliancein.SocialGuideDetailModel
+}
+
+// ComplianceSocialConsultCreateReq 提交社保咨询
+type ComplianceSocialConsultCreateReq struct {
+	g.Meta     `path:"/compliance/social/consults" method:"post" tags:"会员合规" summary:"提交社保咨询"`
+	Category   string `json:"category" d:"founder"`
+	Question   string `json:"question" v:"required|min-length:5#请描述问题|问题至少5个字"`
+	RegionCode string `json:"regionCode"`
+}
+
+type ComplianceSocialConsultCreateRes struct {
+	*compliancein.SocialConsultCreateModel
+}
+
+// ComplianceSocialConsultListReq 社保咨询列表
+type ComplianceSocialConsultListReq struct {
+	g.Meta   `path:"/compliance/social/consults" method:"get" tags:"会员合规" summary:"社保咨询列表"`
+	Page     int `p:"page" json:"page" d:"1"`
+	PageSize int `p:"pageSize" json:"pageSize" d:"20"`
+}
+
+type ComplianceSocialConsultListRes struct {
+	*compliancein.SocialConsultListModel
+}
+
 

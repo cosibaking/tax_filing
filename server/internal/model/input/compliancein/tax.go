@@ -97,6 +97,7 @@ type ChecklistItem struct {
 	Key     string `json:"key"`
 	Label   string `json:"label"`
 	Checked bool   `json:"checked"`
+	Na      bool   `json:"na,omitempty"`
 	Hint    string `json:"hint,omitempty"`
 }
 
@@ -127,6 +128,7 @@ type FilingTaskItem struct {
 	MemberId         uint64  `json:"memberId"`
 	CompanyName      string  `json:"companyName"`
 	MemberName       string  `json:"memberName"`
+	EmploymentStatus string  `json:"employmentStatus,omitempty"`
 	TaxType          string  `json:"taxType"`
 	TaxTypeLabel     string  `json:"taxTypeLabel"`
 	Period           string  `json:"period"`

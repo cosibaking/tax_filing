@@ -61,7 +61,7 @@ func (s *sComplianceTax) GetCalendar(ctx context.Context, in *compliancein.TaxCa
 	dueSet := make(map[string]struct{})
 	var nextDue uint64
 	for _, row := range rows {
-		item := toCalendarItem(row)
+		item := toCalendarItem(ctx, row)
 		items = append(items, item)
 		if row.DueDate > 0 {
 			dueStr := formatUnix(row.DueDate)
@@ -145,6 +145,7 @@ func (s *sComplianceTax) GetChecklist(ctx context.Context, in *compliancein.TaxC
 	if task.Id > 0 && task.Checklist != "" {
 		items = mergeChecklist(items, task.Checklist)
 	}
+	items = enrichChecklistForOpc(ctx, opc.Id, items)
 
 	return &compliancein.TaxChecklistModel{
 		TaskId:      taskId,
@@ -233,11 +234,12 @@ type taskRow struct {
 	Checklist        string  `json:"checklist"`
 }
 
-func toCalendarItem(row taskRow) compliancein.TaxCalendarItem {
+func toCalendarItem(ctx context.Context, row taskRow) compliancein.TaxCalendarItem {
 	items := defaultChecklistItems()
 	if row.Checklist != "" {
 		items = mergeChecklist(items, row.Checklist)
 	}
+	items = enrichChecklistForOpc(ctx, row.OpcId, items)
 	return compliancein.TaxCalendarItem{
 		Id:               row.Id,
 		TaxType:          row.TaxType,
@@ -292,6 +294,9 @@ func mergeChecklist(defaults []compliancein.ChecklistItem, raw string) []complia
 
 func checklistComplete(items []compliancein.ChecklistItem) bool {
 	for _, item := range items {
+		if item.Na {
+			continue
+		}
 		if !item.Checked {
 			return false
 		}

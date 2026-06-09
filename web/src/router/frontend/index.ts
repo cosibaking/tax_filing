@@ -360,6 +360,34 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
 
           {
 
+            path: 'compliance/social-guide',
+
+            name: 'MemberComplianceSocialGuide',
+
+            component: () => import('@/views/frontend/compliance/social-guide.vue'),
+
+            meta: { title: '社保指引', requiresAuth: true },
+
+            beforeEnter: complianceRouteGuard
+
+          },
+
+          {
+
+            path: 'compliance/social-consult',
+
+            name: 'MemberComplianceSocialConsult',
+
+            component: () => import('@/views/frontend/compliance/social-consult.vue'),
+
+            meta: { title: '社保咨询', requiresAuth: true },
+
+            beforeEnter: complianceRouteGuard
+
+          },
+
+          {
+
             path: 'compliance/statement',
 
             name: 'MemberComplianceStatement',

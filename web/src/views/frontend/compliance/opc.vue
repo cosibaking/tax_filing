@@ -285,14 +285,15 @@
                 <p class="text-sm font-black text-clay-foreground mb-3">{{ item.label }}</p>
                 <img
                   v-if="isImageMime(item.mimeType)"
-                  :src="item.accessUrl"
+                  :src="getAttachmentSrc(item)"
                   :alt="item.fileName"
                   class="w-full max-h-72 object-contain rounded-xl bg-white"
                   referrerpolicy="same-origin"
+                  @error="refreshAttachmentUrl(item.fileId)"
                 />
                 <a
                   v-else
-                  :href="item.accessUrl"
+                  :href="getAttachmentSrc(item)"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="inline-flex items-center gap-2 text-sm font-bold text-clay-accent hover:underline"
@@ -398,6 +399,7 @@
 <script setup lang="ts">
 import ChinaRegionSelect from '@/components/frontend/ChinaRegionSelect.vue'
 import MemberFileUpload from '@/components/frontend/MemberFileUpload.vue'
+import { getMemberAttachmentUrl } from '@/api/frontend/member/upload'
 import {
   getOpcProgress,
   getMaterialsOverview,
@@ -450,6 +452,8 @@ const revealedSections = ref<MaterialsRevealSection[]>([])
 const passwordVisible = ref(false)
 const passwordInput = ref('')
 const revealSubmitting = ref(false)
+const attachmentUrlOverrides = ref<Record<string, string>>({})
+const attachmentUrlRefreshing = ref<Record<string, boolean>>({})
 
 const DEFAULT_STEPS: OpcProgressStep[] = [
   { key: 'materials', label: '资料提交', status: 'current' },
@@ -499,6 +503,27 @@ function sectionDisplayAttachments(section: MaterialsDetailSection | MaterialsRe
 
 function isImageMime(mime?: string) {
   return !!mime && mime.startsWith('image/')
+}
+
+function getAttachmentSrc(item: MaterialsAttachmentReveal) {
+  const key = String(item.fileId)
+  return attachmentUrlOverrides.value[key] ?? item.accessUrl
+}
+
+async function refreshAttachmentUrl(fileId: number | string) {
+  const key = String(fileId)
+  if (attachmentUrlRefreshing.value[key]) return
+  attachmentUrlRefreshing.value[key] = true
+  try {
+    const data = await getMemberAttachmentUrl(fileId)
+    if (data?.url) {
+      attachmentUrlOverrides.value[key] = data.url
+    }
+  } catch {
+    // 忽略刷新失败，避免重复触发 error-handle
+  } finally {
+    attachmentUrlRefreshing.value[key] = false
+  }
 }
 
 const formData = reactive({
@@ -687,6 +712,8 @@ function resetDetailState() {
   activeOpcId.value = 0
   revealed.value = false
   revealedSections.value = []
+  attachmentUrlOverrides.value = {}
+  attachmentUrlRefreshing.value = {}
 }
 
 async function handleReveal() {

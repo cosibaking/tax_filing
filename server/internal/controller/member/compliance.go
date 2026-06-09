@@ -1001,6 +1001,98 @@ func (c *ControllerV1) ComplianceStatementPdf(ctx context.Context, req *member.C
 	return &member.ComplianceStatementPdfRes{Url: ""}, nil
 }
 
+// ComplianceEmploymentGet 获取用工状态
+func (c *ControllerV1) ComplianceEmploymentGet(ctx context.Context, req *member.ComplianceEmploymentGetReq) (res *member.ComplianceEmploymentGetRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceSocial().GetEmployment(ctx, memberId)
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceEmploymentGetRes{EmploymentStatusModel: out}, nil
+}
+
+// ComplianceEmploymentSet 设置用工状态
+func (c *ControllerV1) ComplianceEmploymentSet(ctx context.Context, req *member.ComplianceEmploymentSetReq) (res *member.ComplianceEmploymentSetRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ip, _ := requestMeta(ctx)
+	out, err := service.ComplianceSocial().SetEmployment(ctx, &compliancein.EmploymentStatusInp{
+		MemberId:         memberId,
+		EmploymentStatus: req.EmploymentStatus,
+		Ip:               ip,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceEmploymentSetRes{EmploymentStatusModel: out}, nil
+}
+
+// ComplianceSocialGuides 社保指引列表
+func (c *ControllerV1) ComplianceSocialGuides(ctx context.Context, req *member.ComplianceSocialGuidesReq) (res *member.ComplianceSocialGuidesRes, err error) {
+	if _, err = requireMemberId(ctx); err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceSocial().ListGuides(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceSocialGuidesRes{SocialGuideListModel: out}, nil
+}
+
+// ComplianceSocialGuideDetail 社保指引详情
+func (c *ControllerV1) ComplianceSocialGuideDetail(ctx context.Context, req *member.ComplianceSocialGuideDetailReq) (res *member.ComplianceSocialGuideDetailRes, err error) {
+	if _, err = requireMemberId(ctx); err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceSocial().GetGuide(ctx, &compliancein.SocialGuideDetailInp{Slug: req.Slug})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceSocialGuideDetailRes{SocialGuideDetailModel: out}, nil
+}
+
+// ComplianceSocialConsultCreate 提交社保咨询
+func (c *ControllerV1) ComplianceSocialConsultCreate(ctx context.Context, req *member.ComplianceSocialConsultCreateReq) (res *member.ComplianceSocialConsultCreateRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ip, _ := requestMeta(ctx)
+	out, err := service.ComplianceSocial().CreateConsult(ctx, &compliancein.SocialConsultCreateInp{
+		MemberId:   memberId,
+		Category:   req.Category,
+		Question:   req.Question,
+		RegionCode: req.RegionCode,
+		Ip:         ip,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceSocialConsultCreateRes{SocialConsultCreateModel: out}, nil
+}
+
+// ComplianceSocialConsultList 社保咨询列表
+func (c *ControllerV1) ComplianceSocialConsultList(ctx context.Context, req *member.ComplianceSocialConsultListReq) (res *member.ComplianceSocialConsultListRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceSocial().ListMemberConsults(ctx, &compliancein.SocialConsultListInp{
+		MemberId: memberId,
+		Page:     req.Page,
+		PageSize: req.PageSize,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceSocialConsultListRes{SocialConsultListModel: out}, nil
+}
+
 func buildProfitQuery(req *member.ComplianceLedgerProfitReq) *compliancein.ProfitQueryInp {
 	in := &compliancein.ProfitQueryInp{}
 	switch strings.ToLower(strings.TrimSpace(req.PeriodType)) {

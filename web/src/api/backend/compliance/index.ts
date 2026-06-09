@@ -6,7 +6,7 @@ import { adminRequest } from '@/utils/http'
 import { FILING_CHECKLIST_ITEMS as CHECKLIST_DEFS } from './checklist'
 import type { OpcStatus } from '@/api/frontend/compliance/opc'
 
-export { FILING_CHECKLIST_ITEMS } from './checklist'
+export { FILING_CHECKLIST_ITEMS, isChecklistItemNA } from './checklist'
 
 /** OPC 任务列表项 */
 export interface OpcTaskItem {
@@ -304,6 +304,8 @@ export interface FilingTaskItem {
   memberName?: string
   memberPhone?: string
   opcCompanyName?: string
+  opcId?: number
+  employmentStatus?: string
   taxType: FilingTaxType
   period: string
   dueDate: string
@@ -433,6 +435,8 @@ function mapFilingItem(raw: Record<string, any>): FilingTaskItem {
     memberId: raw.memberId ?? raw.member_id,
     memberName: raw.memberName ?? raw.member_name,
     opcCompanyName: raw.companyName ?? raw.opcCompanyName ?? raw.company_name,
+    opcId: raw.opcId ?? raw.opc_id,
+    employmentStatus: raw.employmentStatus ?? raw.employment_status,
     taxType,
     period: raw.period,
     dueDate: raw.dueDate ?? raw.due_date,

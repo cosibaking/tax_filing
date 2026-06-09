@@ -88,6 +88,22 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     visible: (plan) => plan.opcStatus === 'active'
   },
   {
+    id: 'social-guide',
+    name: '社保指引',
+    icon: 'ri:heart-pulse-line',
+    path: '/user/compliance/social-guide',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
+    id: 'social-consult',
+    name: '社保咨询',
+    icon: 'ri:question-answer-line',
+    path: '/user/compliance/social-consult',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
     id: 'statement',
     name: '对账单',
     icon: 'ri:file-chart-line',

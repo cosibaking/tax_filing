@@ -114,6 +114,17 @@ type UploadFileRes struct {
 	AttachmentId uint64 `json:"attachmentId"`
 }
 
+// AttachmentAccessURLReq 刷新会员附件访问链接
+type AttachmentAccessURLReq struct {
+	g.Meta `path:"/user/attachment-url" method:"get" tags:"会员上传" summary:"获取附件访问链接"`
+	FileId uint64 `p:"fileId" json:"fileId" v:"required|min:1#请指定附件|附件ID无效"`
+}
+
+// AttachmentAccessURLRes 附件访问链接响应
+type AttachmentAccessURLRes struct {
+	Url string `json:"url"`
+}
+
 // ==================== 每日签到 ====================
 
 // CheckinInfoReq 获取签到信息（7天日历+连续天数）

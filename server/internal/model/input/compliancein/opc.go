@@ -45,12 +45,14 @@ type MaterialsSubmitModel struct {
 
 // OpcSummaryModel OPC 主体摘要
 type OpcSummaryModel struct {
-	OpcId       uint64 `json:"opcId,omitempty"`
-	Status      string `json:"status"`
-	CompanyName string `json:"companyName,omitempty"`
-	CreditCode  string `json:"creditCode,omitempty"`
-	PlanTier    string `json:"planTier,omitempty"`
-	IsActive    bool   `json:"isActive"`
+	OpcId                 uint64 `json:"opcId,omitempty"`
+	Status                string `json:"status"`
+	CompanyName           string `json:"companyName,omitempty"`
+	CreditCode            string `json:"creditCode,omitempty"`
+	PlanTier              string `json:"planTier,omitempty"`
+	IsActive              bool   `json:"isActive"`
+	EmploymentStatus      string `json:"employmentStatus,omitempty"`
+	EmploymentConfirmedAt string `json:"employmentConfirmedAt,omitempty"`
 }
 
 // ProgressStepItem 时间轴节点

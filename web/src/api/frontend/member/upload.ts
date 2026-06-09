@@ -19,3 +19,11 @@ export function uploadMemberFile(file: File) {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
+
+/** 获取（刷新）会员附件签名访问链接 */
+export function getMemberAttachmentUrl(fileId: number | string) {
+  return memberRequest.get<{ url: string }>({
+    url: '/user/attachment-url',
+    params: { fileId },
+  })
+}

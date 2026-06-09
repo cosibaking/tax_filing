@@ -9,6 +9,7 @@ import (
 	_ "xygo/internal/logic/compliance/dashboard"
 	_ "xygo/internal/logic/compliance/statement"
 	_ "xygo/internal/logic/compliance/tax"
+	_ "xygo/internal/logic/compliance/social"
 	"xygo/internal/service"
 )
 
