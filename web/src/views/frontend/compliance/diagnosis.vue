@@ -56,7 +56,7 @@
             <span class="font-bold text-clay-foreground">{{ entityLabel(item.existingEntity) }}</span>
           </div>
           <div>
-            <span class="block text-[10px] font-black text-clay-muted uppercase tracking-widest mb-1">直播平台</span>
+            <span class="block text-[10px] font-black text-clay-muted uppercase tracking-widest mb-1">收入渠道</span>
             <span class="font-bold text-clay-foreground">{{ item.platforms?.join('、') || '-' }}</span>
           </div>
         </div>

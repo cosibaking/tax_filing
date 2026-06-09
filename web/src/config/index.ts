@@ -48,7 +48,7 @@ import { headerBarConfig } from './modules/headerBar'
 const appConfig: SystemConfig = {
   // 系统信息
   systemInfo: {
-    name: 'Art Design Pro' // 系统名称
+    name: '金税管家' // 系统名称
   },
   // 系统主题
   systemThemeStyles: {

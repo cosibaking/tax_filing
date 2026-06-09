@@ -27,8 +27,8 @@ export const useSiteStore = defineStore(
   () => {
     // 站点信息
     const siteInfo = ref<Partial<SiteInfo>>({
-      siteName: 'XYGo Admin',
-      siteSubtitle: '基于GoFrame和Vue3的后台管理系统',
+      siteName: '金税管家',
+      siteSubtitle: '个人税务合规与申报一站式服务',
       logo: '',
       themeColor: '#1890ff',
       description: '',
@@ -68,7 +68,7 @@ export const useSiteStore = defineStore(
      * 获取站点名称
      */
     const getSiteName = (): string => {
-      return siteInfo.value.siteName || 'XYGo Admin'
+      return siteInfo.value.siteName || '金税管家'
     }
 
     /**

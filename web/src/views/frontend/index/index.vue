@@ -1,271 +1,432 @@
 <!-- +----------------------------------------------------------------------
-  | XYGo Admin [ Vue3 + GoFrame 企业级中后台管理系统 ]
-  +----------------------------------------------------------------------
-  | Copyright (c) 2026 大连星韵网络科技有限公司 All rights reserved.
-  +----------------------------------------------------------------------
-  | Licensed ( https://opensource.org/licenses/MIT )
-  +----------------------------------------------------------------------
-  | Author: 喜羊羊 <751300685@qq.com>
+  | P-01 首页 — 主播 OPC 合规营销落地页
   +---------------------------------------------------------------------- -->
 <template>
-  <div class="home-page">
-    <!-- Hero Section -->
-    <header class="relative pt-12 pb-12 px-6 lg:pt-16 lg:pb-20 overflow-hidden">
-      <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-        <!-- 文案 -->
-        <div class="relative z-10 text-center lg:text-left">
-          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 backdrop-blur-sm border border-white/50 shadow-sm mb-6 animate-float">
-            <span class="w-2 h-2 rounded-full bg-clay-success"></span>
-            <span class="text-sm font-bold text-clay-muted uppercase tracking-wider">v1.0 正式发布</span>
-          </div>
-          <h1 class="font-heading font-black text-5xl sm:text-6xl lg:text-7xl leading-[1.1] mb-6 text-clay-foreground">
-            开箱即用的<br><span class="clay-text-gradient">开源中后台</span>框架
-          </h1>
-          <p class="text-lg sm:text-xl text-clay-muted mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-            基于 Vue3 + GoFrame 构建的通用开源中后台管理框架。内置权限管理、代码生成、系统监控等核心模块，开箱即用，快速启动你的业务开发。
-          </p>
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6">
-            <RouterLink
-              to="/diagnosis"
-              class="w-full sm:w-auto px-10 py-4 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-lg font-bold shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1 active:scale-95 active:shadow-clay-pressed transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              <span>免费诊断</span>
-              <ArtSvgIcon icon="ri:shield-check-line" class="text-lg" />
-            </RouterLink>
-            <RouterLink
-              to="/pricing"
-              class="w-full sm:w-auto px-10 py-4 rounded-full bg-white text-clay-foreground text-lg font-bold shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              <span>服务价格</span>
-              <ArtSvgIcon icon="ri:price-tag-3-line" class="text-lg" />
-            </RouterLink>
-          </div>
-        </div>
-
-        <!-- 右侧模拟界面 -->
-        <div class="relative z-10 mt-12 lg:mt-0 perspective-1000">
-          <div class="relative w-full aspect-[4/3] rounded-[48px] bg-white/40 backdrop-blur-xl shadow-clay-deep border border-[#d1d9e6]/40 p-6 animate-float-delayed transform rotate-y-12 hover:rotate-y-0 transition-transform duration-700 ease-out">
-            <!-- 模拟 Header -->
-            <div class="flex items-center justify-between mb-6">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-white shadow-clay-pressed flex items-center justify-center">
-                  <div class="w-6 h-6 rounded-full bg-clay-accent"></div>
-                </div>
-                <div class="h-4 w-32 bg-gray-200 rounded-full shadow-inner"></div>
-              </div>
-              <div class="flex gap-3">
-                <div class="w-10 h-10 rounded-full bg-white shadow-clay-btn"></div>
-                <div class="w-10 h-10 rounded-full bg-white shadow-clay-btn"></div>
-              </div>
-            </div>
-            <!-- 模拟 Content -->
-            <div class="grid grid-cols-3 gap-6 h-[calc(100%-80px)]">
-              <div class="hidden sm:block col-span-1 bg-white/50 rounded-[32px] shadow-clay-pressed p-4">
-                <div class="space-y-4 mt-4">
-                  <div v-for="i in 5" :key="i" class="h-8 w-full rounded-xl" :class="i === 2 ? 'bg-clay-accent shadow-clay-btn' : 'bg-transparent'"></div>
-                </div>
-              </div>
-              <div class="col-span-3 sm:col-span-2 space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="h-32 rounded-[24px] bg-white shadow-clay-card p-4 flex flex-col justify-between">
-                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center">
-                      <ArtSvgIcon icon="ri:pie-chart-line" class="text-base" />
-                    </div>
-                    <div class="h-2 w-16 bg-gray-200 rounded-full"></div>
-                    <div class="h-6 w-12 bg-gray-300 rounded-full"></div>
-                  </div>
-                  <div class="h-32 rounded-[24px] bg-white shadow-clay-card p-4 flex flex-col justify-between">
-                    <div class="w-8 h-8 rounded-full bg-green-100 text-green-500 flex items-center justify-center">
-                      <ArtSvgIcon icon="ri:bar-chart-box-line" class="text-base" />
-                    </div>
-                    <div class="h-2 w-16 bg-gray-200 rounded-full"></div>
-                    <div class="h-6 w-12 bg-gray-300 rounded-full"></div>
-                  </div>
-                </div>
-                <div class="h-40 rounded-[24px] bg-white shadow-clay-card p-4">
-                  <div class="h-4 w-32 bg-gray-200 rounded-full mb-4"></div>
-                  <div class="space-y-3">
-                    <div class="h-2 w-full bg-gray-100 rounded-full"></div>
-                    <div class="h-2 w-5/6 bg-gray-100 rounded-full"></div>
-                    <div class="h-2 w-4/6 bg-gray-100 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- 装饰球 -->
-          <div class="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-clay-btn animate-breathe flex items-center justify-center text-white text-3xl font-bold">
-            Hi!
-          </div>
-        </div>
+  <div class="opc-home">
+    <!-- Hero -->
+    <section class="opc-hero">
+      <h1 class="opc-hero__title">个人税务合规，从诊断到申报一站搞定</h1>
+      <p class="opc-hero__subtitle">
+        税务诊断、收入费用台账、申报提醒与月度对账单，让合规可执行、可追踪。
+      </p>
+      <div class="opc-hero__actions">
+        <RouterLink to="/diagnosis" class="opc-btn opc-btn--primary">免费合规诊断</RouterLink>
+        <RouterLink to="/pricing" class="opc-btn opc-btn--secondary">查看服务套餐</RouterLink>
       </div>
-    </header>
+    </section>
 
-    <!-- Features Section -->
-    <section class="py-20 px-6 bg-[#f0f3f8]/50">
-      <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-16">
-          <h2 class="font-heading font-extrabold text-4xl sm:text-5xl text-clay-foreground mb-4">
-            核心功能 <span class="text-clay-accent">一应俱全</span>
-          </h2>
-          <p class="text-xl text-clay-muted max-w-2xl mx-auto">从权限管理到代码生成，从系统监控到消息通知，常见中后台需求全部内置。</p>
-        </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div
-            v-for="(feature, index) in features"
-            :key="index"
-            class="group relative rounded-[32px] bg-white/70 p-8 shadow-clay-card backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-clay-card-hover overflow-hidden border border-[#d1d9e6]/40"
-          >
-            <div class="absolute -bottom-8 -right-8 w-32 h-32 rounded-full opacity-20 blur-2xl transition-transform duration-500 group-hover:scale-150" :class="feature.bg"></div>
-            <div class="relative z-10">
-              <div class="w-16 h-16 rounded-2xl bg-white shadow-clay-btn flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-                <ArtSvgIcon :icon="feature.icon" class="text-[28px]" :class="feature.color" />
-              </div>
-              <h3 class="font-heading font-bold text-2xl text-clay-foreground mb-3">{{ feature.title }}</h3>
-              <p class="text-clay-muted leading-relaxed">{{ feature.desc }}</p>
-            </div>
-          </div>
+    <!-- 三步流程 -->
+    <section class="opc-steps">
+      <h2 class="opc-steps__title">三步开启合规服务</h2>
+      <div class="opc-steps__grid">
+        <div v-for="(step, index) in steps" :key="step.title" class="opc-step-card">
+          <div class="opc-step-card__badge">步骤 {{ index + 1 }}</div>
+          <h3 class="opc-step-card__title">{{ step.title }}</h3>
+          <p class="opc-step-card__desc">{{ step.desc }}</p>
         </div>
       </div>
     </section>
 
-    <!-- CRUD Code Gen Section（对齐 homesite） -->
-    <section class="py-20 px-6 relative">
-      <div class="max-w-7xl mx-auto rounded-[60px] bg-white/30 backdrop-blur-xl shadow-clay-deep p-8 md:p-16 overflow-hidden relative">
-        <div class="grid lg:grid-cols-2 gap-12 items-center overflow-hidden">
-          <div class="order-2 lg:order-1 min-w-0 overflow-hidden">
-            <div class="relative rounded-[32px] bg-[#1e1e1e] p-6 shadow-none lg:shadow-2xl overflow-hidden transform rotate-1 transition-transform hover:rotate-0">
-              <div class="flex gap-2 mb-4">
-                <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div class="w-3 h-3 rounded-full bg-green-500"></div>
-              </div>
-              <pre class="font-mono text-sm text-gray-300 overflow-x-auto"><span class="text-purple-400">export</span> <span class="text-blue-400">default</span> <span class="text-yellow-300">defineTable</span>({
-  <span class="text-blue-300">columns</span>: [
-    { <span class="text-green-300">prop</span>: <span class="text-orange-300">'id'</span>, <span class="text-green-300">label</span>: <span class="text-orange-300">'ID'</span>, <span class="text-green-300">width</span>: <span class="text-orange-300">80</span> },
-    { <span class="text-green-300">prop</span>: <span class="text-orange-300">'title'</span>, <span class="text-green-300">label</span>: <span class="text-orange-300">'标题'</span> },
-    { <span class="text-green-300">prop</span>: <span class="text-orange-300">'image'</span>, <span class="text-green-300">label</span>: <span class="text-orange-300">'图片'</span>, <span class="text-green-300">render</span>: <span class="text-yellow-300">Image</span> },
-    { <span class="text-green-300">prop</span>: <span class="text-orange-300">'status'</span>, <span class="text-green-300">label</span>: <span class="text-orange-300">'状态'</span>, <span class="text-green-300">type</span>: <span class="text-orange-300">'switch'</span> },
-  ],
-  <span class="text-gray-500">// 自动生成 CRUD API 和 界面</span>
-})</pre>
-            </div>
-          </div>
-          <div class="order-1 lg:order-2 min-w-0">
-            <div class="inline-block px-4 py-1 rounded-full bg-clay-accent/10 text-clay-accent font-bold mb-4">代码生成</div>
-            <h2 class="font-heading font-extrabold text-4xl md:text-5xl text-clay-foreground mb-6">可视化 CRUD 代码生成</h2>
-            <p class="text-lg text-clay-muted mb-8">在界面上配置数据表字段和表单类型，一键生成前后端完整的增删改查代码，包含控制器、模型、Vue 页面和 API 文件，无需手写重复代码。</p>
-            <ul class="space-y-4">
-              <li v-for="item in ['自动生成 Go 控制器与数据模型', '自动生成 Vue3 列表与表单页面', '支持关联查询、权限控制、导出等配置']" :key="item" class="flex items-center gap-3">
-                <div class="w-6 h-6 rounded-full bg-clay-success/20 text-clay-success flex items-center justify-center">
-                  <ArtSvgIcon icon="ri:check-line" class="text-sm" />
-                </div>
-                <span class="font-medium text-clay-foreground">{{ item }}</span>
-              </li>
-            </ul>
-          </div>
-        </div>
+    <!-- 应用案例 -->
+    <section id="cases" class="opc-cases">
+      <div class="opc-cases__header">
+        <h2 class="opc-cases__title">应用案例</h2>
+        <p class="opc-cases__subtitle">
+          不同收入类型用户，如何通过金税管家实现合规诊断、台账管理与按时申报。
+        </p>
+      </div>
+      <div class="opc-cases__grid">
+        <article v-for="item in previewCases" :key="item.id" class="opc-case-card">
+          <span class="opc-case-card__tag">{{ item.tag }}</span>
+          <h3 class="opc-case-card__title">{{ item.title }}</h3>
+          <p class="opc-case-card__profile">{{ item.profile }}</p>
+          <p class="opc-case-card__outcome">{{ item.outcome }}</p>
+        </article>
+      </div>
+      <div class="opc-cases__more">
+        <RouterLink to="/cases" class="opc-btn opc-btn--secondary">查看全部案例</RouterLink>
+      </div>
+    </section>
+
+    <!-- 关于我们 -->
+    <section id="about" class="opc-about">
+      <div class="opc-about__header">
+        <h2 class="opc-about__title">关于金税管家</h2>
+        <p class="opc-about__subtitle">{{ aboutIntro.subtitle }}</p>
+      </div>
+      <p class="opc-about__desc">{{ aboutIntro.description }}</p>
+      <div class="opc-about__values">
+        <article v-for="item in aboutValues" :key="item.title" class="opc-about-card">
+          <ArtSvgIcon :icon="item.icon" class="opc-about-card__icon" />
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.desc }}</p>
+        </article>
+      </div>
+      <div class="opc-about__more">
+        <RouterLink to="/about" class="opc-btn opc-btn--secondary">了解更多</RouterLink>
+      </div>
+    </section>
+
+    <!-- 重要告知 -->
+    <section class="opc-notice">
+      <div class="opc-notice__box">
+        <h3 class="opc-notice__title">重要告知</h3>
+        <p class="opc-notice__text">
+          本服务为合法合规税务优化方案，非逃税避税方案；不承诺「零风险」「包不被查」。税务筹划基于现行法律法规及优惠政策实施，最终执行结果以税务机关认定为准。请您确保提供资料真实、完整，并在签约前仔细阅读《服务协议》及《风险告知书》。
+        </p>
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import { appCases } from '@/data/frontend/cases'
+import { aboutIntro, aboutValues } from '@/data/frontend/about'
+
 defineOptions({ name: 'FrontendHome' })
 
-const features = [
+const previewCases = appCases.slice(0, 3)
+
+const steps = [
   {
-    title: '权限管理',
-    desc: '基于 RBAC 的角色权限体系，菜单、按钮、接口三级精确控制，支持多角色叠加。',
-    icon: 'ri:shield-keyhole-line',
-    bg: 'bg-blue-400',
-    color: 'text-blue-500'
+    title: '免费诊断',
+    desc: '填写问卷，了解税负对比与合规风险'
   },
   {
-    title: '代码生成',
-    desc: '可视化配置表结构，一键生成前后端增删改查完整代码，告别重复劳动。',
-    icon: 'ri:tools-line',
-    bg: 'bg-cyan-400',
-    color: 'text-cyan-500'
+    title: '签约服务',
+    desc: '选择套餐，完成风险告知与电子签约'
   },
   {
-    title: 'Vue3 + GoFrame',
-    desc: '前端 Vue3 + TypeScript，后端 GoFrame v2，前后端分离，类型安全，开发体验极佳。',
-    icon: 'ri:terminal-box-line',
-    bg: 'bg-indigo-400',
-    color: 'text-indigo-500'
-  },
-  {
-    title: '系统监控',
-    desc: '实时查看服务器 CPU、内存、磁盘状态，接口性能分析，运行日志一目了然。',
-    icon: 'ri:dashboard-line',
-    bg: 'bg-emerald-400',
-    color: 'text-emerald-500'
-  },
-  {
-    title: '消息通知',
-    desc: '内置站内通知系统，支持系统公告、业务消息推送，WebSocket 实时送达。',
-    icon: 'ri:notification-3-line',
-    bg: 'bg-orange-400',
-    color: 'text-orange-500'
-  },
-  {
-    title: '开箱即用',
-    desc: '完整的登录鉴权、操作日志、定时任务、文件上传等基础模块，克隆即可启动。',
-    icon: 'ri:rocket-2-line',
-    bg: 'bg-purple-400',
-    color: 'text-purple-500'
+    title: '记账申报',
+    desc: '录入流水，顾问协助申报与对账'
   }
 ]
 </script>
 
 <style lang="scss" scoped>
-.text-clay-foreground { color: #32325d; }
-.text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.text-clay-success { color: #71dd37; }
-.bg-clay-accent { background-color: #5a8dee; }
-.bg-clay-success { background-color: #71dd37; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-
-.perspective-1000 { perspective: 1000px; }
-.rotate-y-12 { transform: rotateY(12deg); }
-.hover\:rotate-y-0:hover { transform: rotateY(0deg); }
-
-.clay-text-gradient {
-  background: linear-gradient(135deg, #32325d 20%, #5a8dee 60%, #03c3ec 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.opc-home {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
 }
 
-.shadow-clay-deep {
-  box-shadow: 30px 30px 60px #d1d9e6, -30px -30px 60px #ffffff,
-    inset 10px 10px 20px rgba(90, 141, 238, 0.05), inset -10px -10px 20px rgba(255, 255, 255, 0.8);
-}
-.shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
-}
-.shadow-clay-card-hover {
-  box-shadow: 20px 20px 40px rgba(165, 175, 190, 0.35), -12px -12px 30px rgba(255, 255, 255, 0.95),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
-}
-.shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
-}
-.shadow-clay-btn-hover {
-  box-shadow: 16px 16px 32px rgba(90, 141, 238, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.5),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
-}
-.shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
+.opc-hero {
+  text-align: center;
+  padding: 24px 0 56px;
 }
 
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-.animate-float { animation: float 8s ease-in-out infinite; }
-.animate-float-delayed { animation: float 8s ease-in-out 4s infinite; }
-.animate-breathe { animation: breathe 6s ease-in-out infinite; }
+.opc-hero__title {
+  margin: 0 0 20px;
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 800;
+  line-height: 1.35;
+  color: #1a1f36;
+  letter-spacing: -0.02em;
+}
+
+.opc-hero__subtitle {
+  margin: 0 auto 36px;
+  max-width: 640px;
+  font-size: 16px;
+  line-height: 1.75;
+  color: #6b7c93;
+}
+
+.opc-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+
+.opc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &--primary {
+    color: #fff;
+    background: #2563eb;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+
+    &:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+  }
+
+  &--secondary {
+    color: #334155;
+    background: #fff;
+    border: 1px solid #d8dee9;
+
+    &:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+  }
+}
+
+.opc-steps {
+  padding: 16px 0 48px;
+}
+
+.opc-steps__title {
+  margin: 0 0 28px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-steps__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.opc-step-card {
+  padding: 28px 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.opc-step-card__badge {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.opc-step-card__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-step-card__desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #6b7c93;
+}
+
+.opc-cases {
+  padding: 16px 0 48px;
+}
+
+.opc-cases__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.opc-cases__title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-cases__subtitle {
+  margin: 0 auto;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #6b7c93;
+}
+
+.opc-cases__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.opc-case-card {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.opc-case-card__tag {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.opc-case-card__title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #1a1f36;
+}
+
+.opc-case-card__profile {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.opc-case-card__outcome {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #64748b;
+}
+
+.opc-cases__more {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.opc-about {
+  padding: 16px 0 48px;
+}
+
+.opc-about__header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.opc-about__title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-about__subtitle {
+  margin: 0 auto;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #6b7c93;
+}
+
+.opc-about__desc {
+  margin: 0 auto 28px;
+  max-width: 720px;
+  font-size: 15px;
+  line-height: 1.85;
+  text-align: center;
+  color: #475569;
+}
+
+.opc-about__values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.opc-about-card {
+  padding: 22px 18px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+
+  h3 {
+    margin: 12px 0 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #64748b;
+  }
+}
+
+.opc-about-card__icon {
+  font-size: 26px;
+  color: #2563eb;
+}
+
+.opc-about__more {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.opc-notice {
+  padding-top: 8px;
+}
+
+.opc-notice__box {
+  padding: 24px 28px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+}
+
+.opc-notice__title {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.opc-notice__text {
+  margin: 0;
+  color: #78350f;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+@media (max-width: 768px) {
+  .opc-home {
+    padding: 32px 16px 64px;
+  }
+
+  .opc-steps__grid,
+  .opc-cases__grid,
+  .opc-about__values {
+    grid-template-columns: 1fr;
+  }
+
+  .opc-hero__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .opc-btn {
+    width: 100%;
+  }
+}
 </style>

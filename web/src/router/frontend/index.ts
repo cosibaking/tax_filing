@@ -112,6 +112,34 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
 
       },
 
+      // 应用案例
+
+      {
+
+        path: 'cases',
+
+        name: 'FrontendCases',
+
+        component: () => import('@/views/frontend/cases/index.vue'),
+
+        meta: { title: '应用案例' }
+
+      },
+
+      // 关于我们
+
+      {
+
+        path: 'about',
+
+        name: 'FrontendAbout',
+
+        component: () => import('@/views/frontend/about/index.vue'),
+
+        meta: { title: '关于我们' }
+
+      },
+
       // 法律页
 
       {

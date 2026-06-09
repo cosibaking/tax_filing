@@ -19,6 +19,9 @@ server/resource/public/attachment/upload/*
 # 前端构建产物（嵌入 Go 静态目录，可 pnpm build 重建）
 server/resource/public/dist/
 
+# Go 编译产物
+server/tax-filing-server
+
 # 运行时日志与队列存储
 server/logs/
 server/storage/
