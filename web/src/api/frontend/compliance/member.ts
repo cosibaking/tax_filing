@@ -702,15 +702,41 @@ export async function getCompliancePlanState(): Promise<CompliancePlanState> {
 
 /** 收入台账列表 */
 
-export function getIncomeList(params: IncomeListParams) {
+export async function getIncomeList(params: IncomeListParams) {
 
-  return memberRequest.get<IncomeListResult>({
+  const raw = await memberRequest.get<Record<string, any>>({
 
     url: '/compliance/income',
 
     params
 
   })
+
+  const summary = raw?.summary
+
+  return {
+
+    list: (raw?.list || []) as IncomeEntry[],
+
+    total: Number(raw?.total) || 0,
+
+    page: Number(raw?.page) || 1,
+
+    pageSize: Number(raw?.pageSize) || 20,
+
+    summary: summary
+
+      ? {
+
+          grossTotal: Number(summary.totalGross ?? summary.grossTotal) || 0,
+
+          netTotal: Number(summary.totalNet ?? summary.netTotal) || 0
+
+        }
+
+      : undefined
+
+  } satisfies IncomeListResult
 
 }
 
@@ -872,15 +898,35 @@ export function deleteExpense(id: number | string) {
 
 /** 利润表摘要 */
 
-export function getProfitSummary(params: { period: string; periodType: ProfitPeriodType }) {
+export async function getProfitSummary(params: { period: string; periodType: ProfitPeriodType }) {
 
-  return memberRequest.get<ProfitSummary>({
+  const raw = await memberRequest.get<Record<string, any>>({
 
     url: '/compliance/ledger/profit',
 
-    params
+    params,
+
+    showErrorMessage: false
 
   })
+
+  const items = Array.isArray(raw?.items) ? raw.items : []
+
+  return {
+
+    period: raw?.period ?? '',
+
+    periodType: params.periodType,
+
+    revenue: Number(raw?.revenue) || 0,
+
+    cost: Number(raw?.cost) || 0,
+
+    profit: Number(raw?.profit) || 0,
+
+    cumulativeProfit: Number(raw?.cumulativeProfit ?? items[0]?.cumulativeProfit) || 0
+
+  } satisfies ProfitSummary
 
 }
 

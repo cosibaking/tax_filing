@@ -157,6 +157,21 @@ Third-party ID OCR, three-factor verification, and phone real-name checks are no
 
 For production: set backend provider to `aliyun` (or other) and implement `VerifyMaterials`; set frontend `VITE_COMPLIANCE_VERIFY_MOCK=false`.
 
+**Unified Social Credit Code (执照下发 Mock)**
+
+When an advisor marks a license as issued (`issue_license`), credit code validation also follows the same mock switch:
+
+| Mode | Rule |
+|------|------|
+| Mock | Non-empty, max 18 chars (no format/checksum) |
+| Production | GB 32100 format + checksum (`validateCreditCode` in `opc/validate.go` and `complianceVerify.ts`) |
+
+Optional for production: third-party API to verify credit code matches the approved company name. See `docs/03-验收记录.md` §开发备忘 (2026-06-09).
+
+**OPC Task Advance Forms (执照 / 税务 / 银行 Mock)**
+
+Advisor `opc-task-detail-dialog` advance actions use the same mock switch. In mock mode, required fields are non-empty only; attachments skip DB/MIME checks (`validateAttachmentForMode`). Use `ArtFileUpload` with `value-type="id"` so `licenseFileId` / `bankReceiptFileId` send attachment IDs, not URLs.
+
 ### Documentation
 
 | Document | Description |

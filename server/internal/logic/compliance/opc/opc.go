@@ -2,6 +2,8 @@ package opc
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/gogf/gf/v2/encoding/gjson"
@@ -168,7 +170,7 @@ func (s *sComplianceOpc) SubmitMaterials(ctx context.Context, in *compliancein.M
 		return nil, err
 	}
 	for _, fid := range []uint64{in.AddressProofFileId, in.IdCardFrontFileId, in.IdCardBackFileId} {
-		if err := validateAttachment(ctx, fid); err != nil {
+		if err := validateAttachmentForMode(ctx, fid); err != nil {
 			return nil, err
 		}
 	}
@@ -257,7 +259,7 @@ func (s *sComplianceOpc) SubmitBankReceipt(ctx context.Context, in *compliancein
 	if in.BankReceiptFileId == 0 {
 		return nil, gerror.New("请上传开户回执")
 	}
-	if err := validateAttachment(ctx, in.BankReceiptFileId); err != nil {
+	if err := validateAttachmentForMode(ctx, in.BankReceiptFileId); err != nil {
 		return nil, err
 	}
 
@@ -538,13 +540,13 @@ func (s *sComplianceOpc) AdvanceTask(ctx context.Context, in *compliancein.OpcTa
 		if strings.TrimSpace(in.CompanyName) == "" {
 			return nil, gerror.New("请填写核准公司名称")
 		}
-		if !validateCreditCode(in.CreditCode) {
+		if !validateCreditCodeForMode(ctx, in.CreditCode) {
 			return nil, gerror.New("统一社会信用代码格式无效")
 		}
 		if in.LicenseFileId == 0 {
 			return nil, gerror.New("请上传营业执照")
 		}
-		if err := validateAttachment(ctx, in.LicenseFileId); err != nil {
+		if err := validateAttachmentForMode(ctx, in.LicenseFileId); err != nil {
 			return nil, err
 		}
 		update := g.Map{
@@ -764,6 +766,9 @@ func (s *sComplianceOpc) loadOpcByMember(ctx context.Context, memberId uint64) (
 		Where("deleted", 0).
 		Scan(&row)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, gerror.Wrap(err, "查询OPC主体失败")
 	}
 	if row.Id == 0 {
@@ -779,10 +784,13 @@ func (s *sComplianceOpc) loadOpcDetail(ctx context.Context, opcId uint64) (*opcR
 		Where("deleted", 0).
 		Scan(&row)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, memberBrief{}, gerror.NewCode(consts.CodeDataNotFound, "任务不存在")
+		}
 		return nil, memberBrief{}, gerror.Wrap(err, "查询OPC主体失败")
 	}
 	if row.Id == 0 {
-		return nil, memberBrief{}, gerror.New("任务不存在")
+		return nil, memberBrief{}, gerror.NewCode(consts.CodeDataNotFound, "任务不存在")
 	}
 	var member memberBrief
 	_ = g.DB().Model(tableMember).Ctx(ctx).Where("id", row.MemberId).Scan(&member)

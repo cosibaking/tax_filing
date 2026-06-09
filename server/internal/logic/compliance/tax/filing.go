@@ -61,7 +61,7 @@ func (s *sComplianceTax) ListTasks(ctx context.Context, in *compliancein.FilingL
 	err = m.Fields(
 		"t.id", "t.opc_id", "t.tax_type", "t.period", "t.due_date", "t.status",
 		"t.calculated_amount", "t.filed_amount", "t.checklist",
-		"o.company_name", "m.nickname AS member_name",
+		"o.company_name", "o.member_id", "m.nickname AS member_name",
 	).OrderDesc("t.due_date").Page(page, pageSize).Scan(&rows)
 	if err != nil {
 		return nil, gerror.Wrap(err, "查询申报任务失败")
@@ -76,6 +76,7 @@ func (s *sComplianceTax) ListTasks(ctx context.Context, in *compliancein.FilingL
 		list = append(list, compliancein.FilingTaskItem{
 			Id:               row.Id,
 			OpcId:            row.OpcId,
+			MemberId:         row.MemberId,
 			CompanyName:      row.CompanyName,
 			MemberName:       row.MemberName,
 			TaxType:          row.TaxType,
@@ -131,6 +132,9 @@ func (s *sComplianceTax) MarkFiled(ctx context.Context, in *compliancein.FilingM
 	if !checklistComplete(items) {
 		return nil, gerror.New("自查清单未全部勾选，无法标记已申报")
 	}
+	if in.ReceiptFileId == 0 {
+		return nil, gerror.New("请上传申报回执 PDF")
+	}
 
 	filedAmount := in.FiledAmount
 	if filedAmount <= 0 {
@@ -165,6 +169,7 @@ func (s *sComplianceTax) MarkFiled(ctx context.Context, in *compliancein.FilingM
 
 type filingListRow struct {
 	taskRow
+	MemberId    uint64 `json:"member_id"`
 	CompanyName string `json:"company_name"`
 	MemberName  string `json:"member_name"`
 }

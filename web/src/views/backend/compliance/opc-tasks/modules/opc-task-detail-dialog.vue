@@ -146,6 +146,13 @@
 
         <template v-else-if="detail.status === 'registering'">
 
+          <div
+            v-if="verifyMock"
+            class="mb-3 px-3 py-2 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800"
+          >
+            开发模式：核准名称、信用代码、执照附件仅校验非空；信用代码不校验国标格式，附件不校验库内记录。
+          </div>
+
           <ElForm label-width="100px" size="small">
 
             <ElFormItem label="核准名称"><ElInput v-model="actionForm.companyName" /></ElFormItem>
@@ -154,7 +161,7 @@
 
             <ElFormItem label="成立日期"><ElDatePicker v-model="actionForm.establishedAt" type="date" value-format="YYYY-MM-DD" class="w-full" /></ElFormItem>
 
-            <ElFormItem label="执照附件"><ArtFileUpload v-model="actionForm.licenseFileId" accept=".pdf,.jpg,.jpeg,.png" compact /></ElFormItem>
+            <ElFormItem label="执照附件"><ArtFileUpload v-model="actionForm.licenseFileId" value-type="id" accept=".pdf,.jpg,.jpeg,.png" compact /></ElFormItem>
 
           </ElForm>
 
@@ -165,6 +172,13 @@
 
 
         <template v-else-if="detail.status === 'tax'">
+
+          <div
+            v-if="verifyMock"
+            class="mb-3 px-3 py-2 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800"
+          >
+            开发模式：税务激活日仅校验非空，未对接电子税务局核验。
+          </div>
 
           <ElFormItem label="税务激活日">
 
@@ -180,11 +194,18 @@
 
         <template v-else-if="detail.status === 'bank'">
 
+          <div
+            v-if="verifyMock"
+            class="mb-3 px-3 py-2 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800"
+          >
+            开发模式：对公账号、回执附件仅校验非空，账号格式与附件库内记录暂不校验。
+          </div>
+
           <ElForm label-width="100px" size="small">
 
             <ElFormItem label="对公账号"><ElInput v-model="actionForm.bankAccount" /></ElFormItem>
 
-            <ElFormItem label="回执附件"><ArtFileUpload v-model="actionForm.bankReceiptFileId" accept=".pdf,.jpg,.jpeg,.png" compact /></ElFormItem>
+            <ElFormItem label="回执附件"><ArtFileUpload v-model="actionForm.bankReceiptFileId" value-type="id" accept=".pdf,.jpg,.jpeg,.png" compact /></ElFormItem>
 
           </ElForm>
 
@@ -229,6 +250,16 @@ import {
   type OpcTaskDetail
 
 } from '@/api/backend/compliance'
+
+import {
+
+  isComplianceVerifyMock,
+
+  validateCreditCode,
+
+  validateCreditCodeMock
+
+} from '@/config/complianceVerify'
 
 
 
@@ -282,6 +313,14 @@ const actionForm = reactive({
 
 
 
+const verifyMock = isComplianceVerifyMock()
+
+function toFileId(value?: string | number) {
+  if (value == null || value === '') return 0
+  const n = Number(value)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
+
 const showActions = computed(() =>
 
   hasAuth('advance') &&
@@ -333,6 +372,74 @@ async function doAction(action: string) {
     ElMessage.warning('驳回备注至少 10 字')
 
     return
+
+  }
+
+  if (action === 'issue_license') {
+
+    if (!actionForm.companyName?.trim()) {
+
+      ElMessage.warning('请填写核准名称')
+
+      return
+
+    }
+
+    const code = actionForm.creditCode?.trim() || ''
+
+    if (!code) {
+
+      ElMessage.warning('请填写信用代码')
+
+      return
+
+    }
+
+    const codeOk = verifyMock ? validateCreditCodeMock(code) : validateCreditCode(code)
+
+    if (!codeOk) {
+
+      ElMessage.warning('统一社会信用代码格式无效')
+
+      return
+
+    }
+
+    if (!toFileId(actionForm.licenseFileId)) {
+
+      ElMessage.warning('请上传执照附件')
+
+      return
+
+    }
+
+  }
+
+  if (action === 'complete_tax' && !actionForm.taxActivatedAt) {
+
+    ElMessage.warning('请填写税务激活日')
+
+    return
+
+  }
+
+  if (action === 'complete_bank') {
+
+    if (!actionForm.bankAccount?.trim()) {
+
+      ElMessage.warning('请填写对公账号')
+
+      return
+
+    }
+
+    if (!toFileId(actionForm.bankReceiptFileId)) {
+
+      ElMessage.warning('请上传开户回执')
+
+      return
+
+    }
 
   }
 

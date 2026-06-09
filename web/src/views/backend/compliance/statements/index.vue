@@ -41,6 +41,28 @@
         @pagination:current-change="handleCurrentChange"
       />
     </ElCard>
+
+    <ElDialog v-model="summaryVisible" title="对账单摘要" width="480px" destroy-on-close>
+      <ElDescriptions v-if="summaryRow" :column="1" border size="small">
+        <ElDescriptionsItem label="主播">{{ summaryRow.memberName || `会员#${summaryRow.memberId}` }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="OPC 主体">{{ summaryRow.opcCompanyName || '—' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="月份">{{ summaryRow.period }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="收入">¥{{ summaryRow.revenue?.toFixed(2) ?? '0.00' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="成本">¥{{ summaryRow.cost?.toFixed(2) ?? '0.00' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="利润">¥{{ summaryRow.profit?.toFixed(2) ?? '0.00' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="预缴税额">¥{{ summaryRow.prepaidTax?.toFixed(2) ?? '0.00' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="状态">
+          <ElTag :type="statusTagType(summaryRow.status) as any" size="small">
+            {{ STATEMENT_STATUS_LABELS[summaryRow.status] || summaryRow.status }}
+          </ElTag>
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="发送时间">{{ summaryRow.sentAt || '—' }}</ElDescriptionsItem>
+      </ElDescriptions>
+      <p class="text-xs text-gray-400 mt-3">MVP 阶段以 JSON 摘要为准，PDF 导出后续版本提供。</p>
+      <template #footer>
+        <ElButton @click="summaryVisible = false">关闭</ElButton>
+      </template>
+    </ElDialog>
   </div>
 </template>
 
@@ -65,6 +87,8 @@ const selectedRows = ref<AdminStatementItem[]>([])
 const batchPeriod = ref('')
 const generating = ref(false)
 const sending = ref(false)
+const summaryVisible = ref(false)
+const summaryRow = ref<AdminStatementItem | null>(null)
 
 const now = new Date()
 batchPeriod.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -122,10 +146,22 @@ const {
         formatter: (row: AdminStatementItem) => `¥${row.revenue?.toFixed(2) ?? '0.00'}`
       },
       {
+        prop: 'cost',
+        label: '成本',
+        width: 100,
+        formatter: (row: AdminStatementItem) => `¥${row.cost?.toFixed(2) ?? '0.00'}`
+      },
+      {
         prop: 'profit',
         label: '利润',
         width: 100,
         formatter: (row: AdminStatementItem) => `¥${row.profit?.toFixed(2) ?? '0.00'}`
+      },
+      {
+        prop: 'prepaidTax',
+        label: '预缴税额',
+        width: 110,
+        formatter: (row: AdminStatementItem) => `¥${row.prepaidTax?.toFixed(2) ?? '0.00'}`
       },
       {
         prop: 'status',
@@ -143,13 +179,18 @@ const {
         width: 100,
         fixed: 'right',
         formatter: (row: AdminStatementItem) =>
-          row.pdfUrl && hasAuth('view')
-            ? h(ElButton, { type: 'primary', link: true, size: 'small', onClick: () => window.open(row.pdfUrl, '_blank') }, () => '预览 PDF')
+          hasAuth('view') || hasAuth('send')
+            ? h(ElButton, { type: 'primary', link: true, size: 'small', onClick: () => openSummary(row) }, () => '查看摘要')
             : null
       }
     ]
   }
 })
+
+function openSummary(row: AdminStatementItem) {
+  summaryRow.value = row
+  summaryVisible.value = true
+}
 
 const handleSearch = (params: Record<string, any>) => {
   Object.assign(searchParams, params)

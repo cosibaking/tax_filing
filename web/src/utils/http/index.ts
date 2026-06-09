@@ -18,7 +18,7 @@ import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } 
 import { useUserStore } from '@/store/modules/user'
 import { useMemberStore } from '@/store/modules/member'
 import { ApiStatus } from './status'
-import { HttpError, handleError, showError, showSuccess } from './error'
+import { HttpError, handleError, sanitizeErrorMessage, showError, showSuccess } from './error'
 import { $t } from '@/locales'
 import { BaseResponse } from '@/types'
 import { router } from '@/router'
@@ -146,7 +146,10 @@ axiosInstance.interceptors.response.use(
       handleUnauthorizedError(errorMsg, isMember)
     }
 
-    throw createHttpError(errorMsg || $t('httpMsg.requestFailed'), code)
+    throw createHttpError(
+      sanitizeErrorMessage(errorMsg || $t('httpMsg.requestFailed')),
+      code
+    )
   },
   async (error) => {
     const url = error.config?.url || ''
@@ -328,16 +331,14 @@ function resetUnauthorizedError() {
   unauthorizedTimer = null
 }
 
-function getCurrentHashPath() {
-  const hash = window.location.hash || ''
-  const path = hash.startsWith('#') ? hash.slice(1) : hash
-  return path || router.currentRoute.value.fullPath || '/'
+function getCurrentRoutePath() {
+  return router.currentRoute.value.fullPath || `${window.location.pathname}${window.location.search}` || '/'
 }
 
 /** 后台管理员退出登录 */
 function logOut() {
   setTimeout(() => {
-    const redirectPath = getCurrentHashPath()
+    const redirectPath = getCurrentRoutePath()
     useUserStore().logOut({ redirect: false })
     if (router.currentRoute.value.path !== ADMIN_LOGIN_PATH) {
       router.push({

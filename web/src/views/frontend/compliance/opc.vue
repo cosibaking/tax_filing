@@ -425,6 +425,7 @@ import {
 import { validateChineseIDCard, validateEmail, validatePhone } from '@/utils/form/validator'
 import { useMemberStore } from '@/store/modules/member'
 import { requireLogin } from '@/utils/auth/requireLogin'
+import { sanitizeErrorMessage } from '@/utils/http/error'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 
 defineOptions({ name: 'ComplianceOpc' })
@@ -673,7 +674,7 @@ async function openMaterialsDetail(opcId: number | string) {
   try {
     detailData.value = await getMaterialsDetail(opcId)
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : '加载资料详情失败'
+    const msg = sanitizeErrorMessage(e instanceof Error ? e.message : '加载资料详情失败')
     ElMessage.error(msg)
     detailVisible.value = false
   } finally {
@@ -698,7 +699,7 @@ async function handleReveal() {
     passwordVisible.value = false
     ElMessage.success('验证成功')
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : '密码验证失败'
+    const msg = sanitizeErrorMessage(e instanceof Error ? e.message : '密码验证失败')
     ElMessage.error(msg)
   } finally {
     revealSubmitting.value = false
@@ -743,7 +744,7 @@ async function handleSubmitMaterials() {
     ElMessage.success('资料提交成功，等待顾问审核')
     await loadProgress()
   } catch (e: any) {
-    const msg = e?.message || e?.msg || '提交失败，请检查表单后重试'
+    const msg = sanitizeErrorMessage(e?.message || e?.msg || '提交失败，请检查表单后重试')
     ElMessage.error(msg)
   } finally {
     submitting.value = false

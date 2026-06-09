@@ -13,6 +13,7 @@ package cmd
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
@@ -72,22 +73,29 @@ var (
 			s.AddStaticPath("/m", "resource/public/mobile")
 			s.SetIndexFolder(false)
 
-			// SPA 回退：/admin 下的子路由返回后台前端入口，让 Vue Router 接管
+			// SPA 回退：History 模式下由 Vue Router 接管前端路由
 			s.BindStatusHandler(http.StatusNotFound, func(r *ghttp.Request) {
-				path := r.RequestURI
-				if len(path) >= 6 && path[:6] == "/admin" {
-					indexPath := "resource/public/dist/index.html"
-					r.Response.ClearBuffer()
-					r.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-					var content string
-					if gres.Contains(indexPath) {
-						content = string(gres.GetContent(indexPath))
-					} else if gfile.Exists(indexPath) {
-						content = gfile.GetContents(indexPath)
-					}
-					if content != "" {
-						r.Response.WriteStatus(http.StatusOK, content)
-					}
+				if r.Method != http.MethodGet && r.Method != http.MethodHead {
+					return
+				}
+				if !strings.Contains(r.Header.Get("Accept"), "text/html") {
+					return
+				}
+				path := r.URL.Path
+				if path != "/" && strings.Contains(strings.TrimPrefix(path, "/"), ".") {
+					return
+				}
+				indexPath := "resource/public/dist/index.html"
+				r.Response.ClearBuffer()
+				r.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
+				var content string
+				if gres.Contains(indexPath) {
+					content = string(gres.GetContent(indexPath))
+				} else if gfile.Exists(indexPath) {
+					content = gfile.GetContents(indexPath)
+				}
+				if content != "" {
+					r.Response.WriteStatus(http.StatusOK, content)
 				}
 			})
 

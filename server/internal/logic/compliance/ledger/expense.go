@@ -185,6 +185,7 @@ func (s *sComplianceLedger) CreateExpense(ctx context.Context, in *compliancein.
 	_ = audit.WriteAudit(ctx, "expense_entry", uint64(id), "expense.create", in.MemberId, "member", nil, data, in.Ip)
 	_ = RecordExpenseVoucher(ctx, opcId, uint64(id), in.Amount, occurredAt)
 	year, month := yearMonthFromUnix(occurredAt)
+	_ = refreshProfitSummary(ctx, opcId, year, month)
 	_ = tax.RefreshOpcPeriodTaxAmounts(ctx, opcId, year, month)
 
 	return &compliancein.ExpenseCreateModel{

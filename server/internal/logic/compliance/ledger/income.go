@@ -163,6 +163,7 @@ func (s *sComplianceLedger) CreateIncome(ctx context.Context, in *compliancein.I
 	_ = audit.WriteAudit(ctx, "income_entry", uint64(id), "income.create", in.MemberId, "member", nil, data, in.Ip)
 	_ = RecordIncomeVoucher(ctx, opcId, uint64(id), in.GrossAmount, occurredAt)
 	year, month := yearMonthFromUnix(occurredAt)
+	_ = refreshProfitSummary(ctx, opcId, year, month)
 	_ = tax.RefreshOpcPeriodTaxAmounts(ctx, opcId, year, month)
 
 	return &compliancein.IncomeCreateModel{

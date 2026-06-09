@@ -2,6 +2,8 @@ package ledger
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/gogf/gf/v2/errors/gerror"
@@ -35,8 +37,9 @@ func (s *sComplianceLedger) GetProfit(ctx context.Context, in *compliancein.Prof
 		period = "monthly"
 	}
 
+	// 申报任务补齐失败不阻断利润查询
 	if err := tax.EnsureOpcYearTasks(ctx, opc.Id, year); err != nil {
-		return nil, err
+		g.Log().Warningf(ctx, "[ledger] 补齐申报任务失败 opcId=%d year=%d: %v", opc.Id, year, err)
 	}
 
 	switch period {
@@ -58,10 +61,11 @@ func (s *sComplianceLedger) GetProfit(ctx context.Context, in *compliancein.Prof
 }
 
 func (s *sComplianceLedger) monthlyProfit(ctx context.Context, opcId uint64, year, month int) (*compliancein.ProfitSummaryModel, error) {
-	row, err := loadProfitRow(ctx, opcId, year, month)
+	row, err := calcMonthProfit(ctx, opcId, year, month)
 	if err != nil {
 		return nil, err
 	}
+	_ = refreshProfitSummary(ctx, opcId, year, month)
 	item := compliancein.ProfitPeriodItem{
 		Label:            fmt.Sprintf("%04d-%02d", year, month),
 		Year:             year,
@@ -72,12 +76,13 @@ func (s *sComplianceLedger) monthlyProfit(ctx context.Context, opcId uint64, yea
 		CumulativeProfit: row.CumulativeProfit,
 	}
 	return &compliancein.ProfitSummaryModel{
-		Period:  "monthly",
-		Year:    year,
-		Items:   []compliancein.ProfitPeriodItem{item},
-		Revenue: row.Revenue,
-		Cost:    row.Cost,
-		Profit:  row.Profit,
+		Period:           "monthly",
+		Year:             year,
+		Items:            []compliancein.ProfitPeriodItem{item},
+		Revenue:          row.Revenue,
+		Cost:             row.Cost,
+		Profit:           row.Profit,
+		CumulativeProfit: row.CumulativeProfit,
 	}, nil
 }
 
@@ -86,7 +91,7 @@ func (s *sComplianceLedger) quarterlyProfit(ctx context.Context, opcId uint64, y
 	items := make([]compliancein.ProfitPeriodItem, 0, 3)
 	var totalRevenue, totalCost, totalProfit float64
 	for m := startMonth; m < startMonth+3; m++ {
-		row, err := loadProfitRow(ctx, opcId, year, m)
+		row, err := calcMonthProfit(ctx, opcId, year, m)
 		if err != nil {
 			return nil, err
 		}
@@ -113,23 +118,21 @@ func (s *sComplianceLedger) quarterlyProfit(ctx context.Context, opcId uint64, y
 }
 
 func (s *sComplianceLedger) yearlyProfit(ctx context.Context, opcId uint64, year int) (*compliancein.ProfitSummaryModel, error) {
-	var rows []profitRow
-	err := g.DB().Model(tableProfitSummary).Ctx(ctx).
-		Where("opc_id", opcId).
-		Where("year", year).
-		OrderAsc("month").
-		Scan(&rows)
-	if err != nil {
-		return nil, gerror.Wrap(err, "查询年度利润失败")
-	}
-
-	items := make([]compliancein.ProfitPeriodItem, 0, len(rows))
+	items := make([]compliancein.ProfitPeriodItem, 0, 12)
 	var totalRevenue, totalCost, totalProfit float64
-	for _, row := range rows {
+	for m := 1; m <= 12; m++ {
+		row, err := calcMonthProfit(ctx, opcId, year, m)
+		if err != nil {
+			return nil, err
+		}
+		_ = refreshProfitSummary(ctx, opcId, year, m)
+		if row.Revenue == 0 && row.Cost == 0 && row.Profit == 0 {
+			continue
+		}
 		items = append(items, compliancein.ProfitPeriodItem{
-			Label:            fmt.Sprintf("%04d-%02d", year, row.Month),
+			Label:            fmt.Sprintf("%04d-%02d", year, m),
 			Year:             year,
-			Month:            row.Month,
+			Month:            m,
 			Revenue:          row.Revenue,
 			Cost:             row.Cost,
 			Profit:           row.Profit,
@@ -157,18 +160,90 @@ type profitRow struct {
 	CumulativeProfit float64 `json:"cumulative_profit"`
 }
 
+// calcMonthProfit 与收入台账同源：按 monthRange 实时汇总收入/费用
+func calcMonthProfit(ctx context.Context, opcId uint64, year, month int) (profitRow, error) {
+	period := fmt.Sprintf("%04d-%02d", year, month)
+	start, end, err := monthRange(period)
+	if err != nil {
+		return profitRow{}, err
+	}
+	revenue, err := sumIncome(ctx, opcId, start, end)
+	if err != nil {
+		return profitRow{}, err
+	}
+	cost, err := sumExpense(ctx, opcId, start, end)
+	if err != nil {
+		return profitRow{}, err
+	}
+	profit := round2(revenue - cost)
+	cumulative, err := calcCumulativeProfit(ctx, opcId, year, month, profit)
+	if err != nil {
+		return profitRow{}, err
+	}
+	return profitRow{
+		Month:            month,
+		Revenue:          revenue,
+		Cost:             cost,
+		Profit:           profit,
+		CumulativeProfit: cumulative,
+	}, nil
+}
+
+func calcCumulativeProfit(ctx context.Context, opcId uint64, year, month int, currentProfit float64) (float64, error) {
+	var prior float64
+	for m := 1; m < month; m++ {
+		p, err := calcMonthProfitSimple(ctx, opcId, year, m)
+		if err != nil {
+			return 0, err
+		}
+		prior += p.Profit
+	}
+	return round2(prior + currentProfit), nil
+}
+
+func calcMonthProfitSimple(ctx context.Context, opcId uint64, year, month int) (profitRow, error) {
+	period := fmt.Sprintf("%04d-%02d", year, month)
+	start, end, err := monthRange(period)
+	if err != nil {
+		return profitRow{}, err
+	}
+	revenue, err := sumIncome(ctx, opcId, start, end)
+	if err != nil {
+		return profitRow{}, err
+	}
+	cost, err := sumExpense(ctx, opcId, start, end)
+	if err != nil {
+		return profitRow{}, err
+	}
+	return profitRow{
+		Month:  month,
+		Revenue: revenue,
+		Cost:    cost,
+		Profit:  round2(revenue - cost),
+	}, nil
+}
+
 func loadProfitRow(ctx context.Context, opcId uint64, year, month int) (profitRow, error) {
-	var row profitRow
-	err := g.DB().Model(tableProfitSummary).Ctx(ctx).
+	row, err := calcMonthProfit(ctx, opcId, year, month)
+	if err != nil {
+		return profitRow{}, err
+	}
+	_ = refreshProfitSummary(ctx, opcId, year, month)
+
+	var cached profitRow
+	err = g.DB().Model(tableProfitSummary).Ctx(ctx).
 		Where("opc_id", opcId).
 		Where("year", year).
 		Where("month", month).
-		Scan(&row)
+		Scan(&cached)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return row, nil
+		}
 		return profitRow{}, gerror.Wrap(err, "查询利润汇总失败")
 	}
-	if row.Month == 0 {
-		return profitRow{Month: month}, nil
+	if cached.Month == 0 {
+		return row, nil
 	}
 	return row, nil
 }

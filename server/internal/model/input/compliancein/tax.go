@@ -124,6 +124,7 @@ type FilingListInp struct {
 type FilingTaskItem struct {
 	Id               uint64  `json:"id"`
 	OpcId            uint64  `json:"opcId"`
+	MemberId         uint64  `json:"memberId"`
 	CompanyName      string  `json:"companyName"`
 	MemberName       string  `json:"memberName"`
 	TaxType          string  `json:"taxType"`

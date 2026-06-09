@@ -40,6 +40,7 @@ import { ElTag } from 'element-plus'
 
 defineOptions({ name: 'ComplianceCustomers' })
 
+const router = useRouter()
 const { hasAuth } = useAuth()
 
 const searchForm = ref({
@@ -79,6 +80,14 @@ async function handleExport(row: ComplianceCustomerItem) {
   } catch {
     ElMessage.error('导出失败')
   }
+}
+
+function openOpcTask(row: ComplianceCustomerItem) {
+  if (!row.opcId) {
+    ElMessage.info('该客户尚未进入 OPC 设立流程')
+    return
+  }
+  router.push({ path: '/compliance/opc-tasks', query: { id: String(row.opcId) } })
 }
 
 const {
@@ -124,16 +133,32 @@ const {
       {
         prop: 'action',
         label: '操作',
-        width: 100,
+        width: 140,
         fixed: 'right',
-        formatter: (row: ComplianceCustomerItem) =>
-          hasAuth('export')
-            ? h(ArtButtonTable, {
+        formatter: (row: ComplianceCustomerItem) => {
+          const actions = []
+          if (row.opcId) {
+            actions.push(
+              h(ArtButtonTable, {
+                type: 'edit',
+                icon: 'ri:file-list-3-line',
+                buttonBgColor: 'var(--el-color-primary-light-9)',
+                iconColor: 'var(--el-color-primary)',
+                onClick: () => openOpcTask(row)
+              })
+            )
+          }
+          if (hasAuth('export')) {
+            actions.push(
+              h(ArtButtonTable, {
                 type: 'view',
                 icon: 'ri:download-line',
                 onClick: () => handleExport(row)
               })
-            : null
+            )
+          }
+          return actions.length ? h('div', { class: 'flex gap-1' }, actions) : null
+        }
       }
     ]
   }

@@ -167,6 +167,7 @@ import {
 import { getCompliancePlanState } from '@/api/frontend/compliance/member'
 import { useMemberStore } from '@/store/modules/member'
 import { requireLogin } from '@/utils/auth/requireLogin'
+import { sanitizeErrorMessage } from '@/utils/http/error'
 import { ElMessage } from 'element-plus'
 
 const PENDING_ORDER_KEY = 'compliance_pending_order_id'
@@ -325,7 +326,7 @@ async function nextStep() {
     currentStep.value++
     pendingOrderHint.value = ''
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : '操作失败，请稍后重试'
+    const msg = sanitizeErrorMessage(e instanceof Error ? e.message : '操作失败，请稍后重试')
     apiError.value = msg
     ElMessage.error(msg)
   } finally {
@@ -354,7 +355,7 @@ async function handleSign() {
       router.push('/user/compliance/opc')
     }
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : '签约失败，请检查信息后重试'
+    const msg = sanitizeErrorMessage(e instanceof Error ? e.message : '签约失败，请检查信息后重试')
     apiError.value = msg
     ElMessage.error(msg)
   } finally {

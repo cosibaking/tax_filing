@@ -22,6 +22,7 @@ export interface UploadResponse {
   path?: string
   name?: string
   size?: number
+  attachmentId?: number
 }
 
 /**

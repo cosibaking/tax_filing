@@ -35,6 +35,42 @@ import { AxiosError } from 'axios'
 import { ApiStatus } from './status'
 import { $t } from '@/locales'
 
+/** 数据库底层错误特征（用于前端兜底脱敏） */
+const DB_ERROR_PATTERNS: RegExp[] = [
+  /^sql:/i,
+  /no rows in result set/i,
+  /\bSELECT\s+/i,
+  /\bINSERT\s+/i,
+  /\bUPDATE\s+/i,
+  /\bDELETE\s+/i,
+  /Duplicate entry/i,
+  /duplicate key/i,
+  /connection refused/i,
+  /dial tcp/i,
+  /数据库执行异常/,
+  /\bpq:/i,
+  /\bmysql:/i
+]
+
+/**
+ * 将数据库技术错误转为业务友好文案（前端兜底，与后端 ApiErrorMessage 对齐）
+ */
+export function sanitizeErrorMessage(message: string): string {
+  const text = (message || '').trim()
+  if (!text) return '操作失败，请稍后重试'
+
+  const wrapped = text.match(/^(.+?):\s*(?:sql:|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|pq:|mysql:)/i)
+  if (wrapped?.[1]) return wrapped[1].trim()
+
+  for (const pattern of DB_ERROR_PATTERNS) {
+    if (!pattern.test(text)) continue
+    if (/no rows/i.test(text)) return '数据不存在'
+    return '操作失败，请稍后重试'
+  }
+
+  return text
+}
+
 // 错误响应接口
 export interface ErrorResponse {
   /** 错误状态码 */
@@ -165,7 +201,7 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
  */
 export function showError(error: HttpError, showMessage: boolean = true): void {
   if (showMessage) {
-    ElMessage.error(error.message)
+    ElMessage.error(sanitizeErrorMessage(error.message))
   }
   // 记录错误日志
   console.error('[HTTP Error]', error.toLogData())

@@ -2,6 +2,8 @@ package ledger
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/gogf/gf/v2/errors/gerror"
@@ -36,7 +38,8 @@ func RecordIncomeVoucher(ctx context.Context, opcId, refId uint64, amount float6
 		return gerror.Wrap(err, "查询收入凭证失败")
 	}
 	if count > 0 {
-		return nil
+		year, month := yearMonthFromUnix(occurredAt)
+		return refreshProfitSummary(ctx, opcId, year, month)
 	}
 
 	_, err = g.DB().Model(tableLedgerVoucher).Ctx(ctx).Data(g.Map{
@@ -74,7 +77,8 @@ func RecordExpenseVoucher(ctx context.Context, opcId, refId uint64, amount float
 		return gerror.Wrap(err, "查询费用凭证失败")
 	}
 	if count > 0 {
-		return nil
+		year, month := yearMonthFromUnix(occurredAt)
+		return refreshProfitSummary(ctx, opcId, year, month)
 	}
 
 	_, err = g.DB().Model(tableLedgerVoucher).Ctx(ctx).Data(g.Map{
@@ -100,7 +104,10 @@ func refreshProfitSummary(ctx context.Context, opcId uint64, year, month int) er
 		return nil
 	}
 
-	startTs, endTs := monthRangeUnix(year, month)
+	startTs, endTs, err := monthRange(fmt.Sprintf("%04d-%02d", year, month))
+	if err != nil {
+		return err
+	}
 	revenue, err := sumIncome(ctx, opcId, startTs, endTs)
 	if err != nil {
 		return err
@@ -152,6 +159,9 @@ func sumIncome(ctx context.Context, opcId uint64, startTs, endTs uint64) (float6
 		Fields("COALESCE(SUM(gross_amount), 0) AS total").
 		Scan(&row)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
 		return 0, gerror.Wrap(err, "汇总收入失败")
 	}
 	return round2(row.Total), nil
@@ -168,6 +178,9 @@ func sumExpense(ctx context.Context, opcId uint64, startTs, endTs uint64) (float
 		Fields("COALESCE(SUM(amount), 0) AS total").
 		Scan(&row)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
 		return 0, gerror.Wrap(err, "汇总费用失败")
 	}
 	return round2(row.Total), nil

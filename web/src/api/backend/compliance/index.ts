@@ -97,6 +97,7 @@ export interface OpcTaskPatchParams {
 export interface ComplianceCustomerItem {
   id: number
   memberId: number
+  opcId?: number
   username?: string
   nickname?: string
   mobile?: string
@@ -204,6 +205,7 @@ function mapCustomerItem(raw: Record<string, any>): ComplianceCustomerItem {
   return {
     id: raw.memberId,
     memberId: raw.memberId,
+    opcId: raw.opcId,
     nickname: raw.memberName,
     mobile: raw.memberPhoneMasked ?? raw.mobile,
     planName: PLAN_TIER_LABELS[raw.planTier] ?? raw.planTier ?? raw.planName,
@@ -425,7 +427,7 @@ export const STATEMENT_STATUS_LABELS: Record<string, string> = {
 function mapFilingItem(raw: Record<string, any>): FilingTaskItem {
   return {
     id: raw.id,
-    memberId: raw.opcId ? raw.memberId : raw.memberId,
+    memberId: raw.memberId,
     memberName: raw.memberName,
     opcCompanyName: raw.companyName ?? raw.opcCompanyName,
     taxType: raw.taxType,

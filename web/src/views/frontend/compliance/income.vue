@@ -87,9 +87,12 @@
       </table>
     </div>
 
-    <div v-if="summary" class="mt-6 p-4 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed flex flex-wrap gap-6 text-sm">
+    <div v-if="summary" class="mt-6 p-4 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
       <span class="font-bold text-clay-foreground">本月合计：含税 ¥{{ formatMoney(summary.grossTotal) }}</span>
       <span class="font-bold text-clay-success">实收 ¥{{ formatMoney(summary.netTotal) }}</span>
+      <RouterLink to="/user/compliance/ledger" class="text-clay-accent font-bold hover:underline">
+        查看利润报表 →
+      </RouterLink>
     </div>
 
     <!-- 银行流水对账 -->

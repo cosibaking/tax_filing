@@ -101,6 +101,8 @@ interface Props {
   accept?: string
   maxSize?: number // MB
   compact?: boolean // 紧凑模式（用于数组编辑器等场景）
+  /** url=存访问地址（默认）；id=存附件表 attachmentId，供合规等需 fileId 的场景 */
+  valueType?: 'url' | 'id'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -108,7 +110,8 @@ const props = withDefaults(defineProps<Props>(), {
   limit: 10,
   accept: '*',
   maxSize: 10,
-  compact: false
+  compact: false,
+  valueType: 'url'
 })
 
 const emit = defineEmits<{
@@ -126,13 +129,26 @@ interface FileItem {
 // 单文件模式
 const fileInfo = ref<FileItem | null>(null)
 
-// 解析单文件URL
-const parseSingleFile = (url: string) => {
-  if (!url) return null
-  const name = url.split('/').pop() || 'file'
+const emitValue = (value: string) => {
+  emit('update:modelValue', value)
+  emit('change', value)
+}
+
+// 解析单文件展示信息
+const parseSingleFile = (val: string) => {
+  if (!val) return null
+  if (props.valueType === 'id') {
+    return {
+      id: Number(val) || Date.now(),
+      url: '',
+      name: `附件 #${val}`,
+      size: 0
+    }
+  }
+  const name = val.split('/').pop() || 'file'
   return {
     id: Date.now(),
-    url,
+    url: val,
     name,
     size: 0
   }
@@ -257,14 +273,17 @@ const customUpload = async (options: UploadRequestOptions) => {
     const data = await uploadFileApi(file)
     
     if (data?.url) {
+      const stored =
+        props.valueType === 'id' && data.attachmentId
+          ? String(data.attachmentId)
+          : data.url
       fileInfo.value = {
-        id: Date.now(),
+        id: data.attachmentId || Date.now(),
         url: data.url,
         name: file.name,
         size: file.size
       }
-      emit('update:modelValue', data.url)
-      emit('change', data.url)
+      emitValue(stored)
       ElMessage.success('上传成功')
       options.onSuccess(data)
     } else {
@@ -315,8 +334,7 @@ const handleDownload = () => {
 // 删除文件
 const handleRemove = () => {
   fileInfo.value = null
-  emit('update:modelValue', '')
-  emit('change', '')
+  emitValue('')
 }
 
 // 多文件下载

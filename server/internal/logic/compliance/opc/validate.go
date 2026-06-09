@@ -129,8 +129,44 @@ func validateIdCard(id string) bool {
 	return idCardCheckMap[sum%11] == id[17]
 }
 
+func validateCreditCodeForMode(ctx context.Context, code string) bool {
+	if complianceverify.IsMockMode(ctx) {
+		return validateCreditCodeMock(code)
+	}
+	return validateCreditCode(code)
+}
+
+// validateCreditCodeMock MVP Mock：非空且 ≤18 位即可，未对接工商公开库
+func validateCreditCodeMock(code string) bool {
+	trimmed := strings.TrimSpace(code)
+	return len(trimmed) > 0 && len(trimmed) <= 18
+}
+
+// validateCreditCode 生产模式：GB 32100 格式 + 校验位
 func validateCreditCode(code string) bool {
-	return creditCodeRe.MatchString(strings.ToUpper(strings.TrimSpace(code)))
+	code = strings.ToUpper(strings.TrimSpace(code))
+	if !creditCodeRe.MatchString(code) {
+		return false
+	}
+	return validateCreditCodeChecksum(code)
+}
+
+var (
+	creditCodeCharset = "0123456789ABCDEFGHJKLMNPQRTUWXY"
+	creditCodeWeights = []int{1, 3, 9, 27, 19, 26, 16, 17, 20, 29, 25, 13, 8, 24, 10, 30, 28}
+)
+
+func validateCreditCodeChecksum(code string) bool {
+	sum := 0
+	for i := 0; i < 17; i++ {
+		idx := strings.IndexByte(creditCodeCharset, code[i])
+		if idx < 0 {
+			return false
+		}
+		sum += idx * creditCodeWeights[i]
+	}
+	checkIdx := (31 - sum%31) % 31
+	return creditCodeCharset[checkIdx] == code[17]
 }
 
 func isAllDigits(s string) bool {
@@ -153,6 +189,16 @@ func containsScopeKeyword(scope string) bool {
 		}
 	}
 	return false
+}
+
+func validateAttachmentForMode(ctx context.Context, fileId uint64) error {
+	if fileId == 0 {
+		return gerror.New("附件ID无效")
+	}
+	if complianceverify.IsMockMode(ctx) {
+		return nil
+	}
+	return validateAttachment(ctx, fileId)
 }
 
 func validateAttachment(ctx context.Context, fileId uint64) error {

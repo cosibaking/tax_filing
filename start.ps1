@@ -95,6 +95,34 @@ function Stop-PortListener {
     }
 }
 
+function Test-PortListening {
+    param([int]$Port)
+    return [bool](Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue)
+}
+
+function Wait-PortListening {
+    param(
+        [int]$Port,
+        [string]$Label,
+        [int]$TimeoutSec = 30
+    )
+    for ($i = 0; $i -lt $TimeoutSec; $i++) {
+        if (Test-PortListening -Port $Port) {
+            return $true
+        }
+        Start-Sleep -Seconds 1
+    }
+    Write-Host "$Label 未在 ${TimeoutSec}s 内监听端口 $Port，请查看弹出的 PowerShell 窗口中的报错。" -ForegroundColor Red
+    return $false
+}
+
+function Start-EncodedPowerShell {
+    param([string]$Script)
+    $bytes = [System.Text.Encoding]::Unicode.GetBytes($Script)
+    $encoded = [Convert]::ToBase64String($bytes)
+    Start-Process powershell -ArgumentList '-NoExit', '-EncodedCommand', $encoded | Out-Null
+}
+
 function Stop-DevServices {
     param(
         [bool]$Backend = $true,
@@ -108,6 +136,9 @@ function Stop-DevServices {
     if ($Frontend) {
         Write-Host "停止前端 (端口 $FrontendPort)..." -ForegroundColor Yellow
         Stop-PortListener -Port $FrontendPort
+        foreach ($legacyPort in @(3006, 3007)) {
+            Stop-PortListener -Port $legacyPort
+        }
     }
 }
 
@@ -172,8 +203,11 @@ function Invoke-Migrate {
 function Start-Backend {
     $runCmd = Get-BackendRunCommand
     Write-Host '后端: 启动中 -> http://localhost:4096' -ForegroundColor Green
-    $cmd = "Set-Location '$ServerDir'; $runCmd"
-    Start-Process powershell -ArgumentList '-NoExit', '-Command', $cmd
+    $script = @"
+Set-Location -LiteralPath '$ServerDir'
+$runCmd
+"@
+    Start-EncodedPowerShell -Script $script
 }
 
 function Start-Frontend {
@@ -183,9 +217,12 @@ function Start-Frontend {
     if (-not (Test-Path (Join-Path $WebDir 'node_modules'))) {
         throw '前端依赖未安装，请先运行: .\start.ps1 -Init'
     }
-    Write-Host '前端: 启动中...' -ForegroundColor Green
-    $cmd = "Set-Location '$WebDir'; pnpm dev"
-    Start-Process powershell -ArgumentList '-NoExit', '-Command', $cmd
+    Write-Host "前端: 启动中 -> http://localhost:$FrontendPort" -ForegroundColor Green
+    $script = @"
+Set-Location -LiteralPath '$WebDir'
+pnpm dev --port $FrontendPort --strictPort
+"@
+    Start-EncodedPowerShell -Script $script
 }
 
 function Show-StartupSummary {
@@ -255,5 +292,12 @@ if ($startBackend) { Start-Backend }
 if ($startFrontend) { Start-Frontend }
 
 if ($startBackend -or $startFrontend) {
+    Start-Sleep -Seconds 2
+    $backendOk = -not $startBackend -or (Wait-PortListening -Port $BackendPort -Label '后端')
+    $frontendOk = -not $startFrontend -or (Wait-PortListening -Port $FrontendPort -Label '前端')
     Show-StartupSummary -Backend $startBackend -Frontend $startFrontend -IsRestart:$Restart
+    if (-not $backendOk -or -not $frontendOk) {
+        Write-Host '部分服务未成功启动。请检查新弹出的 PowerShell 窗口中的错误信息。' -ForegroundColor Red
+        exit 1
+    }
 }

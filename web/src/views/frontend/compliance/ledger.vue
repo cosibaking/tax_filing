@@ -115,8 +115,9 @@
       </div>
     </div>
 
-    <div v-else class="py-16 text-center text-clay-muted font-medium">
-      暂无利润数据，请先录入收入与费用
+    <div v-else class="py-16 text-center text-clay-muted font-medium space-y-2">
+      <p>暂无 {{ selectedPeriod }} 的利润数据</p>
+      <p class="text-sm">请先在「收入台账」或「费用台账」录入<strong>发生日期落在该月</strong>的记录</p>
     </div>
   </section>
 </template>
@@ -153,13 +154,18 @@ function voucherPeriod(): string {
   return selectedPeriod.value.slice(0, 7)
 }
 
+function isEmptyProfit(data: ProfitSummary) {
+  return !Number(data.revenue) && !Number(data.cost) && !Number(data.profit)
+}
+
 async function loadData() {
   loading.value = true
   try {
-    profit.value = await getProfitSummary({
+    const data = await getProfitSummary({
       period: selectedPeriod.value,
       periodType: periodType.value
     })
+    profit.value = isEmptyProfit(data) ? null : data
     const vRes = await getLedgerVouchers({ period: voucherPeriod() })
     vouchers.value = vRes.list || []
   } catch {

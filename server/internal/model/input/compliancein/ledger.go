@@ -23,12 +23,13 @@ type ProfitPeriodItem struct {
 
 // ProfitSummaryModel 利润表出参
 type ProfitSummaryModel struct {
-	Period   string             `json:"period"`
-	Year     int                `json:"year"`
-	Items    []ProfitPeriodItem `json:"items"`
-	Revenue  float64            `json:"revenue"`
-	Cost     float64            `json:"cost"`
-	Profit   float64            `json:"profit"`
+	Period             string             `json:"period"`
+	Year               int                `json:"year"`
+	Items              []ProfitPeriodItem `json:"items"`
+	Revenue            float64            `json:"revenue"`
+	Cost               float64            `json:"cost"`
+	Profit             float64            `json:"profit"`
+	CumulativeProfit   float64            `json:"cumulativeProfit,omitempty"`
 }
 
 // IncomeListInp 收入台账列表入参

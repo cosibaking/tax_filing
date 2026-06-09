@@ -16,8 +16,8 @@ WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.name = 'ComplianceCust
 SET @customersPageId = (SELECT id FROM `xy_admin_menu` WHERE name = 'ComplianceCustomers' AND type = 2 LIMIT 1);
 
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
-SELECT @customersPageId, 3, '导出留痕', 'ComplianceCustomersExport', '', '', 'compliance_customers', '', 0, 0, '', '', '["GET /admin/compliance/audit/export"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
-WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @customersPageId AND t.type = 3 AND t.name = 'ComplianceCustomersExport');
+SELECT @customersPageId, 3, '导出留痕', 'export', '', '', 'compliance_customers', '', 0, 0, '', '', '["GET /admin/compliance/audit/export"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @customersPageId AND t.type = 3 AND t.name = 'export');
 
 -- 3. OPC 任务
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
@@ -27,12 +27,12 @@ WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.name = 'ComplianceOpcT
 SET @opcTasksPageId = (SELECT id FROM `xy_admin_menu` WHERE name = 'ComplianceOpcTasks' AND type = 2 LIMIT 1);
 
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
-SELECT @opcTasksPageId, 3, '查看详情', 'ComplianceOpcTasksView', '', '', 'compliance_opc_tasks', '', 0, 0, '', '', '["GET /admin/compliance/opc-tasks"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
-WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @opcTasksPageId AND t.type = 3 AND t.name = 'ComplianceOpcTasksView');
+SELECT @opcTasksPageId, 3, '查看详情', 'view', '', '', 'compliance_opc_tasks', '', 0, 0, '', '', '["GET /admin/compliance/opc-tasks"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @opcTasksPageId AND t.type = 3 AND t.name = 'view');
 
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
-SELECT @opcTasksPageId, 3, '推进进度', 'ComplianceOpcTasksAdvance', '', '', 'compliance_opc_tasks', '', 0, 0, '', '', '["PATCH /admin/compliance/opc-tasks"]', 0, 0, 0, '', '', 0, 0, 2, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
-WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @opcTasksPageId AND t.type = 3 AND t.name = 'ComplianceOpcTasksAdvance');
+SELECT @opcTasksPageId, 3, '推进进度', 'advance', '', '', 'compliance_opc_tasks', '', 0, 0, '', '', '["PATCH /admin/compliance/opc-tasks"]', 0, 0, 0, '', '', 0, 0, 2, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @opcTasksPageId AND t.type = 3 AND t.name = 'advance');
 
 -- 4. 申报工作台
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
@@ -42,8 +42,8 @@ WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.name = 'ComplianceFili
 SET @filingPageId = (SELECT id FROM `xy_admin_menu` WHERE name = 'ComplianceFiling' AND type = 2 LIMIT 1);
 
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
-SELECT @filingPageId, 3, '标记已申报', 'ComplianceFilingFiled', '', '', 'compliance_filing', '', 0, 0, '', '', '["PATCH /admin/compliance/filing"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
-WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @filingPageId AND t.type = 3 AND t.name = 'ComplianceFilingFiled');
+SELECT @filingPageId, 3, '标记已申报', 'filed', '', '', 'compliance_filing', '', 0, 0, '', '', '["PATCH /admin/compliance/filing"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @filingPageId AND t.type = 3 AND t.name = 'filed');
 
 -- 5. 对账单管理
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
@@ -53,5 +53,9 @@ WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.name = 'ComplianceStat
 SET @statementsPageId = (SELECT id FROM `xy_admin_menu` WHERE name = 'ComplianceStatements' AND type = 2 LIMIT 1);
 
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
-SELECT @statementsPageId, 3, '生成发送', 'ComplianceStatementsSend', '', '', 'compliance_statements', '', 0, 0, '', '', '["POST /admin/compliance/statements/send"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
-WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @statementsPageId AND t.type = 3 AND t.name = 'ComplianceStatementsSend');
+SELECT @statementsPageId, 3, '发送通知', 'send', '', '', 'compliance_statements', '', 0, 0, '', '', '["POST /admin/compliance/statements/send"]', 0, 0, 0, '', '', 0, 0, 1, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @statementsPageId AND t.type = 3 AND t.name = 'send');
+
+INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
+SELECT @statementsPageId, 3, '批量生成', 'generate', '', '', 'compliance_statements', '', 0, 0, '', '', '["POST /admin/compliance/statements/generate"]', 0, 0, 0, '', '', 0, 0, 2, 1, '', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.parent_id = @statementsPageId AND t.type = 3 AND t.name = 'generate');

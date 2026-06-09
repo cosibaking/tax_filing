@@ -25,7 +25,8 @@ export default ({ mode }: { mode: string }) => {
     },
     base: VITE_BASE_URL,
     server: {
-      port: Number(VITE_PORT),
+      port: Number(VITE_PORT) || 5173,
+      strictPort: true,
       // Windows 下外部进程（如 Go 代码生成器）批量创建/覆盖文件时，
       // 原生 fs 事件偶发会丢失或合并，启用轮询可显著提升稳定性。
       watch: {
@@ -39,7 +40,14 @@ export default ({ mode }: { mode: string }) => {
       proxy: {
         '/admin': {
           target: VITE_API_PROXY_URL,
-          changeOrigin: true
+          changeOrigin: true,
+          // 后台页面路由与 API 共用 /admin 前缀：浏览器导航走 Vite SPA，XHR/fetch 才代理到 Go。
+          bypass(req) {
+            const accept = req.headers.accept ?? ''
+            if (req.method === 'GET' && accept.includes('text/html')) {
+              return '/index.html'
+            }
+          }
         },
         // 静态资源代理（上传的文件）
         '/attachment': {

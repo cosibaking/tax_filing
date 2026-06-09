@@ -87,14 +87,11 @@ onMounted(async () => {
       }
     }
 
-    // 4. 导航到目标路径
-    //    用 location.hash 强制跳转，绕过路由守卫缓存的匹配信息
-    //    确保动态注册的路由能被正确解析
+    // 4. 导航到目标路径（replace 触发完整导航，确保动态注册的路由被重新解析）
     console.log('[FrontendLoading] 导航到:', targetPath)
     message.value = '跳转中...'
     await nextTick()
-    const query = new URLSearchParams(targetQuery).toString()
-    window.location.hash = targetPath + (query ? '?' + query : '')
+    await router.replace({ path: targetPath, query: targetQuery })
   } catch (e) {
     console.error('[FrontendLoading] 加载失败:', e)
     message.value = '加载失败，返回首页...'

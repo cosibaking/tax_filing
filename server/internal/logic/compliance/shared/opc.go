@@ -2,6 +2,8 @@ package shared
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
@@ -41,6 +43,9 @@ func LoadOpcByMember(ctx context.Context, memberId uint64) (*OpcBrief, error) {
 		Where("deleted", 0).
 		Scan(&row)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, gerror.Wrap(err, "查询OPC主体失败")
 	}
 	if row.Id == 0 {
@@ -73,10 +78,13 @@ func LoadOpcById(ctx context.Context, opcId uint64) (*OpcBrief, error) {
 		Where("deleted", 0).
 		Scan(&row)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, gerror.NewCode(consts.CodeDataNotFound, "OPC主体不存在")
+		}
 		return nil, gerror.Wrap(err, "查询OPC主体失败")
 	}
 	if row.Id == 0 {
-		return nil, gerror.New("OPC主体不存在")
+		return nil, gerror.NewCode(consts.CodeDataNotFound, "OPC主体不存在")
 	}
 	return &row, nil
 }
