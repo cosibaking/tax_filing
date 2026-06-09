@@ -2,6 +2,8 @@ package order
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/gogf/gf/v2/errors/gerror"
@@ -410,6 +412,9 @@ func (s *sComplianceOrder) GetActiveOrder(ctx context.Context, memberId uint64) 
 		Limit(1).
 		Scan(&row)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, gerror.Wrap(err, "查询订单失败")
 	}
 	if row.Id == 0 {
