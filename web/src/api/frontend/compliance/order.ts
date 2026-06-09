@@ -84,11 +84,16 @@ export function signAgreement(params: SignParams) {
   })
 }
 
-/** 获取当前活跃订单（若有） */
-export function getActiveOrder() {
-  return memberRequest.get<ComplianceOrder | null>({
+/** 获取当前活跃订单（若无有效订单则返回 null） */
+export async function getActiveOrder(): Promise<ComplianceOrder | null> {
+  const res = await memberRequest.get<ComplianceOrder | null>({
     url: '/compliance/order/active'
   })
+  const orderId = Number(res?.orderId ?? res?.id ?? 0)
+  if (!orderId || !res?.status || res.status === 'cancelled') {
+    return null
+  }
+  return res
 }
 
 export type { ServicePlan }

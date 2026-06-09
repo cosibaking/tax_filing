@@ -10,6 +10,8 @@ export interface CompliancePlanState {
   hasActiveOrder: boolean
   /** 是否存在待签约的 pending 订单 */
   hasPendingOrder?: boolean
+  /** 是否已完成至少一次免费诊断 */
+  hasDiagnosis?: boolean
   /** OPC 设立进度 */
   opcStatus: OpcStatus
 }

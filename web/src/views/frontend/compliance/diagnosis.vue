@@ -2,100 +2,85 @@
   | XYGo Admin — 会员合规诊断历史
   +---------------------------------------------------------------------- -->
 <template>
-  <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10 animate-in">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <div>
-        <h2 class="font-heading font-black text-2xl text-clay-foreground">诊断历史</h2>
-        <p class="text-xs text-clay-muted mt-1">查看您的合规诊断记录与推荐方案</p>
+  <div class="diag-page">
+    <section class="overview-panel">
+      <div class="overview-panel__head">
+        <div>
+          <h2 class="overview-panel__section-title">诊断历史</h2>
+          <p class="overview-panel__section-desc">查看您的合规诊断记录与推荐方案</p>
+        </div>
+        <RouterLink to="/diagnosis" class="overview-btn overview-btn--primary">
+          <ArtSvgIcon icon="ri:add-line" />
+          新建诊断
+        </RouterLink>
       </div>
-      <RouterLink
-        to="/diagnosis"
-        class="px-6 py-3 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn font-bold text-sm active:scale-95 transition-all flex items-center gap-2"
-      >
-        <ArtSvgIcon icon="ri:add-line" class="text-lg" />
-        新建诊断
-      </RouterLink>
-    </div>
 
-    <div v-if="loading && list.length === 0" class="py-20 text-center">
-      <ArtSvgIcon icon="ri:loader-4-line" class="text-4xl text-clay-muted animate-spin mx-auto mb-4" />
-      <p class="text-clay-muted font-medium">加载中...</p>
-    </div>
-
-    <div v-else-if="list.length === 0" class="py-20 text-center">
-      <div class="w-24 h-24 rounded-full bg-white shadow-clay-btn flex items-center justify-center mb-6 mx-auto">
-        <ArtSvgIcon icon="ri:file-search-line" class="text-[40px] text-clay-muted opacity-50" />
+      <div v-if="loading && list.length === 0" class="overview-empty">
+        <ArtSvgIcon icon="ri:loader-4-line" class="overview-empty__icon diag-loading" />
+        <p>加载中...</p>
       </div>
-      <p class="text-clay-muted font-bold text-lg mb-4">暂无诊断记录</p>
-      <RouterLink to="/diagnosis" class="text-clay-accent font-bold hover:underline">立即开始免费诊断</RouterLink>
-    </div>
 
-    <div v-else class="space-y-4">
-      <div
-        v-for="item in list"
-        :key="item.id"
-        class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed hover:bg-white hover:shadow-clay-card transition-all duration-300"
-      >
-        <div class="flex flex-wrap items-center gap-3 mb-4">
-          <span class="px-3 py-1 rounded-lg bg-white shadow-clay-btn text-[10px] font-black text-clay-accent uppercase">
-            {{ planLabel(item.recommendedPlan) }}
-          </span>
-          <span class="text-xs text-clay-muted font-medium">{{ item.createdAt }}</span>
-        </div>
-        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span class="block text-[10px] font-black text-clay-muted uppercase tracking-widest mb-1">月收入区间</span>
-            <span class="font-bold text-clay-foreground">{{ item.monthlyIncomeRange }}</span>
-          </div>
-          <div>
-            <span class="block text-[10px] font-black text-clay-muted uppercase tracking-widest mb-1">年成本估算</span>
-            <span class="font-bold text-clay-foreground">{{ formatMoney(item.annualCostEstimate) }} 元</span>
-          </div>
-          <div>
-            <span class="block text-[10px] font-black text-clay-muted uppercase tracking-widest mb-1">现有主体</span>
-            <span class="font-bold text-clay-foreground">{{ entityLabel(item.existingEntity) }}</span>
-          </div>
-          <div>
-            <span class="block text-[10px] font-black text-clay-muted uppercase tracking-widest mb-1">收入渠道</span>
-            <span class="font-bold text-clay-foreground">{{ item.platforms?.join('、') || '-' }}</span>
-          </div>
-        </div>
-        <div v-if="item.taxComparison?.items?.length" class="mt-4 pt-4 border-t border-gray-200/50">
-          <span class="text-[10px] font-black text-clay-muted uppercase tracking-widest">推荐方案预估年税负</span>
-          <div class="flex flex-wrap gap-3 mt-2">
-            <span
-              v-for="tax in item.taxComparison.items.filter(t => t.recommended)"
-              :key="tax.plan"
-              class="px-3 py-1.5 rounded-xl bg-white shadow-clay-btn text-xs font-bold text-clay-success"
-            >
-              {{ tax.label }}：{{ formatMoney(tax.annualTax) }} 元
-            </span>
-          </div>
-        </div>
-        <div class="mt-4 flex justify-end">
-          <RouterLink
-            :to="`/diagnosis/result?id=${item.id}`"
-            class="text-sm font-bold text-clay-accent hover:underline flex items-center gap-1"
-          >
-            查看详情
-            <ArtSvgIcon icon="ri:arrow-right-s-line" />
-          </RouterLink>
+      <div v-else-if="list.length === 0" class="overview-empty">
+        <ArtSvgIcon icon="ri:file-search-line" class="overview-empty__icon" />
+        <p>暂无诊断记录</p>
+        <div class="overview-empty__actions">
+          <RouterLink to="/diagnosis" class="overview-btn overview-btn--primary">立即开始免费诊断</RouterLink>
         </div>
       </div>
 
-      <div v-if="total > pageSize" class="pt-4 flex justify-center">
-        <button
-          v-if="page * pageSize < total"
-          class="flex items-center gap-2 text-sm font-bold text-clay-muted hover:text-clay-accent transition-colors"
-          :disabled="loading"
-          @click="loadMore"
-        >
-          <ArtSvgIcon v-if="loading" icon="ri:loader-4-line" class="animate-spin" />
-          加载更多 <ArtSvgIcon icon="ri:arrow-down-s-line" class="text-base" />
+      <ul v-else class="diag-list">
+        <li v-for="item in list" :key="item.id" class="diag-item">
+          <div class="diag-item__head">
+            <span class="diag-tag">{{ planLabel(item.recommendedPlan) }}</span>
+            <span class="diag-item__time">{{ item.createdAt }}</span>
+          </div>
+          <div class="diag-item__grid">
+            <div class="diag-field">
+              <span class="diag-field__label">月收入区间</span>
+              <span class="diag-field__value">{{ item.monthlyIncomeRange }}</span>
+            </div>
+            <div class="diag-field">
+              <span class="diag-field__label">年成本估算</span>
+              <span class="diag-field__value">{{ formatMoney(item.annualCostEstimate) }} 元</span>
+            </div>
+            <div class="diag-field">
+              <span class="diag-field__label">现有主体</span>
+              <span class="diag-field__value">{{ entityLabel(item.existingEntity) }}</span>
+            </div>
+            <div class="diag-field">
+              <span class="diag-field__label">收入渠道</span>
+              <span class="diag-field__value">{{ item.platforms?.join('、') || '-' }}</span>
+            </div>
+          </div>
+          <div v-if="item.taxComparison?.items?.length" class="diag-item__tax">
+            <span class="diag-field__label">推荐方案预估年税负</span>
+            <div class="diag-tax-tags">
+              <span
+                v-for="tax in item.taxComparison.items.filter(t => t.recommended)"
+                :key="tax.plan"
+                class="diag-tax-tag"
+              >
+                {{ tax.label }}：{{ formatMoney(tax.annualTax) }} 元
+              </span>
+            </div>
+          </div>
+          <div class="diag-item__footer">
+            <RouterLink :to="`/diagnosis/result?id=${item.id}`" class="diag-link">
+              查看详情
+              <ArtSvgIcon icon="ri:arrow-right-s-line" />
+            </RouterLink>
+          </div>
+        </li>
+      </ul>
+
+      <div v-if="total > pageSize && page * pageSize < total" class="diag-load-more">
+        <button type="button" class="overview-btn overview-btn--ghost" :disabled="loading" @click="loadMore">
+          <ArtSvgIcon v-if="loading" icon="ri:loader-4-line" class="diag-loading" />
+          加载更多
         </button>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -163,29 +148,221 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.text-clay-foreground { color: #32325d; }
-.text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.text-clay-success { color: #71dd37; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-
-.shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
-}
-.shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
-}
-.shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
+.diag-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.animate-in {
-  animation: slideIn 0.4s ease-out;
+.overview-panel {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+
+.overview-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.overview-panel__section-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.overview-panel__section-desc {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.overview-empty {
+  padding: 32px 16px;
+  text-align: center;
+
+  p {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+  }
+}
+
+.overview-empty__icon {
+  font-size: 40px;
+  color: #2563eb;
+  margin-bottom: 16px;
+}
+
+.overview-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.overview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &--primary {
+    color: #fff;
+    background: #2563eb;
+
+    &:hover {
+      background: #1d4ed8;
+    }
+  }
+
+  &--ghost {
+    color: #334155;
+    background: #fff;
+    border: 1px solid #d8dee9;
+
+    &:hover:not(:disabled) {
+      background: #f8fafc;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.diag-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diag-item {
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.diag-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.diag-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.diag-item__time {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.diag-item__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.diag-field__label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.diag-field__value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1f36;
+}
+
+.diag-item__tax {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e8edf3;
+}
+
+.diag-tax-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.diag-tax-tag {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.diag-item__footer {
+  margin-top: 14px;
+  text-align: right;
+}
+
+.diag-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.diag-load-more {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.diag-loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .diag-item__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

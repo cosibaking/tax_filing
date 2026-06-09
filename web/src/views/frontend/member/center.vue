@@ -65,14 +65,27 @@
               <p>
                 {{ complianceState.hasPendingOrder
                   ? '您已选择套餐，请继续完成风险告知与电子签约'
-                  : '尚未签约合规服务，建议先完成免费诊断了解税负方案' }}
+                  : complianceState.hasDiagnosis
+                    ? '您已完成免费诊断，请选择套餐并完成签约以开启合规服务'
+                    : '尚未签约合规服务，建议先完成免费诊断了解税负方案' }}
               </p>
               <div class="overview-empty__actions">
                 <RouterLink to="/user/compliance/plan" class="overview-btn overview-btn--primary">
                   {{ complianceState.hasPendingOrder ? '继续签约' : '方案与签约' }}
                 </RouterLink>
-                <RouterLink v-if="!complianceState.hasPendingOrder" to="/diagnosis" class="overview-btn overview-btn--ghost">
+                <RouterLink
+                  v-if="!complianceState.hasPendingOrder && !complianceState.hasDiagnosis"
+                  to="/diagnosis"
+                  class="overview-btn overview-btn--ghost"
+                >
                   免费合规诊断
+                </RouterLink>
+                <RouterLink
+                  v-else-if="!complianceState.hasPendingOrder && complianceState.hasDiagnosis"
+                  to="/user/compliance/diagnosis"
+                  class="overview-btn overview-btn--ghost"
+                >
+                  查看诊断报告
                 </RouterLink>
               </div>
             </div>
@@ -162,44 +175,43 @@
         </div>
 
         <!-- 3. 个人资料 -->
-        <div v-if="activeMenu === 'profile'" class="animate-in">
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-12">
-            <h2 class="font-heading font-black text-2xl text-clay-foreground mb-8">个人资料设置</h2>
-            <ElForm ref="profileFormRef" :model="profileForm" :rules="profileRules" label-position="top" class="grid md:grid-cols-2 gap-8">
-              <div class="space-y-6">
+        <div v-if="activeMenu === 'profile'" class="member-page animate-in">
+          <section class="overview-panel">
+            <h2 class="overview-panel__section-title">个人资料设置</h2>
+            <p class="overview-panel__section-desc">管理您的昵称、联系方式与头像</p>
+            <ElForm ref="profileFormRef" :model="profileForm" :rules="profileRules" label-position="top" class="member-profile-form">
+              <div class="member-profile-form__fields">
                 <ElFormItem label="昵称" prop="nickname">
-                  <ElInput v-model="profileForm.nickname" size="large" class="clay-input" />
+                  <ElInput v-model="profileForm.nickname" size="large" class="member-field" />
                 </ElFormItem>
                 <ElFormItem label="邮箱" prop="email">
-                  <ElInput v-model="profileForm.email" size="large" class="clay-input" />
+                  <ElInput v-model="profileForm.email" size="large" class="member-field" />
                 </ElFormItem>
                 <ElFormItem label="手机号">
-                  <ElInput v-model="profileForm.mobile" size="large" class="clay-input" />
+                  <ElInput v-model="profileForm.mobile" size="large" class="member-field" />
                 </ElFormItem>
                 <ElFormItem label="性别">
-                  <ElRadioGroup v-model="profileForm.gender">
+                  <ElRadioGroup v-model="profileForm.gender" class="member-radio-group">
                     <ElRadio :value="1">男</ElRadio>
                     <ElRadio :value="2">女</ElRadio>
                     <ElRadio :value="0">保密</ElRadio>
                   </ElRadioGroup>
                 </ElFormItem>
               </div>
-              <div class="flex flex-col items-center justify-center p-8 rounded-[40px] bg-[#f0f3f8] shadow-clay-pressed border-2 border-dashed border-gray-200">
-                <div class="w-32 h-32 rounded-[40px] bg-white shadow-clay-btn p-1 mb-6">
-                  <ElAvatar :size="120" :src="profileForm.avatar" class="!rounded-[36px] !w-full !h-full">
-                    {{ profileForm.nickname?.charAt(0) || 'U' }}
-                  </ElAvatar>
-                </div>
+              <div class="member-avatar-box">
+                <ElAvatar :size="96" :src="profileForm.avatar" class="member-avatar-box__img">
+                  {{ profileForm.nickname?.charAt(0) || 'U' }}
+                </ElAvatar>
                 <input ref="avatarInputRef" type="file" accept="image/jpeg,image/png,image/gif" class="hidden" @change="handleAvatarUpload" />
-                <button type="button" class="px-6 py-2 rounded-xl bg-white shadow-clay-btn text-xs font-bold text-clay-accent transition-all" @click="avatarInputRef?.click()">
+                <button type="button" class="overview-btn overview-btn--ghost" @click="avatarInputRef?.click()">
                   {{ avatarUploading ? '上传中...' : '更换头像' }}
                 </button>
-                <p class="mt-4 text-[10px] text-clay-muted text-center">支持 JPG, PNG, GIF 格式<br>最大 2MB</p>
+                <p class="member-avatar-box__hint">支持 JPG、PNG、GIF，最大 2MB</p>
               </div>
             </ElForm>
-            <div class="mt-12 flex justify-end gap-4">
-              <button class="px-8 py-3 rounded-2xl bg-white shadow-clay-btn font-bold text-clay-muted active:scale-95 transition-all">取消</button>
-              <button class="px-10 py-3 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn font-bold active:scale-95 transition-all" :disabled="saving" @click="handleSaveProfile">
+            <div class="member-form-actions">
+              <button type="button" class="overview-btn overview-btn--ghost">取消</button>
+              <button type="button" class="overview-btn overview-btn--primary" :disabled="saving" @click="handleSaveProfile">
                 {{ saving ? '保存中...' : '保存修改' }}
               </button>
             </div>
@@ -207,24 +219,23 @@
         </div>
 
         <!-- 4. 修改密码 -->
-        <div v-if="activeMenu === 'password'" class="animate-in">
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-12">
-            <h2 class="font-heading font-black text-2xl text-clay-foreground mb-8">安全设置 - 修改密码</h2>
-            <ElForm ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-position="top" class="max-w-md space-y-6">
+        <div v-if="activeMenu === 'password'" class="member-page animate-in">
+          <section class="overview-panel">
+            <h2 class="overview-panel__section-title">修改密码</h2>
+            <p class="overview-panel__section-desc">定期更新密码以保障账户安全</p>
+            <ElForm ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-position="top" class="member-password-form">
               <ElFormItem label="当前密码" prop="oldPassword">
-                <ElInput v-model="passwordForm.oldPassword" type="password" show-password placeholder="请输入当前密码" size="large" class="clay-input" />
+                <ElInput v-model="passwordForm.oldPassword" type="password" show-password placeholder="请输入当前密码" size="large" class="member-field" />
               </ElFormItem>
               <ElFormItem label="新密码" prop="newPassword">
-                <ElInput v-model="passwordForm.newPassword" type="password" show-password placeholder="不少于6位" size="large" class="clay-input" />
+                <ElInput v-model="passwordForm.newPassword" type="password" show-password placeholder="不少于6位" size="large" class="member-field" />
               </ElFormItem>
               <ElFormItem label="确认新密码" prop="confirmPassword">
-                <ElInput v-model="passwordForm.confirmPassword" type="password" show-password placeholder="再次输入新密码" size="large" class="clay-input" />
+                <ElInput v-model="passwordForm.confirmPassword" type="password" show-password placeholder="再次输入新密码" size="large" class="member-field" />
               </ElFormItem>
-              <div class="pt-4">
-                <button class="w-full py-4 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn font-bold active:scale-95 transition-all" :disabled="changingPassword" @click="handleChangePassword">
-                  {{ changingPassword ? '更新中...' : '更新密码' }}
-                </button>
-              </div>
+              <button type="button" class="overview-btn overview-btn--primary overview-btn--block" :disabled="changingPassword" @click="handleChangePassword">
+                {{ changingPassword ? '更新中...' : '更新密码' }}
+              </button>
             </ElForm>
           </section>
         </div>
@@ -320,53 +331,45 @@
           </section>
         </div>
 
-        <!-- 7. 系统通知（对齐 homesite：富通知卡片+未读标记） -->
-        <div v-if="activeMenu === 'notification'" class="animate-in">
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-12">
-            <div class="flex justify-between items-center mb-10">
-              <div class="flex items-center gap-4">
-                <h2 class="font-heading font-black text-2xl text-clay-foreground">系统通知</h2>
-                <span v-if="noticeUnread > 0" class="px-3 py-1 rounded-full bg-blue-500 text-white text-[10px] font-black">{{ noticeUnread }} 未读</span>
+        <!-- 7. 系统通知 -->
+        <div v-if="activeMenu === 'notification'" class="member-page animate-in">
+          <section class="overview-panel">
+            <div class="overview-panel__head">
+              <div class="member-notice-head">
+                <h2 class="overview-panel__section-title">系统通知</h2>
+                <span v-if="noticeUnread > 0" class="member-badge">{{ noticeUnread }} 未读</span>
               </div>
-              <button
-                class="px-6 py-2 rounded-xl bg-[#f0f3f8] shadow-clay-pressed text-xs font-bold text-clay-muted hover:bg-white hover:shadow-clay-btn transition-all"
-                @click="handleReadAllNotice"
-              >全部已读</button>
+              <button type="button" class="overview-btn overview-btn--ghost" @click="handleReadAllNotice">全部已读</button>
             </div>
-            <div v-if="noticeList.length === 0 && !noticeLoading" class="py-20 text-center">
-              <div class="w-24 h-24 rounded-full bg-white shadow-clay-btn flex items-center justify-center mb-6 mx-auto">
-                <ArtSvgIcon icon="ri:notification-line" class="text-[40px] text-clay-muted opacity-50" />
-              </div>
-              <p class="text-clay-muted font-bold text-lg">暂无通知</p>
+            <p class="overview-panel__section-desc">平台消息与业务提醒</p>
+
+            <div v-if="noticeList.length === 0 && !noticeLoading" class="overview-empty">
+              <ArtSvgIcon icon="ri:notification-line" class="overview-empty__icon" />
+              <p>暂无通知</p>
             </div>
-            <div v-else class="space-y-8">
-              <div v-for="item in noticeList" :key="item.id"
-                   class="group relative bg-[#f0f3f8] shadow-clay-pressed rounded-[32px] p-6 md:p-8 hover:bg-white hover:shadow-clay-card transition-all duration-500 cursor-pointer"
-                   @click="handleReadNotice(item)">
-                <!-- 未读标记 -->
-                <div v-if="!item.isRead" class="absolute top-8 left-8 w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                <div :class="{ 'ml-6': !item.isRead }">
-                  <div class="flex flex-wrap items-center gap-3 mb-3">
-                    <span class="px-3 py-1 rounded-lg bg-white shadow-clay-btn text-[10px] font-black text-clay-accent uppercase">{{ noticeTypeLabel(item.type) }}</span>
-                    <h3 class="font-bold text-lg text-clay-foreground group-hover:text-blue-600 transition-colors">{{ item.title }}</h3>
-                  </div>
-                  <div class="text-sm text-clay-muted leading-relaxed mb-6" v-html="item.content"></div>
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-xs font-bold text-clay-muted">
-                      <ArtSvgIcon icon="ri:time-line" class="text-sm" />
-                      {{ formatTimestamp(item.createdAt) }}
-                    </div>
-                  </div>
+            <ul v-else class="member-notice-list">
+              <li
+                v-for="item in noticeList"
+                :key="item.id"
+                class="member-notice-item"
+                :class="{ 'is-unread': !item.isRead }"
+                @click="handleReadNotice(item)"
+              >
+                <div class="member-notice-item__head">
+                  <span class="member-tag">{{ noticeTypeLabel(item.type) }}</span>
+                  <h3>{{ item.title }}</h3>
                 </div>
-              </div>
-              <!-- 加载更多 -->
-              <div v-if="noticeTotal > noticePageSize" class="pt-4 flex justify-center">
-                <button v-if="noticePage * noticePageSize < noticeTotal"
-                  class="flex items-center gap-2 text-sm font-bold text-clay-muted hover:text-clay-accent transition-colors"
-                  @click="loadNoticeList(noticePage + 1)">
-                  查看更多通知 <ArtSvgIcon icon="ri:arrow-down-s-line" class="text-base" />
-                </button>
-              </div>
+                <div class="member-notice-item__content" v-html="item.content" />
+                <div class="member-notice-item__time">
+                  <ArtSvgIcon icon="ri:time-line" />
+                  {{ formatTimestamp(item.createdAt) }}
+                </div>
+              </li>
+            </ul>
+            <div v-if="noticeTotal > noticePageSize && noticePage * noticePageSize < noticeTotal" class="member-load-more">
+              <button type="button" class="overview-btn overview-btn--ghost" @click="loadNoticeList(noticePage + 1)">
+                查看更多通知
+              </button>
             </div>
           </section>
         </div>
@@ -440,21 +443,22 @@ const opcStatusLabel = computed(() => {
 const serviceSteps = computed(() => {
   const s = complianceState.value
   const opcDone = s.opcStatus === 'active'
+  const diagnosisDone = !!s.hasDiagnosis || !!s.hasPendingOrder || s.hasActiveOrder
 
   return [
     {
       key: 'diagnosis',
       title: '免费诊断',
       desc: '了解税负对比与合规风险',
-      done: s.hasPendingOrder || s.hasActiveOrder,
-      current: !s.hasPendingOrder && !s.hasActiveOrder
+      done: diagnosisDone,
+      current: !diagnosisDone
     },
     {
       key: 'plan',
       title: '方案签约',
       desc: '选择套餐并完成风险告知',
       done: s.hasActiveOrder,
-      current: !!s.hasPendingOrder
+      current: !s.hasActiveOrder && (!!s.hasPendingOrder || !!s.hasDiagnosis)
     },
     {
       key: 'opc',
@@ -1085,6 +1089,8 @@ const handleChangePassword = async () => {
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
+  border: none;
+  cursor: pointer;
   transition: all 0.15s ease;
 
   &--primary {
@@ -1105,9 +1111,174 @@ const handleChangePassword = async () => {
       background: #f8fafc;
     }
   }
+
+  &--block {
+    width: 100%;
+  }
+}
+
+.member-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.member-profile-form {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.member-profile-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.member-avatar-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px;
+  border: 1px dashed #d8dee9;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.member-avatar-box__img {
+  border-radius: 8px;
+}
+
+.member-avatar-box__hint {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.member-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e8edf3;
+}
+
+.member-password-form {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.member-notice-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.member-badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.member-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.member-notice-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.member-notice-item {
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    border-color: #bfdbfe;
+    background: #fff;
+  }
+
+  &.is-unread {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+  }
+}
+
+.member-notice-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+}
+
+.member-notice-item__content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.member-notice-item__time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.member-load-more {
+  margin-top: 16px;
+  text-align: center;
+}
+
+:deep(.member-field) .el-input__wrapper {
+  min-height: 40px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d8dee9 inset;
+}
+
+.member-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 @media (max-width: 768px) {
+  .member-profile-form {
+    grid-template-columns: 1fr;
+  }
   .overview-steps,
   .overview-stats,
   .overview-links {

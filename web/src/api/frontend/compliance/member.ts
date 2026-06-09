@@ -780,14 +780,28 @@ export function getDiagnosisDetail(id: number | string) {
  */
 
 export async function getCompliancePlanState(): Promise<CompliancePlanState> {
+  let hasDiagnosis = false
+  try {
+    const hist = await getDiagnosisHistory({ page: 1, pageSize: 1 })
+    hasDiagnosis = (hist?.total ?? 0) > 0 || (hist?.list?.length ?? 0) > 0
+  } catch {
+    /* ignore */
+  }
+
+  const base: CompliancePlanState = {
+    hasActiveOrder: false,
+    opcStatus: 'none',
+    hasPendingOrder: false,
+    hasDiagnosis,
+  }
+
   try {
     const order = await getActiveOrder()
-    if (!order || order.status === 'cancelled') {
-      return { hasActiveOrder: false, opcStatus: 'none', hasPendingOrder: false }
-    }
+    if (!order) return base
     if (order.status === 'pending') {
-      return { hasActiveOrder: false, opcStatus: 'none', hasPendingOrder: true }
+      return { ...base, hasPendingOrder: true }
     }
+    if (order.status !== 'active') return base
 
     let opcStatus: OpcStatus = 'pending'
     try {
@@ -800,9 +814,9 @@ export async function getCompliancePlanState(): Promise<CompliancePlanState> {
     } catch {
       /* ignore */
     }
-    return { hasActiveOrder: true, opcStatus, hasPendingOrder: false }
+    return { hasActiveOrder: true, opcStatus, hasPendingOrder: false, hasDiagnosis }
   } catch {
-    return { hasActiveOrder: false, opcStatus: 'none', hasPendingOrder: false }
+    return base
   }
 }
 

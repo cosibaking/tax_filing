@@ -164,6 +164,14 @@ const guideBanner = computed<GuideBanner | null>(() => {
         actionPath: '/user/compliance/plan',
       }
     }
+    if (planState.value.hasDiagnosis) {
+      return {
+        type: 'warning',
+        message: '您已完成免费诊断，请选择套餐并完成签约',
+        actionLabel: '去签约',
+        actionPath: '/user/compliance/plan',
+      }
+    }
     return {
       type: 'warning',
       message: '完成方案签约，开启合规服务',

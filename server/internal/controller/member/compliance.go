@@ -898,6 +898,9 @@ func (c *ControllerV1) ComplianceOrderActive(ctx context.Context, req *member.Co
 	if err != nil {
 		return nil, err
 	}
+	if out == nil {
+		return nil, nil
+	}
 	return &member.ComplianceOrderActiveRes{ActiveOrderModel: out}, nil
 }
 
