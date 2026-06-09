@@ -191,7 +191,7 @@ const COLUMN_DEFS: ComparisonColumnDef[] = [
   { plan: 'none', label: '不报税', warning: true },
   { plan: 'labor', label: '纯劳务' },
   { plan: 'individual', label: '个体户' },
-  { plan: 'opc', label: 'OPC' }
+  { plan: 'opc', label: '小微公司' }
 ]
 
 function isPlanRecommended(plan: string, recommended?: string, itemRecommended?: boolean) {
@@ -231,24 +231,24 @@ const recommendationReasons = computed(() => {
   const plan = diagnosisResult.value?.recommendedPlan
   const defaults: Record<string, string[]> = {
     opc: [
-      '年收入规模适合通过 OPC 小微公司合规经营，综合税负更优',
+      '年收入规模适合通过小微公司合规经营，综合税负更优',
       '可合法抵扣成本费用，降低应纳税所得额',
-      '便于与平台/MCN 对公结算，降低个人账户大额流水风险'
+      '便于与平台、客户对公结算，降低个人账户大额流水风险'
     ],
     individual: [
       '当前收入规模适合个体户查账征收，设立成本较低',
       '经营所得可扣除真实成本，税负低于劳务报酬',
-      '后续收入增长可升级 OPC 方案'
+      '后续收入增长可升级小微公司方案'
     ],
     labor: [
       '当前收入较低，劳务报酬计税相对简单',
       '建议保留完整收入凭证，为后续升级做准备',
-      '收入增长后建议重新评估个体户或 OPC 方案'
+      '收入增长后建议重新评估个体户或小微公司方案'
     ],
     transitional: [
       '建议先完成历史申报补正，再选择合适经营主体',
       '过渡期内可借助顾问梳理合规路径',
-      '稳定经营后推荐升级 OPC 方案'
+      '稳定经营后推荐升级小微公司方案'
     ]
   }
   return defaults[plan || 'opc'] || defaults.opc

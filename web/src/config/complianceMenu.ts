@@ -50,7 +50,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
   },
   {
     id: 'opc',
-    name: 'OPC 进度',
+    name: '主体设立',
     icon: 'ri:building-2-line',
     path: '/user/compliance/opc',
     visible: (plan) => plan.hasActiveOrder && plan.opcStatus !== 'active'
@@ -76,6 +76,14 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '利润报表',
     icon: 'ri:line-chart-line',
     path: '/user/compliance/ledger',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
+    id: 'filing',
+    name: '报税中心',
+    icon: 'ri:file-edit-line',
+    path: '/user/compliance/filing',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },

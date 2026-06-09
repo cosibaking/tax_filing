@@ -30,10 +30,12 @@ const (
 var (
 	validPlatforms = map[string]bool{
 		"douyin": true, "kuaishou": true, "bilibili": true,
-		"wechat": true, "xiaohongshu": true,
+		"channels": true, "wechat": true, "xiaohongshu": true,
+		"taobao": true, "alipay": true, "offline": true, "other": true,
 	}
 	validIncomeCategories = map[string]bool{
 		"tip": true, "commission": true, "ad": true,
+		"service_fee": true, "product_sales": true,
 		"slot_fee": true, "offline": true, "other": true,
 	}
 	forbiddenIncomeCategories = map[string]bool{

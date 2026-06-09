@@ -1,6 +1,4 @@
-<!-- +----------------------------------------------------------------------
-  | P-01 首页 — 主播 OPC 合规营销落地页
-  +---------------------------------------------------------------------- -->
+<!-- P-01 首页 — 个人税务合规营销落地页 -->
 <template>
   <div class="opc-home">
     <!-- Hero -->
@@ -15,15 +13,34 @@
       </div>
     </section>
 
-    <!-- 三步流程 -->
+    <!-- 服务全流程 -->
     <section class="opc-steps">
-      <h2 class="opc-steps__title">三步开启合规服务</h2>
-      <div class="opc-steps__grid">
-        <div v-for="(step, index) in steps" :key="step.title" class="opc-step-card">
-          <div class="opc-step-card__badge">步骤 {{ index + 1 }}</div>
-          <h3 class="opc-step-card__title">{{ step.title }}</h3>
-          <p class="opc-step-card__desc">{{ step.desc }}</p>
+      <h2 class="opc-steps__title">全链路合规服务</h2>
+      <p class="opc-steps__subtitle">从免费诊断到记账申报，一站式陪伴</p>
+      <div class="opc-journey">
+        <div v-for="(step, index) in journeySteps" :key="step.key" class="opc-journey__item">
+          <span class="opc-journey__index">{{ index + 1 }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.desc }}</p>
         </div>
+      </div>
+    </section>
+
+    <!-- 政策科普 -->
+    <section class="opc-policy">
+      <div class="opc-policy__header">
+        <h2 class="opc-policy__title">政策与合规科普</h2>
+        <p class="opc-policy__subtitle">了解监管背景，做出正确合规决策</p>
+      </div>
+      <div class="opc-policy__grid">
+        <article v-for="topic in policyTopics" :key="topic.id" class="opc-policy-card">
+          <ArtSvgIcon :icon="topic.icon" class="opc-policy-card__icon" />
+          <h3>{{ topic.title }}</h3>
+          <p>{{ topic.summary }}</p>
+        </article>
+      </div>
+      <div class="opc-policy__more">
+        <RouterLink to="/docs" class="opc-btn opc-btn--secondary">查看更多政策说明</RouterLink>
       </div>
     </section>
 
@@ -82,25 +99,12 @@
 <script setup lang="ts">
 import { appCases } from '@/data/frontend/cases'
 import { aboutIntro, aboutValues } from '@/data/frontend/about'
+import { policyTopics, serviceJourneySteps } from '@/data/frontend/policy'
 
 defineOptions({ name: 'FrontendHome' })
 
 const previewCases = appCases.slice(0, 3)
-
-const steps = [
-  {
-    title: '免费诊断',
-    desc: '填写问卷，了解税负对比与合规风险'
-  },
-  {
-    title: '签约服务',
-    desc: '选择套餐，完成风险告知与电子签约'
-  },
-  {
-    title: '记账申报',
-    desc: '录入流水，顾问协助申报与对账'
-  }
-]
+const journeySteps = serviceJourneySteps
 </script>
 
 <style lang="scss" scoped>
@@ -179,56 +183,119 @@ const steps = [
 }
 
 .opc-steps__title {
-  margin: 0 0 28px;
+  margin: 0 0 8px;
   text-align: center;
   font-size: 22px;
   font-weight: 700;
   color: #1a1f36;
 }
 
-.opc-steps__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+.opc-steps__subtitle {
+  margin: 0 auto 28px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7c93;
 }
 
-.opc-step-card {
-  padding: 28px 24px;
+.opc-journey {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.opc-journey__item {
+  padding: 20px 18px;
   background: #fff;
   border: 1px solid #e8edf3;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
 
-  &:hover {
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-    transform: translateY(-2px);
+  h3 {
+    margin: 10px 0 6px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #64748b;
   }
 }
 
-.opc-step-card__badge {
-  display: inline-block;
-  margin-bottom: 14px;
-  padding: 4px 10px;
+.opc-journey__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: #2563eb;
   background: #eff6ff;
 }
 
-.opc-step-card__title {
-  margin: 0 0 10px;
-  font-size: 18px;
+.opc-policy {
+  padding: 16px 0 48px;
+}
+
+.opc-policy__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.opc-policy__title {
+  margin: 0 0 8px;
+  font-size: 22px;
   font-weight: 700;
   color: #1a1f36;
 }
 
-.opc-step-card__desc {
+.opc-policy__subtitle {
   margin: 0;
   font-size: 14px;
-  line-height: 1.65;
   color: #6b7c93;
+}
+
+.opc-policy__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.opc-policy-card {
+  padding: 20px 18px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+
+  h3 {
+    margin: 10px 0 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #64748b;
+  }
+}
+
+.opc-policy-card__icon {
+  font-size: 22px;
+  color: #2563eb;
+}
+
+.opc-policy__more {
+  margin-top: 24px;
+  text-align: center;
 }
 
 .opc-cases {
@@ -414,7 +481,8 @@ const steps = [
     padding: 32px 16px 64px;
   }
 
-  .opc-steps__grid,
+  .opc-journey,
+  .opc-policy__grid,
   .opc-cases__grid,
   .opc-about__values {
     grid-template-columns: 1fr;

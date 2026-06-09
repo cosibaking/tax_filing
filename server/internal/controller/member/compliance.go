@@ -24,6 +24,7 @@ package member
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -665,6 +666,27 @@ func readUploadCSV(ctx context.Context, field string, fallback string) string {
 	return string(b)
 }
 
+func readUploadBytes(ctx context.Context, field string) []byte {
+	r := ghttp.RequestFromCtx(ctx)
+	if r == nil {
+		return nil
+	}
+	up := r.GetUploadFile(field)
+	if up == nil {
+		return nil
+	}
+	f, err := up.Open()
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
 // ComplianceIncomeList 收入台账列表
 func (c *ControllerV1) ComplianceIncomeList(ctx context.Context, req *member.ComplianceIncomeListReq) (res *member.ComplianceIncomeListRes, err error) {
 	memberId, err := requireMemberId(ctx)
@@ -1130,5 +1152,76 @@ func buildProfitQuery(req *member.ComplianceLedgerProfitReq) *compliancein.Profi
 		}
 	}
 	return in
+}
+
+// ComplianceTaxFilingTemplate 下载报税 Excel 模板
+func (c *ControllerV1) ComplianceTaxFilingTemplate(ctx context.Context, req *member.ComplianceTaxFilingTemplateReq) (res *member.ComplianceTaxFilingTemplateRes, err error) {
+	if _, err = requireMemberId(ctx); err != nil {
+		return nil, err
+	}
+	data, err := service.ComplianceTax().GenerateFilingTemplate(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if r := ghttp.RequestFromCtx(ctx); r != nil {
+		r.Response.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		r.Response.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", "tax-filing-import.xlsx"))
+		r.Response.Write(data)
+	}
+	return &member.ComplianceTaxFilingTemplateRes{}, nil
+}
+
+// ComplianceTaxFilingImportPreview 报税 Excel 导入预览
+func (c *ControllerV1) ComplianceTaxFilingImportPreview(ctx context.Context, req *member.ComplianceTaxFilingImportPreviewReq) (res *member.ComplianceTaxFilingImportPreviewRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	fileContent := readUploadBytes(ctx, "file")
+	out, err := service.ComplianceTax().PreviewTaxFilingImport(ctx, &compliancein.TaxFilingImportInp{
+		MemberId:    memberId,
+		FileContent: fileContent,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceTaxFilingImportPreviewRes{TaxFilingImportPreviewModel: out}, nil
+}
+
+// ComplianceTaxFilingImport 报税 Excel 导入
+func (c *ControllerV1) ComplianceTaxFilingImport(ctx context.Context, req *member.ComplianceTaxFilingImportReq) (res *member.ComplianceTaxFilingImportRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ip, _ := requestMeta(ctx)
+	fileContent := readUploadBytes(ctx, "file")
+	out, err := service.ComplianceTax().ImportTaxFilingExcel(ctx, &compliancein.TaxFilingImportInp{
+		MemberId:    memberId,
+		FileContent: fileContent,
+		ExcelFileId: req.ExcelFileId,
+		Ip:          ip,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceTaxFilingImportRes{TaxFilingImportModel: out}, nil
+}
+
+// ComplianceTaxFilingSubmissions 报税提交历史
+func (c *ControllerV1) ComplianceTaxFilingSubmissions(ctx context.Context, req *member.ComplianceTaxFilingSubmissionsReq) (res *member.ComplianceTaxFilingSubmissionsRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceTax().ListTaxFilingSubmissions(ctx, &compliancein.TaxFilingSubmissionListInp{
+		MemberId: memberId,
+		Page:     req.Page,
+		PageSize: req.PageSize,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceTaxFilingSubmissionsRes{TaxFilingSubmissionListModel: out}, nil
 }
 

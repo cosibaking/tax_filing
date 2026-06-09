@@ -18,7 +18,7 @@
             </div>
           </div>
           <h2 class="font-heading font-black text-xl text-clay-foreground mb-1">{{ userInfo.nickname || userInfo.username }}</h2>
-          <p class="text-xs text-clay-muted font-medium">OPC 合规服务</p>
+          <p class="text-xs text-clay-muted font-medium">税务合规服务</p>
           <RouterLink
             to="/user"
             class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-[#f0f3f8] shadow-clay-pressed text-xs font-bold text-clay-muted hover:text-clay-accent transition-colors"

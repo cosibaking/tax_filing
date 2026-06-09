@@ -12,7 +12,7 @@
         </h3>
         <p class="text-sm text-clay-muted mt-1">
           <template v-if="isUnknown">
-            一人 OPC 通常无雇员。确认后将影响报税前自查清单中工资/社保项是否适用。
+            一人有限责任公司通常无雇员。确认后将影响报税前自查清单中工资/社保项是否适用。
           </template>
           <template v-else>
             当前：{{ EMPLOYMENT_STATUS_LABELS[status] }}

@@ -113,7 +113,7 @@ const total = ref(0)
 
 const planLabel = (plan: RecommendedPlan | string) => {
   const map: Record<string, string> = {
-    opc: 'OPC 方案',
+    opc: '小微公司',
     individual: '个体户',
     labor: '劳务报酬',
     transitional: '过渡方案',

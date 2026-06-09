@@ -65,6 +65,10 @@ type (
 		GetCalendar(ctx context.Context, in *compliancein.TaxCalendarInp) (*compliancein.TaxCalendarModel, error)
 		GetChecklist(ctx context.Context, in *compliancein.TaxChecklistInp) (*compliancein.TaxChecklistModel, error)
 		GetTaskDetail(ctx context.Context, in *compliancein.TaxTaskDetailInp) (*compliancein.TaxTaskDetailModel, error)
+		GenerateFilingTemplate(ctx context.Context) ([]byte, error)
+		PreviewTaxFilingImport(ctx context.Context, in *compliancein.TaxFilingImportInp) (*compliancein.TaxFilingImportPreviewModel, error)
+		ImportTaxFilingExcel(ctx context.Context, in *compliancein.TaxFilingImportInp) (*compliancein.TaxFilingImportModel, error)
+		ListTaxFilingSubmissions(ctx context.Context, in *compliancein.TaxFilingSubmissionListInp) (*compliancein.TaxFilingSubmissionListModel, error)
 	}
 
 	IComplianceFiling interface {

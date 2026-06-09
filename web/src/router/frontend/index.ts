@@ -72,7 +72,7 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
 
       },
 
-      // OPC 合规诊断
+      // 合规诊断
 
       {
 
@@ -326,7 +326,7 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
 
             component: () => import('@/views/frontend/compliance/opc.vue'),
 
-            meta: { title: 'OPC 落地进度', requiresAuth: true }
+            meta: { title: '主体设立进度', requiresAuth: true }
 
           },
 
@@ -367,6 +367,20 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
             component: () => import('@/views/frontend/compliance/ledger.vue'),
 
             meta: { title: '利润报表', requiresAuth: true },
+
+            beforeEnter: complianceRouteGuard
+
+          },
+
+          {
+
+            path: 'compliance/filing',
+
+            name: 'MemberComplianceFiling',
+
+            component: () => import('@/views/frontend/compliance/filing.vue'),
+
+            meta: { title: '报税中心', requiresAuth: true },
 
             beforeEnter: complianceRouteGuard
 

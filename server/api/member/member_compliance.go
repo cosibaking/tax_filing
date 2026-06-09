@@ -684,4 +684,41 @@ type ComplianceSocialConsultListRes struct {
 	*compliancein.SocialConsultListModel
 }
 
+// ComplianceTaxFilingTemplateReq 下载报税 Excel 模板
+type ComplianceTaxFilingTemplateReq struct {
+	g.Meta `path:"/compliance/tax/filing/template" method:"get" tags:"会员合规" summary:"下载报税Excel模板"`
+}
+
+type ComplianceTaxFilingTemplateRes struct{}
+
+// ComplianceTaxFilingImportPreviewReq 报税 Excel 导入预览
+type ComplianceTaxFilingImportPreviewReq struct {
+	g.Meta `path:"/compliance/tax/filing/import/preview" method:"post" mime:"multipart/form-data" tags:"会员合规" summary:"报税Excel导入预览"`
+}
+
+type ComplianceTaxFilingImportPreviewRes struct {
+	*compliancein.TaxFilingImportPreviewModel
+}
+
+// ComplianceTaxFilingImportReq 报税 Excel 导入
+type ComplianceTaxFilingImportReq struct {
+	g.Meta        `path:"/compliance/tax/filing/import" method:"post" mime:"multipart/form-data" tags:"会员合规" summary:"报税Excel导入"`
+	ExcelFileId   uint64 `json:"excelFileId"`
+}
+
+type ComplianceTaxFilingImportRes struct {
+	*compliancein.TaxFilingImportModel
+}
+
+// ComplianceTaxFilingSubmissionsReq 报税提交历史
+type ComplianceTaxFilingSubmissionsReq struct {
+	g.Meta   `path:"/compliance/tax/filing/submissions" method:"get" tags:"会员合规" summary:"报税提交历史"`
+	Page     int `p:"page" json:"page" d:"1"`
+	PageSize int `p:"pageSize" json:"pageSize" d:"20"`
+}
+
+type ComplianceTaxFilingSubmissionsRes struct {
+	*compliancein.TaxFilingSubmissionListModel
+}
+
 

@@ -61,7 +61,7 @@ export interface DiagnosisHistoryResult {
 
 
 
-/** 直播平台 */
+/** 收入渠道/平台 */
 
 export const INCOME_PLATFORMS = [
 
@@ -75,7 +75,17 @@ export const INCOME_PLATFORMS = [
 
   { value: 'channels', label: '视频号' },
 
-  { value: 'xiaohongshu', label: '小红书' }
+  { value: 'xiaohongshu', label: '小红书' },
+
+  { value: 'taobao', label: '淘宝/天猫' },
+
+  { value: 'wechat', label: '微信生态' },
+
+  { value: 'alipay', label: '支付宝' },
+
+  { value: 'offline', label: '线下收款' },
+
+  { value: 'other', label: '其他' }
 
 ] as const
 
@@ -89,15 +99,19 @@ export type IncomePlatform = (typeof INCOME_PLATFORMS)[number]['value']
 
 export const INCOME_CATEGORIES = [
 
-  { value: 'tip', label: '打赏' },
+  { value: 'tip', label: '打赏/酬劳' },
 
-  { value: 'commission', label: '带货佣金' },
+  { value: 'commission', label: '佣金' },
 
   { value: 'ad', label: '广告' },
 
+  { value: 'service_fee', label: '服务费' },
+
+  { value: 'product_sales', label: '商品销售' },
+
   { value: 'slot_fee', label: '坑位费' },
 
-  { value: 'offline', label: '线下活动' },
+  { value: 'offline', label: '线下业务' },
 
   { value: 'other', label: '其他' }
 
@@ -559,7 +573,7 @@ export const TAX_CHECKLIST_ITEMS: { key: string; label: string }[] = [
 
   { key: 'cost_booked', label: '成本费用发票是否已入账？' },
 
-  { key: 'payroll_tax', label: 'OPC 是否有员工要报工资个税？' },
+  { key: 'payroll_tax', label: '经营主体是否有员工要报工资个税？' },
 
   { key: 'vat_filed', label: '本季度增值税申报了吗？' },
 
@@ -567,7 +581,7 @@ export const TAX_CHECKLIST_ITEMS: { key: string; label: string }[] = [
 
   { key: 'social_insurance', label: '有员工的话，社保申报了吗？' },
 
-  { key: 'other_platform', label: '主播是否还有其他平台收入要合并计算？' },
+  { key: 'other_platform', label: '是否还有其他渠道收入要合并计算？' },
 
   { key: 'prior_correction', label: '上一期申报是否有错误要更正？' }
 
@@ -1057,6 +1071,210 @@ export function formatMoney(amount: number | undefined | null) {
   if (amount == null) return '—'
 
   return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+}
+
+
+
+/** 报税 Excel 申报汇总预览 */
+
+export interface TaxFilingSummaryPreview {
+
+  period: string
+
+  revenue: number
+
+  expenseTotal: number
+
+  profit: number
+
+  vatAmount: number
+
+  citAmount: number
+
+  surchargeAmount: number
+
+  remark?: string
+
+  valid: boolean
+
+  error?: string
+
+}
+
+
+
+/** 报税 Excel 报销明细预览行 */
+
+export interface TaxFilingExpensePreviewRow {
+
+  row: number
+
+  occurredAt: string
+
+  category: string
+
+  categoryName?: string
+
+  amount: number
+
+  invoiceType: string
+
+  description?: string
+
+  valid: boolean
+
+  error?: string
+
+}
+
+
+
+export interface TaxFilingImportPreviewResult {
+
+  summary: TaxFilingSummaryPreview
+
+  expenseRows: TaxFilingExpensePreviewRow[]
+
+  validExpenseCount: number
+
+  invalidExpenseCount: number
+
+}
+
+
+
+export interface TaxFilingImportResult {
+
+  submissionId: number
+
+  period: string
+
+  expenseImported: number
+
+  expenseFailed: number
+
+}
+
+
+
+export interface TaxFilingSubmissionItem {
+
+  id: number
+
+  period: string
+
+  revenue: number
+
+  expenseTotal: number
+
+  profit: number
+
+  vatAmount: number
+
+  citAmount: number
+
+  surchargeAmount: number
+
+  expenseImported: number
+
+  remark?: string
+
+  createdAt: string
+
+}
+
+
+
+/** 下载报税 Excel 模板 */
+
+export async function downloadTaxFilingTemplate() {
+
+  const { useMemberStore } = await import('@/store/modules/member')
+
+  const token = useMemberStore().getToken()
+
+  const base = (import.meta.env.VITE_API_URL as string) || ''
+
+  const res = await fetch(`${base}/member/compliance/tax/filing/template`, {
+
+    headers: { 'Xy-User-Token': token },
+
+  })
+
+  if (!res.ok) throw new Error('模板下载失败')
+
+  const blob = await res.blob()
+
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+
+  a.href = url
+
+  a.download = 'tax-filing-import.xlsx'
+
+  a.click()
+
+  URL.revokeObjectURL(url)
+
+}
+
+
+
+/** 报税 Excel 导入预览 */
+
+export function previewTaxFilingImport(file: File) {
+
+  const formData = new FormData()
+
+  formData.append('file', file)
+
+  return memberRequest.post<TaxFilingImportPreviewResult>({
+
+    url: '/compliance/tax/filing/import/preview',
+
+    data: formData,
+
+  })
+
+}
+
+
+
+/** 确认报税 Excel 导入 */
+
+export function confirmTaxFilingImport(file: File, excelFileId?: number) {
+
+  const formData = new FormData()
+
+  formData.append('file', file)
+
+  if (excelFileId) formData.append('excelFileId', String(excelFileId))
+
+  return memberRequest.post<TaxFilingImportResult>({
+
+    url: '/compliance/tax/filing/import',
+
+    data: formData,
+
+  })
+
+}
+
+
+
+/** 报税提交历史 */
+
+export function getTaxFilingSubmissions(params?: { page?: number; pageSize?: number }) {
+
+  return memberRequest.get<{ list: TaxFilingSubmissionItem[]; total: number; page: number; pageSize: number }>({
+
+    url: '/compliance/tax/filing/submissions',
+
+    params,
+
+  })
 
 }
 

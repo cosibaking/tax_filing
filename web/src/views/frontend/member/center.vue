@@ -481,6 +481,7 @@ const overviewQuickLinks = computed(() => {
 
   if (complianceState.value.opcStatus === 'active') {
     links.unshift(
+      { label: '报税申报', path: '/user/compliance/filing', icon: 'ri:file-edit-line' },
       { label: '记收入', path: '/user/compliance/income', icon: 'ri:money-cny-circle-line' },
       { label: '记费用', path: '/user/compliance/expense', icon: 'ri:wallet-3-line' },
       { label: '申报管理', path: '/user/compliance/tax', icon: 'ri:file-paper-2-line' },
@@ -508,6 +509,17 @@ async function loadComplianceOverview() {
     const todos: typeof todoList.value = []
 
     if (complianceState.value.opcStatus === 'active') {
+      const day = now.getDate()
+      if (day >= 1 && day <= 5) {
+        const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        const prevLabel = `${prev.getFullYear()}年${prev.getMonth() + 1}月`
+        todos.push({
+          text: `请于本月 5 日前上传${prevLabel}银行流水、平台结算截图与成本发票`,
+          path: '/user/compliance/income',
+          urgent: day >= 4,
+        })
+      }
+
       try {
         const profit = await getProfitSummary({ period, periodType: 'month' })
         monthSummary.revenue = profit?.revenue ?? 0

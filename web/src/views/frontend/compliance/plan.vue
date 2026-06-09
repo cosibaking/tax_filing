@@ -87,7 +87,7 @@
             <div class="space-y-2 text-sm font-medium text-clay-foreground">
               <p>服务套餐：<strong>{{ selectedPlan?.name }}</strong>（{{ selectedPlan?.priceLabel }}）</p>
               <p v-if="diagnosisId">关联诊断：#{{ diagnosisId }}</p>
-              <p>推荐方案：OPC 一人有限责任公司</p>
+              <p>推荐方案：一人有限责任公司（小微公司）</p>
             </div>
           </div>
 
@@ -99,8 +99,8 @@
               class="h-48 overflow-y-auto rounded-2xl bg-[#f0f3f8] shadow-clay-pressed p-5 text-xs text-clay-muted leading-relaxed"
               @scroll="onPdfScroll"
             >
-              <h4 class="font-black text-clay-foreground text-sm mb-3">OPC 合规服务协议（摘要）</h4>
-              <p class="mb-2">第一条 服务内容：本协议约定乙方为甲方提供 OPC 设立代办、记账、申报等合规服务。</p>
+              <h4 class="font-black text-clay-foreground text-sm mb-3">税务合规服务协议（摘要）</h4>
+              <p class="mb-2">第一条 服务内容：本协议约定乙方为甲方提供主体设立代办、记账、申报等合规服务。</p>
               <p class="mb-2">第二条 服务费用：按所选套餐标准收取，具体以订单确认金额为准。</p>
               <p class="mb-2">第三条 甲方义务：如实提供注册资料，配合工商、税务、银行开户流程。</p>
               <p class="mb-2">第四条 合规声明：本服务为合法合规方案，不提供逃税、虚开发票等违法服务。</p>
@@ -202,7 +202,7 @@ const agreementAccepted = ref(false)
 const signerName = ref('')
 
 const FALLBACK_PLANS: ServicePlan[] = [
-  { id: 1, name: '基础版', tier: 'basic', monthlyPrice: 299, priceLabel: '¥299', features: ['OPC 注册代办', '月度记账', '季度申报'] },
+  { id: 1, name: '基础版', tier: 'basic', monthlyPrice: 299, priceLabel: '¥299', features: ['主体注册代办', '月度记账', '季度申报'] },
   { id: 2, name: '进阶版', tier: 'advanced', monthlyPrice: 799, priceLabel: '¥799', recommended: true, features: ['基础版全部', '税务筹划', '发票管理'] },
   { id: 3, name: '尊享版', tier: 'premium', monthlyPrice: null, priceLabel: '面议', features: ['进阶版全部', '架构设计', '稽查应对'] }
 ]
@@ -348,7 +348,7 @@ async function handleSign() {
       legalName: signerName.value,
     })
     sessionStorage.removeItem(PENDING_ORDER_KEY)
-    ElMessage.success('签约成功，即将进入 OPC 落地流程')
+    ElMessage.success('签约成功，即将进入主体设立流程')
     if (res.opcId) {
       router.push('/user/compliance/opc')
     } else {

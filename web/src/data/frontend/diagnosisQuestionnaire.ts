@@ -60,19 +60,19 @@ export interface ConcernOption {
 }
 
 export const diagnosisSteps = [
-  { key: 'profile', title: '身份与渠道', subtitle: '帮助我们了解您的从业类型与主要收入来源' },
+  { key: 'profile', title: '身份与渠道', subtitle: '帮助我们了解您的经营类型与主要收入来源' },
   { key: 'income', title: '收入规模', subtitle: '用于估算年收入区间与税负对比基准' },
   { key: 'compliance', title: '合规现状', subtitle: '了解经营主体与历史申报情况' },
   { key: 'cost-risk', title: '成本与诉求', subtitle: '细化可扣费用，识别合规风险与您的核心需求' }
 ] as const
 
 export const personaOptions: PersonaOption[] = [
-  { value: '直播带货', label: '直播带货', desc: '抖音/快手等平台直播卖货', icon: 'ri:live-line' },
-  { value: '短视频博主', label: '短视频博主', desc: '内容创作、广告合作、打赏收入', icon: 'ri:video-line' },
+  { value: '内容创作', label: '内容创作', desc: '短视频、直播、广告合作等', icon: 'ri:video-line' },
   { value: '自由职业', label: '自由职业接单', desc: '设计、咨询、翻译等项目制收入', icon: 'ri:palette-line' },
   { value: '电商个体', label: '电商网店', desc: '淘宝、拼多多、跨境小店等', icon: 'ri:store-2-line' },
   { value: '知识付费', label: '知识付费', desc: '课程、专栏、社群等付费内容', icon: 'ri:book-open-line' },
-  { value: '其他', label: '其他个人收入', desc: '兼职、合作分成等', icon: 'ri:user-star-line' }
+  { value: '线下服务', label: '线下服务', desc: '门店、家政、维修等实体经营', icon: 'ri:store-3-line' },
+  { value: '其他', label: '其他个人收入', desc: '兼职、合作分成、工资外收入等', icon: 'ri:user-star-line' }
 ]
 
 export const channelOptions: ChannelOption[] = [
@@ -84,31 +84,33 @@ export const channelOptions: ChannelOption[] = [
   { value: '淘宝/天猫', label: '淘宝/天猫', icon: 'ri:shopping-bag-line' },
   { value: '拼多多', label: '拼多多', icon: 'ri:store-line' },
   { value: '微信小店', label: '微信小店', icon: 'ri:wechat-2-line' },
+  { value: '支付宝/微信收款', label: '支付宝/微信收款', icon: 'ri:wallet-3-line' },
+  { value: '银行转账', label: '银行转账', icon: 'ri:bank-line' },
   { value: '线下接单', label: '线下/私域接单', icon: 'ri:hand-coin-line' },
   { value: '其他平台', label: '其他', icon: 'ri:more-line' }
 ]
 
 export const incomeTypeOptions: ChannelOption[] = [
-  { value: '直播打赏/礼物', label: '直播打赏/礼物', icon: 'ri:gift-line' },
+  { value: '商品销售', label: '商品销售', icon: 'ri:store-2-line' },
+  { value: '服务/项目费', label: '服务/项目费', icon: 'ri:briefcase-line' },
   { value: '带货佣金', label: '带货佣金/分销', icon: 'ri:shopping-cart-line' },
   { value: '广告合作', label: '广告/商单合作', icon: 'ri:megaphone-line' },
+  { value: '打赏/礼物', label: '打赏/礼物收入', icon: 'ri:gift-line' },
   { value: '知识付费', label: '课程/专栏收入', icon: 'ri:graduation-cap-line' },
-  { value: '设计咨询接单', label: '设计/咨询接单', icon: 'ri:briefcase-line' },
-  { value: '网店销售', label: '网店商品销售', icon: 'ri:store-2-line' },
   { value: '工资兼职', label: '工资/劳务兼职', icon: 'ri:wallet-line' }
 ]
 
 export const incomeRangeOptions: IncomeRangeOption[] = [
   { value: '0-2万', label: '2 万元以下', desc: '月均不足 2 万', hint: '适合评估劳务报酬与过渡方案' },
   { value: '2-5万', label: '2 — 5 万元', desc: '月均 2—5 万', hint: '常见自由职业与博主区间' },
-  { value: '5-15万', label: '5 — 15 万元', desc: '月均 5—15 万', hint: '建议重点对比个体户与 OPC' },
+  { value: '5-15万', label: '5 — 15 万元', desc: '月均 5—15 万', hint: '建议重点对比个体户与小微公司' },
   { value: '15万+', label: '15 万元以上', desc: '月均 15 万以上', hint: '高收入需关注合规主体与台账' }
 ]
 
 export const entityOptions: EntityOption[] = [
   { value: 'none', label: '暂无经营主体', desc: '收入以个人名义取得，未注册个体户或公司' },
   { value: 'individual', label: '已有个体工商户', desc: '已领取营业执照，有基本户或经营账户' },
-  { value: 'company', label: '已有有限公司', desc: '已设立公司主体（含 OPC 等）' },
+  { value: 'company', label: '已有有限公司', desc: '已设立公司主体（含一人有限公司等）' },
   { value: 'other', label: '其他/不确定', desc: '挂靠、代运营或主体情况待确认' }
 ]
 

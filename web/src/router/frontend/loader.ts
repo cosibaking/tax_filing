@@ -26,7 +26,7 @@ import { useMemberMenuStore } from '@/store/modules/memberMenu'
 const viewModules = import.meta.glob('/src/views/frontend/**/*.vue')
 
 // 已从门户导航移除的菜单（不再注册动态路由）
-const hiddenNavNames = new Set(['docs', 'cases', 'community', 'changelog'])
+const hiddenNavNames = new Set(['cases', 'community', 'changelog'])
 
 // 标记是否已注册
 let isRegistered = false

@@ -1,84 +1,57 @@
-<!-- +----------------------------------------------------------------------
-  | XYGo Admin — 服务套餐 P-04
-  +---------------------------------------------------------------------- -->
+<!-- 服务套餐 -->
 <template>
-  <main class="pt-8 pb-16 px-6">
-    <div class="max-w-6xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-16">
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 border border-white/50 shadow-sm mb-6">
-          <ArtSvgIcon icon="ri:vip-crown-line" class="text-lg text-clay-accent" />
-          <span class="text-sm font-bold text-clay-muted">OPC 合规服务</span>
+  <div class="pricing-page">
+    <header class="pricing-page__header">
+      <span class="pricing-page__badge">税务合规服务</span>
+      <h1 class="pricing-page__title">选择适合您的 <span class="is-accent">服务套餐</span></h1>
+      <p class="pricing-page__subtitle">
+        从主体设立到日常记账申报，全程代办，让您专注经营本身
+      </p>
+    </header>
+
+    <div v-if="loading" class="pricing-page__loading">加载套餐信息...</div>
+
+    <div v-else class="pricing-page__grid">
+      <article
+        v-for="plan in displayPlans"
+        :key="plan.tier"
+        class="pricing-card"
+        :class="{ 'pricing-card--featured': plan.recommended }"
+      >
+        <span v-if="plan.recommended" class="pricing-card__tag">最受欢迎</span>
+
+        <h3 class="pricing-card__name">{{ plan.name }}</h3>
+        <div class="pricing-card__price">
+          <span class="pricing-card__amount">{{ plan.priceLabel }}</span>
+          <span v-if="plan.monthlyPrice" class="pricing-card__unit">/月起</span>
         </div>
-        <h1 class="font-heading font-black text-4xl md:text-5xl text-clay-foreground mb-4">
-          选择适合您的 <span class="text-clay-accent">服务套餐</span>
-        </h1>
-        <p class="text-lg text-clay-muted max-w-2xl mx-auto">
-          从 OPC 设立到日常记账申报，全程代办，让您专注内容创作
-        </p>
-      </div>
 
-      <!-- Loading -->
-      <div v-if="loading" class="text-center py-20">
-        <ArtSvgIcon icon="ri:loader-4-line" class="text-4xl text-clay-accent animate-spin mx-auto mb-4" />
-        <p class="text-clay-muted font-bold">加载套餐信息...</p>
-      </div>
+        <ul class="pricing-card__features">
+          <li v-for="(feat, idx) in plan.features" :key="idx">
+            <ArtSvgIcon icon="ri:check-line" class="pricing-card__check" />
+            <span>{{ feat }}</span>
+          </li>
+        </ul>
 
-      <!-- Pricing cards -->
-      <div v-else class="grid md:grid-cols-3 gap-8">
-        <div
-          v-for="plan in displayPlans"
-          :key="plan.tier"
-          class="relative rounded-[48px] p-8 md:p-10 transition-all duration-500 hover:-translate-y-2 border"
-          :class="plan.recommended
-            ? 'bg-white/90 border-blue-200 shadow-clay-deep ring-2 ring-blue-200/40'
-            : 'bg-white/70 border-[#d1d9e6]/40 shadow-clay-card hover:shadow-clay-card-hover'"
+        <button
+          type="button"
+          class="pricing-card__btn"
+          :class="{ 'pricing-card__btn--primary': plan.recommended }"
+          @click="handleSelectPlan(plan.tier)"
         >
-          <div v-if="plan.recommended" class="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-black shadow-clay-btn whitespace-nowrap">
-            最受欢迎
-          </div>
-
-          <h3 class="font-heading font-black text-2xl text-clay-foreground mb-2 mt-2">{{ plan.name }}</h3>
-          <div class="mb-6">
-            <span class="font-heading font-black text-4xl text-clay-foreground">{{ plan.priceLabel }}</span>
-            <span v-if="plan.monthlyPrice" class="text-clay-muted font-bold ml-1">/月起</span>
-          </div>
-
-          <ul class="space-y-4 mb-10">
-            <li v-for="(feat, idx) in plan.features" :key="idx" class="flex items-start gap-3">
-              <div class="w-5 h-5 rounded-full bg-clay-success/20 text-clay-success flex items-center justify-center shrink-0 mt-0.5">
-                <ArtSvgIcon icon="ri:check-line" class="text-xs" />
-              </div>
-              <span class="text-sm font-medium text-clay-foreground">{{ feat }}</span>
-            </li>
-          </ul>
-
-          <button
-            type="button"
-            class="w-full py-4 rounded-2xl font-black text-base transition-all duration-300 active:scale-95"
-            :class="plan.recommended
-              ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1'
-              : 'bg-white text-clay-foreground shadow-clay-btn hover:shadow-clay-btn-hover'"
-            @click="handleSelectPlan(plan.tier)"
-          >
-            选择此套餐
-          </button>
-        </div>
-      </div>
-
-      <!-- Free diagnosis CTA -->
-      <div class="mt-16 text-center">
-        <p class="text-clay-muted font-medium mb-4">还不确定选哪个？先做免费合规诊断</p>
-        <RouterLink
-          to="/diagnosis"
-          class="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover font-bold text-clay-accent transition-all"
-        >
-          <ArtSvgIcon icon="ri:shield-check-line" class="text-lg" />
-          免费诊断
-        </RouterLink>
-      </div>
+          选择此套餐
+        </button>
+      </article>
     </div>
-  </main>
+
+    <div class="pricing-page__cta">
+      <p>还不确定选哪个？先做免费合规诊断</p>
+      <RouterLink to="/diagnosis" class="opc-btn opc-btn--secondary">
+        <ArtSvgIcon icon="ri:shield-check-line" />
+        免费诊断
+      </RouterLink>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -99,7 +72,7 @@ const FALLBACK_PLANS: ServicePlan[] = [
     tier: 'basic',
     monthlyPrice: 299,
     priceLabel: '¥299',
-    features: ['OPC 注册代办', '月度记账', '季度申报', '年度汇算清缴']
+    features: ['主体注册代办', '月度记账', '季度申报', '年度汇算清缴']
   },
   {
     id: 2,
@@ -144,30 +117,223 @@ onMounted(loadPlans)
 </script>
 
 <style lang="scss" scoped>
-.text-clay-foreground { color: #32325d; }
-.text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.text-clay-success { color: #71dd37; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
+.pricing-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
 
-.shadow-clay-deep {
-  box-shadow: 30px 30px 60px #d1d9e6, -30px -30px 60px #ffffff,
-    inset 10px 10px 20px rgba(90, 141, 238, 0.05), inset -10px -10px 20px rgba(255, 255, 255, 0.8);
+.pricing-page__header {
+  text-align: center;
+  margin-bottom: 36px;
 }
-.shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
+
+.pricing-page__badge {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
 }
-.shadow-clay-card-hover {
-  box-shadow: 20px 20px 40px rgba(165, 175, 190, 0.35), -12px -12px 30px rgba(255, 255, 255, 0.95),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
+
+.pricing-page__title {
+  margin: 0 0 12px;
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 800;
+  color: #1a1f36;
+  letter-spacing: -0.02em;
+
+  .is-accent {
+    color: #2563eb;
+  }
 }
-.shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+
+.pricing-page__subtitle {
+  margin: 0 auto;
+  max-width: 560px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #6b7c93;
 }
-.shadow-clay-btn-hover {
-  box-shadow: 16px 16px 32px rgba(90, 141, 238, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.5),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+
+.pricing-page__loading {
+  padding: 48px 16px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.pricing-page__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+
+  &--featured {
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+
+    &:hover {
+      box-shadow: 0 8px 28px rgba(37, 99, 235, 0.16);
+    }
+  }
+}
+
+.pricing-card__tag {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #2563eb;
+  white-space: nowrap;
+}
+
+.pricing-card__name {
+  margin: 8px 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.pricing-card__price {
+  margin-bottom: 24px;
+}
+
+.pricing-card__amount {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a1f36;
+}
+
+.pricing-card__unit {
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.pricing-card__features {
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  flex: 1;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #475569;
+  }
+}
+
+.pricing-card__check {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 16px;
+  color: #16a34a;
+}
+
+.pricing-card__btn {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+  }
+
+  &--primary {
+    color: #fff;
+    background: #2563eb;
+    border-color: #2563eb;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+
+    &:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+    }
+  }
+}
+
+.pricing-page__cta {
+  margin-top: 40px;
+  text-align: center;
+
+  p {
+    margin: 0 0 16px;
+    font-size: 14px;
+    color: #6b7c93;
+    font-weight: 600;
+  }
+}
+
+.opc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+
+  &--secondary {
+    color: #334155;
+    background: #fff;
+    border: 1px solid #d8dee9;
+
+    &:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .pricing-page {
+    padding: 32px 16px 64px;
+  }
+
+  .pricing-page__grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

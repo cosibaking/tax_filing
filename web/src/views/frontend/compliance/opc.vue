@@ -1,6 +1,4 @@
-<!-- +----------------------------------------------------------------------
-  | XYGo Admin — OPC 落地进度 P-06
-  +---------------------------------------------------------------------- -->
+<!-- 主体设立进度 P-06 -->
 <template>
   <main class="pt-8 pb-16 px-6">
     <div class="max-w-3xl mx-auto space-y-8">
@@ -27,7 +25,7 @@
       <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 class="font-heading font-black text-3xl text-clay-foreground mb-1">OPC 设立进度</h1>
+            <h1 class="font-heading font-black text-3xl text-clay-foreground mb-1">主体设立进度</h1>
             <p class="text-clay-muted font-medium">预计 {{ progress?.estimatedSlaDays ?? 14 }} 个工作日完成</p>
           </div>
           <div v-if="progress?.companyName" class="px-4 py-2 rounded-2xl bg-blue-50 text-clay-accent font-bold text-sm">
@@ -201,7 +199,7 @@
             <div class="space-y-3">
               <ElCheckbox v-model="formData.confirmations.infoTrue" class="clay-checkbox w-full">本人确认以上信息真实、完整</ElCheckbox>
               <ElCheckbox v-model="formData.confirmations.authConsent" class="clay-checkbox w-full">同意用于工商、税务、银行开户申报</ElCheckbox>
-              <ElCheckbox v-model="formData.confirmations.opcLimitAck" class="clay-checkbox w-full">知晓自然人 3 年内不得再设立新 OPC</ElCheckbox>
+              <ElCheckbox v-model="formData.confirmations.opcLimitAck" class="clay-checkbox w-full">知晓自然人 3 年内不得再设立新一人有限责任公司</ElCheckbox>
               <ElCheckbox v-model="formData.confirmations.eSignAuth" class="clay-checkbox w-full">电子签名授权（沿用签约姓名）</ElCheckbox>
             </div>
           </section>
@@ -389,7 +387,7 @@
       <!-- Active success -->
       <div v-if="progress?.opcStatus === 'active'" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 text-center">
         <ArtSvgIcon icon="ri:checkbox-circle-line" class="text-5xl text-clay-success mx-auto mb-4" />
-        <h2 class="font-heading font-black text-2xl text-clay-foreground mb-2">OPC 设立完成</h2>
+        <h2 class="font-heading font-black text-2xl text-clay-foreground mb-2">主体设立完成</h2>
         <p class="text-clay-muted font-medium">收入台账、费用台账等功能已解锁</p>
       </div>
     </div>

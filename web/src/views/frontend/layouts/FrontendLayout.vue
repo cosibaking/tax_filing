@@ -383,7 +383,7 @@ function handleNavTargetClick(c: NavTarget) {
   router.push(c.url)
 }
 
-const hiddenNavNames = new Set(['docs', 'cases', 'community', 'changelog'])
+const hiddenNavNames = new Set(['cases', 'community', 'changelog'])
 
 const navEntries = computed<NavEntry[]>(() => {
   const list: NavEntry[] = [
