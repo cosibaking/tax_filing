@@ -48,6 +48,25 @@
       </div>
     </section>
 
+    <!-- 关于我们 -->
+    <section id="about" class="opc-about">
+      <div class="opc-about__header">
+        <h2 class="opc-about__title">关于金税管家</h2>
+        <p class="opc-about__subtitle">{{ aboutIntro.subtitle }}</p>
+      </div>
+      <p class="opc-about__desc">{{ aboutIntro.description }}</p>
+      <div class="opc-about__values">
+        <article v-for="item in aboutValues" :key="item.title" class="opc-about-card">
+          <ArtSvgIcon :icon="item.icon" class="opc-about-card__icon" />
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.desc }}</p>
+        </article>
+      </div>
+      <div class="opc-about__more">
+        <RouterLink to="/about" class="opc-btn opc-btn--secondary">了解更多</RouterLink>
+      </div>
+    </section>
+
     <!-- 重要告知 -->
     <section class="opc-notice">
       <div class="opc-notice__box">
@@ -62,6 +81,7 @@
 
 <script setup lang="ts">
 import { appCases } from '@/data/frontend/cases'
+import { aboutIntro, aboutValues } from '@/data/frontend/about'
 
 defineOptions({ name: 'FrontendHome' })
 
@@ -292,6 +312,78 @@ const steps = [
   text-align: center;
 }
 
+.opc-about {
+  padding: 16px 0 48px;
+}
+
+.opc-about__header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.opc-about__title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-about__subtitle {
+  margin: 0 auto;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #6b7c93;
+}
+
+.opc-about__desc {
+  margin: 0 auto 28px;
+  max-width: 720px;
+  font-size: 15px;
+  line-height: 1.85;
+  text-align: center;
+  color: #475569;
+}
+
+.opc-about__values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.opc-about-card {
+  padding: 22px 18px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+
+  h3 {
+    margin: 12px 0 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #64748b;
+  }
+}
+
+.opc-about-card__icon {
+  font-size: 26px;
+  color: #2563eb;
+}
+
+.opc-about__more {
+  margin-top: 28px;
+  text-align: center;
+}
+
 .opc-notice {
   padding-top: 8px;
 }
@@ -323,7 +415,8 @@ const steps = [
   }
 
   .opc-steps__grid,
-  .opc-cases__grid {
+  .opc-cases__grid,
+  .opc-about__values {
     grid-template-columns: 1fr;
   }
 

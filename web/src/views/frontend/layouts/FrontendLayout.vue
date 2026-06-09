@@ -272,8 +272,9 @@
             </ul>
           </div>
           <div>
-            <h4 class="font-heading font-bold text-clay-foreground mb-6">资源</h4>
+            <h4 class="font-heading font-bold text-clay-foreground mb-6">关于</h4>
             <ul class="space-y-3">
+              <li><RouterLink to="/about" class="text-clay-muted hover:text-clay-accent transition-colors">关于我们</RouterLink></li>
               <li><RouterLink to="/legal/privacy" class="text-clay-muted hover:text-clay-accent transition-colors">隐私政策</RouterLink></li>
               <li><RouterLink to="/legal/terms" class="text-clay-muted hover:text-clay-accent transition-colors">用户协议</RouterLink></li>
             </ul>
@@ -389,6 +390,7 @@ const navEntries = computed<NavEntry[]>(() => {
     { key: 'nav-home', mode: 'link', name: '首页', icon: '', url: '/', isExternal: false },
     { key: 'nav-diagnosis', mode: 'link', name: '免费诊断', icon: '', url: '/diagnosis', isExternal: false },
     { key: 'nav-cases', mode: 'link', name: '应用案例', icon: '', url: '/cases', isExternal: false },
+    { key: 'nav-about', mode: 'link', name: '关于我们', icon: '', url: '/about', isExternal: false },
     { key: 'nav-pricing', mode: 'link', name: '服务价格', icon: '', url: '/pricing', isExternal: false },
   ]
   for (const m of mainNavMenus.value) {
