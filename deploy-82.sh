@@ -8,6 +8,16 @@ git log -1 --oneline
 
 mkdir -p server/manifest/config
 cp /home/ubuntu/apps/tax-bridge/manifest/config/config.yaml server/manifest/config/config.yaml
+# 确保 OPC 身份证/银行卡加密密钥存在（须恰好 32 字节）
+if ! grep -q 'encryptionKey:' server/manifest/config/config.yaml; then
+  cat >> server/manifest/config/config.yaml <<'EOF'
+
+# 合规模块（OPC 资料加密）
+compliance:
+  verifyProvider: mock
+  encryptionKey: "taxfiling82opcenckey2026060900ab"
+EOF
+fi
 
 # 前端在本地构建后 rsync 同步（服务器 pnpm build 易失败）
 test -f server/resource/public/dist/index.html || { echo "缺少 dist，请先在本地 web 目录执行 vite build"; exit 1; }
