@@ -3,7 +3,7 @@
   +---------------------------------------------------------------------- -->
 <template>
   <div
-    class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 rounded-[24px] border font-bold text-sm"
+    class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-3 rounded-lg border font-bold text-sm"
     :class="bannerClass"
   >
     <div class="flex items-center gap-3">
@@ -13,7 +13,7 @@
     <RouterLink
       v-if="banner.actionPath"
       :to="banner.actionPath"
-      class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white/80 shadow-sm hover:shadow-md transition-all shrink-0"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white/80 border border-current/10 hover:bg-white transition-all shrink-0"
     >
       {{ banner.actionLabel || '查看' }}
       <ArtSvgIcon icon="ri:arrow-right-s-line" class="text-base" />

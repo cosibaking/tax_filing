@@ -26,192 +26,106 @@
 
   <div v-else>
 
-        <!-- 1. 账户概览（对齐 homesite/user-dashboard.html） -->
-        <div v-if="activeMenu === 'overview'" class="h-full flex flex-col gap-8">
-          <!-- 账户信息卡片 -->
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10 relative overflow-hidden group">
-            <div class="absolute -bottom-20 -right-20 w-64 h-64 rounded-full bg-blue-500/5 blur-3xl group-hover:scale-110 transition-transform"></div>
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 relative z-10">
+        <!-- 1. 服务概览 -->
+        <div v-if="activeMenu === 'overview'" class="overview">
+          <section class="overview-panel">
+            <div class="overview-panel__head">
               <div>
-                <h3 class="text-sm font-black text-clay-muted uppercase tracking-wider mb-2">账户信息</h3>
-                <div class="flex items-center gap-4">
-                  <div class="w-16 h-16 rounded-2xl bg-white shadow-clay-pressed flex items-center justify-center text-3xl">👋</div>
-                  <div>
-                    <h1 class="font-heading font-black text-2xl text-clay-foreground">{{ userInfo.nickname || userInfo.username }}，{{ greeting }}！</h1>
-                    <p class="text-clay-muted font-medium">欢迎回到 {{ siteName }} 门户中心</p>
-                  </div>
-                </div>
+                <h1 class="overview-panel__title">{{ userInfo.nickname || userInfo.username }}，{{ greeting }}</h1>
+                <p class="overview-panel__desc">欢迎使用 {{ siteName }}，管理您的税务合规服务</p>
               </div>
-              <RouterLink to="/user/profile" class="px-8 py-3 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all duration-300 font-bold text-clay-foreground flex items-center gap-2">
-                <ArtSvgIcon icon="ri:user-line" class="text-lg" />
-                个人资料
-              </RouterLink>
+              <RouterLink to="/user/profile" class="overview-btn overview-btn--ghost">个人资料</RouterLink>
             </div>
-            <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
-              <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
-                <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">我的积分</span>
-                <div class="flex items-end gap-2">
-                  <span class="text-3xl font-black text-clay-accent">{{ userInfo.score ?? 0 }}</span>
-                  <span class="text-xs font-bold text-clay-muted mb-1">分</span>
-                </div>
-              </div>
-              <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
-                <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">账户余额</span>
-                <div class="flex items-end gap-2">
-                  <span class="text-3xl font-black text-clay-success">{{ formatMoney(userInfo.money) }}</span>
-                  <span class="text-xs font-bold text-clay-muted mb-1">元</span>
-                </div>
-              </div>
-              <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed sm:col-span-2">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">最后登录</span>
-                    <div class="font-bold text-clay-foreground">{{ formatTimestamp(userInfo.lastLoginAt) }}</div>
-                    <div class="text-xs text-clay-muted mt-1">IP: {{ userInfo.lastLoginIp || '-' }}</div>
-                  </div>
-                  <div class="w-12 h-12 rounded-2xl bg-white shadow-clay-btn flex items-center justify-center text-xl">📍</div>
+          </section>
+
+          <section class="overview-panel">
+            <h2 class="overview-panel__section-title">合规服务进度</h2>
+            <div class="overview-steps">
+              <div
+                v-for="(step, index) in serviceSteps"
+                :key="step.key"
+                class="overview-step"
+                :class="{ 'is-done': step.done, 'is-current': step.current }"
+              >
+                <div class="overview-step__index">{{ index + 1 }}</div>
+                <div class="overview-step__body">
+                  <h3>{{ step.title }}</h3>
+                  <p>{{ step.desc }}</p>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- 合规仪表盘（P-07） -->
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10 relative overflow-hidden">
-            <div class="flex justify-between items-center mb-8">
-              <div>
-                <h3 class="font-heading font-black text-xl text-clay-foreground">合规服务概览</h3>
-                <p class="text-xs text-clay-muted mt-1">OPC 状态与本月经营摘要</p>
-              </div>
-            </div>
+          <section class="overview-panel">
+            <h2 class="overview-panel__section-title">合规服务概览</h2>
+            <p class="overview-panel__section-desc">经营主体状态与本月经营摘要</p>
 
-            <!-- 未签约空态 -->
-            <div v-if="!complianceState.hasActiveOrder" class="py-12 text-center">
-              <div class="w-20 h-20 rounded-[24px] bg-[#f0f3f8] shadow-clay-pressed flex items-center justify-center mx-auto mb-6">
-                <ArtSvgIcon icon="ri:shield-check-line" class="text-[36px] text-clay-accent" />
-              </div>
-              <p class="text-clay-muted font-bold mb-6">
+            <div v-if="!complianceState.hasActiveOrder" class="overview-empty">
+              <ArtSvgIcon icon="ri:shield-check-line" class="overview-empty__icon" />
+              <p>
                 {{ complianceState.hasPendingOrder
                   ? '您已选择套餐，请继续完成风险告知与电子签约'
-                  : '尚未签约合规服务，完成免费诊断后可选择方案签约' }}
+                  : '尚未签约合规服务，建议先完成免费诊断了解税负方案' }}
               </p>
-              <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <RouterLink
-                  to="/user/compliance/plan"
-                  class="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-bold shadow-clay-btn"
-                >
+              <div class="overview-empty__actions">
+                <RouterLink to="/user/compliance/plan" class="overview-btn overview-btn--primary">
                   {{ complianceState.hasPendingOrder ? '继续签约' : '方案与签约' }}
-                  <ArtSvgIcon icon="ri:arrow-right-line" />
                 </RouterLink>
-                <RouterLink
-                  v-if="!complianceState.hasPendingOrder"
-                  to="/diagnosis"
-                  class="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-white font-bold text-clay-foreground shadow-clay-btn"
-                >
-                  开始免费诊断
+                <RouterLink v-if="!complianceState.hasPendingOrder" to="/diagnosis" class="overview-btn overview-btn--ghost">
+                  免费合规诊断
                 </RouterLink>
               </div>
             </div>
 
             <template v-else>
-              <div class="grid sm:grid-cols-3 gap-6 mb-8">
-                <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
-                  <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">OPC 状态</span>
-                  <span class="text-xl font-black" :class="complianceState.opcStatus === 'active' ? 'text-clay-success' : 'text-clay-accent'">
+              <div class="overview-stats">
+                <div class="overview-stat">
+                  <span class="overview-stat__label">主体状态</span>
+                  <span class="overview-stat__value" :class="complianceState.opcStatus === 'active' ? 'is-success' : ''">
                     {{ opcStatusLabel }}
                   </span>
                 </div>
-                <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
-                  <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">本月收入</span>
-                  <span class="text-xl font-black text-clay-foreground">¥ {{ formatComplianceMoney(monthSummary.revenue) }}</span>
+                <div v-if="complianceState.opcStatus === 'active'" class="overview-stat">
+                  <span class="overview-stat__label">本月收入</span>
+                  <span class="overview-stat__value">¥ {{ formatComplianceMoney(monthSummary.revenue) }}</span>
                 </div>
-                <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
-                  <span class="block text-xs font-black text-clay-muted uppercase tracking-widest mb-3">本月利润</span>
-                  <span class="text-xl font-black text-clay-success">¥ {{ formatComplianceMoney(monthSummary.profit) }}</span>
+                <div v-if="complianceState.opcStatus === 'active'" class="overview-stat">
+                  <span class="overview-stat__label">本月利润</span>
+                  <span class="overview-stat__value is-success">¥ {{ formatComplianceMoney(monthSummary.profit) }}</span>
                 </div>
               </div>
 
-              <!-- 待办列表 -->
-              <div v-if="todoList.length > 0" class="mb-8">
-                <h4 class="text-sm font-black text-clay-muted uppercase tracking-widest mb-4">待办事项</h4>
-                <ul class="space-y-3">
+              <div v-if="todoList.length > 0" class="overview-todos">
+                <h3 class="overview-todos__title">待办提醒</h3>
+                <ul>
                   <li
                     v-for="(todo, idx) in todoList"
                     :key="idx"
-                    class="flex items-center justify-between gap-4 p-4 rounded-2xl"
-                    :class="todo.urgent ? 'bg-red-50 border border-red-100' : 'bg-[#f0f3f8] shadow-clay-pressed'"
+                    class="overview-todo"
+                    :class="{ 'is-urgent': todo.urgent }"
                   >
-                    <div class="flex items-center gap-3">
-                      <ArtSvgIcon :icon="todo.urgent ? 'ri:error-warning-line' : 'ri:checkbox-circle-line'" :class="todo.urgent ? 'text-red-500' : 'text-clay-accent'" />
-                      <span class="font-bold text-sm text-clay-foreground">{{ todo.text }}</span>
-                    </div>
-                    <RouterLink v-if="todo.path" :to="todo.path" class="text-xs font-bold text-clay-accent hover:underline shrink-0">
-                      去处理 →
-                    </RouterLink>
+                    <ArtSvgIcon :icon="todo.urgent ? 'ri:error-warning-line' : 'ri:checkbox-circle-line'" />
+                    <span class="overview-todo__text">{{ todo.text }}</span>
+                    <RouterLink v-if="todo.path" :to="todo.path" class="overview-todo__link">去处理</RouterLink>
                   </li>
                 </ul>
-              </div>
-
-              <!-- 快捷入口 -->
-              <div class="flex flex-wrap gap-3">
-                <RouterLink
-                  v-for="entry in quickEntries"
-                  :key="entry.path"
-                  :to="entry.path"
-                  class="px-5 py-2.5 rounded-xl bg-white shadow-clay-btn text-sm font-bold text-clay-foreground hover:shadow-clay-btn-hover transition-all"
-                >
-                  {{ entry.label }}
-                </RouterLink>
               </div>
             </template>
           </section>
 
-          <!-- 增长趋势统计图表（对齐 homesite） -->
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10 relative overflow-hidden group flex-1 flex flex-col">
-            <div class="flex justify-between items-center mb-10">
-              <div>
-                <h3 class="font-heading font-black text-xl text-clay-foreground">增长趋势统计</h3>
-                <p class="text-xs text-clay-muted mt-1">最近 7 天账户积分与余额增长情况</p>
-              </div>
-              <div class="flex gap-3">
-                <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white shadow-clay-btn text-[10px] font-bold text-blue-500">
-                  <span class="w-2 h-2 rounded-full bg-blue-500"></span> 积分增长
-                </div>
-                <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white shadow-clay-btn text-[10px] font-bold text-green-500">
-                  <span class="w-2 h-2 rounded-full bg-green-500"></span> 余额增长
-                </div>
-              </div>
+          <section class="overview-panel">
+            <h2 class="overview-panel__section-title">快捷入口</h2>
+            <div class="overview-links">
+              <RouterLink
+                v-for="entry in overviewQuickLinks"
+                :key="entry.path"
+                :to="entry.path"
+                class="overview-link"
+              >
+                <ArtSvgIcon :icon="entry.icon" />
+                <span>{{ entry.label }}</span>
+              </RouterLink>
             </div>
-            <!-- 拟态柱状图 -->
-            <div class="flex-1 w-full relative min-h-[320px] flex flex-col justify-end">
-              <div class="absolute inset-0 flex flex-col justify-between py-6 pointer-events-none">
-                <div v-for="i in 5" :key="i" class="w-full h-[1px] bg-gray-200/30"></div>
-              </div>
-              <div class="relative z-10 flex justify-between items-end h-[240px] px-4">
-                <div v-for="(day, index) in chartDays" :key="index" class="flex flex-col items-center gap-4 group/bar">
-                  <div class="flex items-end gap-3 h-[200px]">
-                    <!-- 积分柱 -->
-                    <div class="w-4 rounded-full bg-gradient-to-t from-blue-500 to-blue-300 shadow-clay-btn relative overflow-hidden group/item transition-all duration-500"
-                         :style="{ height: chartScoreHeights[index] + '%' }">
-                      <div class="absolute inset-0 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white/20"></div>
-                      <div class="absolute top-1 left-1 right-1 h-2 rounded-full bg-white/30 blur-[1px]"></div>
-                      <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-lg">
-                        +{{ chartScoreValues[index] }} 积分
-                      </div>
-                    </div>
-                    <!-- 余额柱 -->
-                    <div class="w-4 rounded-full bg-gradient-to-t from-green-500 to-green-300 shadow-clay-btn relative overflow-hidden group/item transition-all duration-500"
-                         :style="{ height: chartMoneyHeights[index] + '%' }">
-                      <div class="absolute inset-0 opacity-0 group-hover/item:opacity-100 transition-opacity bg-white/20"></div>
-                      <div class="absolute top-1 left-1 right-1 h-2 rounded-full bg-white/30 blur-[1px]"></div>
-                      <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] px-2 py-1 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap shadow-lg">
-                        +{{ chartMoneyValues[index] }}.00 元
-                      </div>
-                    </div>
-                  </div>
-                  <span class="text-[10px] font-bold text-clay-muted group-hover/bar:text-clay-accent transition-colors">{{ day }}</span>
-                </div>
-              </div>
-            </div> 
           </section>
         </div>
 
@@ -504,7 +418,6 @@ onMounted(async () => {
     return
   }
   loadComplianceOverview()
-  loadGrowthChart()
 })
 
 // 路由驱动当前面板（/user/overview → overview）
@@ -524,21 +437,65 @@ const opcStatusLabel = computed(() => {
   return '未签约'
 })
 
-const quickEntries = computed(() => {
+const serviceSteps = computed(() => {
+  const s = complianceState.value
+  const opcDone = s.opcStatus === 'active'
+
+  return [
+    {
+      key: 'diagnosis',
+      title: '免费诊断',
+      desc: '了解税负对比与合规风险',
+      done: s.hasPendingOrder || s.hasActiveOrder,
+      current: !s.hasPendingOrder && !s.hasActiveOrder
+    },
+    {
+      key: 'plan',
+      title: '方案签约',
+      desc: '选择套餐并完成风险告知',
+      done: s.hasActiveOrder,
+      current: !!s.hasPendingOrder
+    },
+    {
+      key: 'opc',
+      title: '主体设立',
+      desc: '个体工商户或公司主体落地',
+      done: opcDone,
+      current: s.hasActiveOrder && !opcDone
+    },
+    {
+      key: 'filing',
+      title: '台账申报',
+      desc: '记账、申报与月度对账',
+      done: opcDone && todoList.value.length === 0,
+      current: opcDone
+    }
+  ]
+})
+
+const overviewQuickLinks = computed(() => {
+  const links: { label: string; path: string; icon: string }[] = [
+    { label: '诊断历史', path: '/user/compliance/diagnosis', icon: 'ri:file-search-line' },
+    { label: '服务价格', path: '/pricing', icon: 'ri:price-tag-3-line' },
+  ]
+
   if (complianceState.value.opcStatus === 'active') {
-    return [
-      { label: '记收入', path: '/user/compliance/income' },
-      { label: '记费用', path: '/user/compliance/expense' },
-      { label: '看对账单', path: '/user/compliance/statement' },
-    ]
+    links.unshift(
+      { label: '记收入', path: '/user/compliance/income', icon: 'ri:money-cny-circle-line' },
+      { label: '记费用', path: '/user/compliance/expense', icon: 'ri:wallet-3-line' },
+      { label: '申报管理', path: '/user/compliance/tax', icon: 'ri:file-paper-2-line' },
+      { label: '月度对账单', path: '/user/compliance/statement', icon: 'ri:file-chart-line' },
+    )
+  } else if (complianceState.value.hasActiveOrder) {
+    links.unshift({ label: '主体设立进度', path: '/user/compliance/opc', icon: 'ri:building-2-line' })
+  } else {
+    links.unshift(
+      { label: '免费诊断', path: '/diagnosis', icon: 'ri:shield-check-line' },
+      { label: '方案与签约', path: '/user/compliance/plan', icon: 'ri:file-list-3-line' },
+    )
   }
-  if (complianceState.value.hasActiveOrder) {
-    return [{ label: '查看 OPC 进度', path: '/user/compliance/opc' }]
-  }
-  if (complianceState.value.hasPendingOrder) {
-    return [{ label: '继续签约', path: '/user/compliance/plan' }]
-  }
-  return [{ label: '方案与签约', path: '/user/compliance/plan' }]
+
+  return links
 })
 
 async function loadComplianceOverview() {
@@ -584,67 +541,6 @@ async function loadComplianceOverview() {
 
     todoList.value = todos
   } catch { /* ignore */ }
-}
-
-// ===== 图表数据（最近 7 天积分/余额增长） =====
-const chartDays = ref<string[]>([])
-const chartScoreHeights = ref<number[]>([])
-const chartScoreValues = ref<number[]>([])
-const chartMoneyHeights = ref<number[]>([])
-const chartMoneyValues = ref<number[]>([])
-
-async function loadGrowthChart() {
-  const days: string[] = []
-  const scoreByDay: number[] = []
-  const moneyByDay: number[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    days.push(`${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
-    scoreByDay.push(0)
-    moneyByDay.push(0)
-  }
-
-  try {
-    const [scoreRes, moneyRes] = await Promise.all([
-      getScoreLogList({ page: 1, pageSize: 200 }),
-      getMoneyLogList({ page: 1, pageSize: 200 }),
-    ])
-    const dayKey = (ts: string) => {
-      const d = new Date(ts)
-      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    }
-    const scoreMap = new Map(days.map((d) => [d, 0]))
-    const moneyMap = new Map(days.map((d) => [d, 0]))
-
-    for (const item of scoreRes?.list || []) {
-      if (item.score <= 0) continue
-      const key = dayKey(item.createdAt)
-      if (scoreMap.has(key)) scoreMap.set(key, (scoreMap.get(key) || 0) + item.score)
-    }
-    for (const item of moneyRes?.list || []) {
-      if (item.money <= 0) continue
-      const key = dayKey(item.createdAt)
-      if (moneyMap.has(key)) moneyMap.set(key, (moneyMap.get(key) || 0) + item.money / 100)
-    }
-
-    days.forEach((d, i) => {
-      scoreByDay[i] = scoreMap.get(d) || 0
-      moneyByDay[i] = moneyMap.get(d) || 0
-    })
-  } catch { /* ignore */ }
-
-  const maxScore = Math.max(...scoreByDay, 1)
-  const maxMoney = Math.max(...moneyByDay, 1)
-
-  chartDays.value = days
-  chartScoreValues.value = scoreByDay
-  chartMoneyValues.value = moneyByDay.map((v) => Math.round(v))
-  chartScoreHeights.value = scoreByDay.map((v) => Math.max(8, Math.round((v / maxScore) * 100)))
-  chartMoneyHeights.value = moneyByDay.map((v) => Math.max(8, Math.round((v / maxMoney) * 100)))
 }
 
 // ===== 签到数据 =====
@@ -793,10 +689,7 @@ const noticeTypeLabel = (type: string) => {
 
 // ===== 路由切换时按需加载数据 =====
 watch(activeMenu, (menu) => {
-  if (menu === 'overview') {
-    loadComplianceOverview()
-    loadGrowthChart()
-  }
+  if (menu === 'overview') loadComplianceOverview()
   if (menu === 'checkin') loadCheckinInfo()
   if (menu === 'points') loadScoreLog(1)
   if (menu === 'balance') loadMoneyLog(1)
@@ -930,6 +823,286 @@ const handleChangePassword = async () => {
 </script>
 
 <style lang="scss" scoped>
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.overview-panel {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.overview-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.overview-panel__title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1f36;
+}
+
+.overview-panel__desc {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7c93;
+}
+
+.overview-panel__section-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.overview-panel__section-desc {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.overview-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.overview-step {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+
+  &.is-done {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+
+    .overview-step__index {
+      background: #2563eb;
+      color: #fff;
+    }
+  }
+
+  &.is-current {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px #2563eb;
+  }
+}
+
+.overview-step__index {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overview-step__body {
+  h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #94a3b8;
+  }
+}
+
+.overview-empty {
+  padding: 32px 16px;
+  text-align: center;
+
+  p {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+  }
+}
+
+.overview-empty__icon {
+  font-size: 40px;
+  color: #2563eb;
+  margin-bottom: 16px;
+}
+
+.overview-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.overview-stat {
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.overview-stat__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.overview-stat__value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1f36;
+
+  &.is-success {
+    color: #16a34a;
+  }
+}
+
+.overview-todos__title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.overview-todos ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.overview-todo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 13px;
+  color: #334155;
+
+  &.is-urgent {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}
+
+.overview-todo__text {
+  flex: 1;
+  font-weight: 600;
+}
+
+.overview-todo__link {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.overview-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.overview-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+  }
+}
+
+.overview-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  &--primary {
+    color: #fff;
+    background: #2563eb;
+
+    &:hover {
+      background: #1d4ed8;
+    }
+  }
+
+  &--ghost {
+    color: #334155;
+    background: #fff;
+    border: 1px solid #d8dee9;
+
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .overview-steps,
+  .overview-stats,
+  .overview-links {
+    grid-template-columns: 1fr;
+  }
+}
+
 .text-clay-foreground { color: #32325d; }
 .text-clay-muted { color: #8898aa; }
 .text-clay-accent { color: #5a8dee; }
