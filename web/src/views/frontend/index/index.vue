@@ -33,11 +33,16 @@
         <p class="opc-policy__subtitle">了解监管背景，做出正确合规决策</p>
       </div>
       <div class="opc-policy__grid">
-        <article v-for="topic in policyTopics" :key="topic.id" class="opc-policy-card">
+        <RouterLink
+          v-for="topic in policyTopics"
+          :key="topic.id"
+          :to="{ path: '/docs', query: { slug: topic.id } }"
+          class="opc-policy-card"
+        >
           <ArtSvgIcon :icon="topic.icon" class="opc-policy-card__icon" />
           <h3>{{ topic.title }}</h3>
           <p>{{ topic.summary }}</p>
-        </article>
+        </RouterLink>
       </div>
       <div class="opc-policy__more">
         <RouterLink to="/docs" class="opc-btn opc-btn--secondary">查看更多政策说明</RouterLink>
@@ -267,11 +272,19 @@ const journeySteps = serviceJourneySteps
 }
 
 .opc-policy-card {
+  display: block;
   padding: 20px 18px;
   background: #fff;
   border: 1px solid #e8edf3;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+  }
 
   h3 {
     margin: 10px 0 8px;
