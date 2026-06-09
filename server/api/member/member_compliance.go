@@ -435,13 +435,17 @@ type ComplianceIncomeListRes struct {
 }
 
 type ComplianceIncomeCreateReq struct {
-	g.Meta      `path:"/compliance/income" method:"post" tags:"会员合规" summary:"创建收入条目"`
-	Platform    string  `json:"platform" v:"required#请选择平台"`
-	Category    string  `json:"category" v:"required#请选择收入类型"`
-	GrossAmount float64 `json:"grossAmount" v:"required|min:0.01#请填写含税收入|含税收入须大于0"`
-	PlatformFee float64 `json:"platformFee"`
-	OccurredAt  string  `json:"occurredAt" v:"required#请填写发生日期"`
-	Remark      string  `json:"remark"`
+	g.Meta           `path:"/compliance/income" method:"post" tags:"会员合规" summary:"创建收入条目"`
+	Platform         string  `json:"platform" v:"required#请选择平台"`
+	Category         string  `json:"category" v:"required#请选择收入类型"`
+	GrossAmount      float64 `json:"grossAmount"`
+	PlatformFee      float64 `json:"platformFee"`
+	OccurredAt       string  `json:"occurredAt" v:"required#请填写发生日期"`
+	SettlementType   string  `json:"settlementType"`
+	McnName          string  `json:"mcnName"`
+	McnSplitRatio    float64 `json:"mcnSplitRatio"`
+	GrossBeforeSplit float64 `json:"grossBeforeSplit"`
+	Remark           string  `json:"remark"`
 }
 
 type ComplianceIncomeCreateRes struct {
@@ -538,6 +542,37 @@ type ComplianceIncomeImportPreviewReq struct {
 
 type ComplianceIncomeImportPreviewRes struct {
 	*compliancein.IncomeImportPreviewModel
+}
+
+type ComplianceIncomeOCRPreviewReq struct {
+	g.Meta     `path:"/compliance/income/ocr/preview" method:"post" mime:"multipart/form-data" tags:"会员合规" summary:"平台流水OCR预览"`
+	Platform   string `p:"platform" json:"platform"`
+	OcrText    string `p:"ocrText" json:"ocrText"`
+	AttachmentId uint64 `p:"attachmentId" json:"attachmentId"`
+}
+
+type ComplianceIncomeOCRPreviewRes struct {
+	*compliancein.IncomeOCRPreviewModel
+}
+
+type ComplianceIncomeOCRImportReq struct {
+	g.Meta       `path:"/compliance/income/ocr/import" method:"post" mime:"multipart/form-data" tags:"会员合规" summary:"平台流水OCR导入"`
+	Platform     string `p:"platform" json:"platform"`
+	OcrText      string `p:"ocrText" json:"ocrText"`
+	AttachmentId uint64 `p:"attachmentId" json:"attachmentId"`
+}
+
+type ComplianceIncomeOCRImportRes struct {
+	*compliancein.IncomeImportModel
+}
+
+type ComplianceIncomeConsistencyReq struct {
+	g.Meta `path:"/compliance/income/consistency" method:"get" tags:"会员合规" summary:"收入一致性比对"`
+	Month  string `p:"month" json:"month"`
+}
+
+type ComplianceIncomeConsistencyRes struct {
+	*compliancein.IncomeConsistencyModel
 }
 
 type ComplianceExpenseDeleteReq struct {

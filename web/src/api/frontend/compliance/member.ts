@@ -143,6 +143,18 @@ export interface IncomeEntry {
 
   source?: string
 
+  settlementType?: string
+
+  mcnName?: string
+
+  mcnSplitRatio?: number
+
+  mcnShareAmount?: number
+
+  grossBeforeSplit?: number
+
+  remark?: string
+
 }
 
 
@@ -200,6 +212,84 @@ export interface IncomeCreateParams {
   grossAmount: number
 
   platformFee: number
+
+  settlementType?: string
+
+  mcnName?: string
+
+  mcnSplitRatio?: number
+
+  grossBeforeSplit?: number
+
+  remark?: string
+
+}
+
+/** 收入一致性比对 */
+
+export interface IncomeConsistencyResult {
+
+  month: string
+
+  ledgerGross: number
+
+  ledgerNet: number
+
+  bankInflow: number
+
+  bankMatched: number
+
+  bankUnmatched: number
+
+  platformReported: number
+
+  varianceLedgerBank: number
+
+  varianceLedgerPlatform: number
+
+  varianceRate: number
+
+  status: 'ok' | 'warning' | 'danger'
+
+  incomeMatchPassed: boolean
+
+  hints?: string[]
+
+  platforms?: {
+
+    platform: string
+
+    ledgerNet: number
+
+    platformReported: number
+
+    variance: number
+
+    status: string
+
+  }[]
+
+}
+
+/** OCR 预览响应 */
+
+export interface IncomeOCRPreviewResult {
+
+  platform: string
+
+  ocrSource: string
+
+  rawTextPreview?: string
+
+  rows: IncomeImportPreviewRow[]
+
+  validCount: number
+
+  invalidCount: number
+
+  totalGross: number
+
+  totalNet: number
 
 }
 
@@ -825,6 +915,86 @@ export function confirmIncomeImport(file: File) {
   return memberRequest.post<{ imported: number }>({
 
     url: '/compliance/income/import',
+
+    data: formData
+
+  })
+
+}
+
+/** 平台流水 OCR 预览 */
+
+export function previewIncomeOCR(params: { file?: File; platform?: string; ocrText?: string; attachmentId?: number }) {
+
+  const formData = new FormData()
+
+  if (params.file) formData.append('file', params.file)
+
+  if (params.platform) formData.append('platform', params.platform)
+
+  if (params.ocrText) formData.append('ocrText', params.ocrText)
+
+  if (params.attachmentId) formData.append('attachmentId', String(params.attachmentId))
+
+  return memberRequest.post<IncomeOCRPreviewResult>({
+
+    url: '/compliance/income/ocr/preview',
+
+    data: formData
+
+  })
+
+}
+
+/** 平台流水 OCR 确认导入 */
+
+export function confirmIncomeOCR(params: { file?: File; platform?: string; ocrText?: string; attachmentId?: number }) {
+
+  const formData = new FormData()
+
+  if (params.file) formData.append('file', params.file)
+
+  if (params.platform) formData.append('platform', params.platform)
+
+  if (params.ocrText) formData.append('ocrText', params.ocrText)
+
+  if (params.attachmentId) formData.append('attachmentId', String(params.attachmentId))
+
+  return memberRequest.post<{ imported: number; failed?: number }>({
+
+    url: '/compliance/income/ocr/import',
+
+    data: formData
+
+  })
+
+}
+
+/** 收入一致性比对 */
+
+export function getIncomeConsistency(params?: { month?: string }) {
+
+  return memberRequest.get<IncomeConsistencyResult>({
+
+    url: '/compliance/income/consistency',
+
+    params
+
+  })
+
+}
+
+/** 银行流水 CSV 导入 */
+
+export function importBankStatement(file: File) {
+
+  const formData = new FormData()
+
+  formData.append('file', file)
+
+  return memberRequest.post<{ imported: number; matched: number; unmatched: number }>({
+
+    url: '/compliance/bank/import',
 
     data: formData
 

@@ -51,6 +51,9 @@ type (
 		DeleteIncome(ctx context.Context, in *compliancein.IncomeDeleteInp) error
 		ImportIncomeCSV(ctx context.Context, in *compliancein.IncomeImportInp) (*compliancein.IncomeImportModel, error)
 		PreviewIncomeImport(ctx context.Context, in *compliancein.IncomeImportInp) (*compliancein.IncomeImportPreviewModel, error)
+		PreviewIncomeOCR(ctx context.Context, in *compliancein.IncomeOCRPreviewInp) (*compliancein.IncomeOCRPreviewModel, error)
+		ImportIncomeOCR(ctx context.Context, in *compliancein.IncomeOCRImportInp) (*compliancein.IncomeImportModel, error)
+		GetIncomeConsistency(ctx context.Context, in *compliancein.IncomeConsistencyInp) (*compliancein.IncomeConsistencyModel, error)
 		ListExpense(ctx context.Context, in *compliancein.ExpenseListInp) (*compliancein.ExpenseListModel, error)
 		CreateExpense(ctx context.Context, in *compliancein.ExpenseCreateInp) (*compliancein.ExpenseCreateModel, error)
 		DeleteExpense(ctx context.Context, in *compliancein.ExpenseDeleteInp) error

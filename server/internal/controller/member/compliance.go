@@ -666,6 +666,18 @@ func readUploadCSV(ctx context.Context, field string, fallback string) string {
 	return string(b)
 }
 
+func readUploadFilename(ctx context.Context, field string) string {
+	r := ghttp.RequestFromCtx(ctx)
+	if r == nil {
+		return ""
+	}
+	up := r.GetUploadFile(field)
+	if up == nil {
+		return ""
+	}
+	return up.Filename
+}
+
 func readUploadBytes(ctx context.Context, field string) []byte {
 	r := ghttp.RequestFromCtx(ctx)
 	if r == nil {
@@ -715,14 +727,18 @@ func (c *ControllerV1) ComplianceIncomeCreate(ctx context.Context, req *member.C
 	}
 	ip, _ := requestMeta(ctx)
 	out, err := service.ComplianceLedger().CreateIncome(ctx, &compliancein.IncomeCreateInp{
-		MemberId:    memberId,
-		Platform:    req.Platform,
-		Category:    req.Category,
-		GrossAmount: req.GrossAmount,
-		PlatformFee: req.PlatformFee,
-		OccurredAt:  req.OccurredAt,
-		Remark:      req.Remark,
-		Ip:          ip,
+		MemberId:         memberId,
+		Platform:         req.Platform,
+		Category:         req.Category,
+		GrossAmount:      req.GrossAmount,
+		PlatformFee:      req.PlatformFee,
+		OccurredAt:       req.OccurredAt,
+		SettlementType:   req.SettlementType,
+		McnName:          req.McnName,
+		McnSplitRatio:    req.McnSplitRatio,
+		GrossBeforeSplit: req.GrossBeforeSplit,
+		Remark:           req.Remark,
+		Ip:               ip,
 	})
 	if err != nil {
 		return nil, err
@@ -918,6 +934,64 @@ func (c *ControllerV1) ComplianceIncomeImportPreview(ctx context.Context, req *m
 		return nil, err
 	}
 	return &member.ComplianceIncomeImportPreviewRes{IncomeImportPreviewModel: out}, nil
+}
+
+// ComplianceIncomeOCRPreview 平台流水 OCR 预览
+func (c *ControllerV1) ComplianceIncomeOCRPreview(ctx context.Context, req *member.ComplianceIncomeOCRPreviewReq) (res *member.ComplianceIncomeOCRPreviewRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceLedger().PreviewIncomeOCR(ctx, &compliancein.IncomeOCRPreviewInp{
+		MemberId:     memberId,
+		Platform:     req.Platform,
+		OcrText:      req.OcrText,
+		ImageBytes:   readUploadBytes(ctx, "file"),
+		Filename:     readUploadFilename(ctx, "file"),
+		AttachmentId: req.AttachmentId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceIncomeOCRPreviewRes{IncomeOCRPreviewModel: out}, nil
+}
+
+// ComplianceIncomeOCRImport 平台流水 OCR 导入
+func (c *ControllerV1) ComplianceIncomeOCRImport(ctx context.Context, req *member.ComplianceIncomeOCRImportReq) (res *member.ComplianceIncomeOCRImportRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ip, _ := requestMeta(ctx)
+	out, err := service.ComplianceLedger().ImportIncomeOCR(ctx, &compliancein.IncomeOCRImportInp{
+		MemberId:     memberId,
+		Platform:     req.Platform,
+		OcrText:      req.OcrText,
+		ImageBytes:   readUploadBytes(ctx, "file"),
+		Filename:     readUploadFilename(ctx, "file"),
+		AttachmentId: req.AttachmentId,
+		Ip:           ip,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceIncomeOCRImportRes{IncomeImportModel: out}, nil
+}
+
+// ComplianceIncomeConsistency 收入一致性比对
+func (c *ControllerV1) ComplianceIncomeConsistency(ctx context.Context, req *member.ComplianceIncomeConsistencyReq) (res *member.ComplianceIncomeConsistencyRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceLedger().GetIncomeConsistency(ctx, &compliancein.IncomeConsistencyInp{
+		MemberId: memberId,
+		Month:    req.Month,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceIncomeConsistencyRes{IncomeConsistencyModel: out}, nil
 }
 
 // ComplianceExpenseDelete 删除费用

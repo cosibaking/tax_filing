@@ -1,94 +1,71 @@
 <!-- 主体设立进度 P-06 -->
 <template>
-  <main class="pt-8 pb-16 px-6">
-    <div class="max-w-3xl mx-auto space-y-8">
+  <div class="opc-page">
+    <div class="opc-page__inner">
       <!-- Signed plan -->
-      <div
-        v-if="signedPlanLabel"
-        class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-6 md:p-8"
-      >
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <section v-if="signedPlanLabel" class="opc-panel">
+        <div class="opc-panel__head">
           <div>
-            <p class="text-xs font-black text-clay-muted uppercase tracking-widest mb-2">当前签约套餐</p>
-            <h2 class="font-heading font-black text-2xl text-clay-foreground">{{ signedPlanLabel }}</h2>
-            <p v-if="progress?.signedAt" class="text-sm text-clay-muted font-medium mt-1">
-              签约时间：{{ progress.signedAt }}
-            </p>
+            <p class="opc-panel__label">当前签约套餐</p>
+            <h2 class="opc-panel__title">{{ signedPlanLabel }}</h2>
+            <p v-if="progress?.signedAt" class="opc-panel__desc">签约时间：{{ progress.signedAt }}</p>
           </div>
-          <div v-if="progress?.planAmount" class="px-5 py-3 rounded-2xl bg-blue-50 text-clay-accent font-black text-lg">
+          <div v-if="progress?.planAmount" class="opc-tag opc-tag--price">
             ¥{{ progress.planAmount.toFixed(2) }}/月
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Header -->
-      <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <!-- Header + Timeline -->
+      <section class="opc-panel">
+        <div class="opc-panel__head">
           <div>
-            <h1 class="font-heading font-black text-3xl text-clay-foreground mb-1">主体设立进度</h1>
-            <p class="text-clay-muted font-medium">预计 {{ progress?.estimatedSlaDays ?? 14 }} 个工作日完成</p>
+            <h1 class="opc-panel__title opc-panel__title--lg">主体设立进度</h1>
+            <p class="opc-panel__desc">预计 {{ progress?.estimatedSlaDays ?? 14 }} 个工作日完成</p>
           </div>
-          <div v-if="progress?.companyName" class="px-4 py-2 rounded-2xl bg-blue-50 text-clay-accent font-bold text-sm">
-            {{ progress.companyName }}
-          </div>
+          <div v-if="progress?.companyName" class="opc-tag">{{ progress.companyName }}</div>
         </div>
 
-        <!-- Timeline -->
-        <div v-if="loading" class="text-center py-8">
-          <ArtSvgIcon icon="ri:loader-4-line" class="text-3xl text-clay-accent animate-spin mx-auto" />
+        <div v-if="loading" class="opc-loading">
+          <ArtSvgIcon icon="ri:loader-4-line" class="opc-loading__icon" />
         </div>
-        <div v-else class="relative pl-6 space-y-0">
+        <div v-else class="opc-timeline">
           <div
             v-for="(step, idx) in timelineSteps"
             :key="step.key"
-            class="relative pb-8 last:pb-0"
+            class="opc-timeline__item"
+            :class="{
+              'is-done': step.status === 'done',
+              'is-current': step.status === 'current'
+            }"
           >
-            <div
-              v-if="idx < timelineSteps.length - 1"
-              class="absolute left-[11px] top-6 bottom-0 w-0.5"
-              :class="step.status === 'done' ? 'bg-clay-accent' : 'bg-[#d1d9e6]'"
-            />
-            <div class="flex items-start gap-4">
-              <div
-                class="w-6 h-6 rounded-full shrink-0 flex items-center justify-center z-10"
-                :class="stepDotClass(step.status)"
-              >
-                <ArtSvgIcon v-if="step.status === 'done'" icon="ri:check-line" class="text-white text-xs" />
-                <span v-else-if="step.status === 'current'" class="w-2 h-2 rounded-full bg-white" />
+            <span class="opc-timeline__index">{{ idx + 1 }}</span>
+            <div class="opc-timeline__body">
+              <div class="opc-timeline__row">
+                <h3>{{ step.label }}</h3>
+                <span class="opc-badge" :class="`opc-badge--${step.status}`">{{ stepSubLabel(step) }}</span>
               </div>
-              <div class="flex-1 pt-0.5">
-                <div class="flex items-center gap-2">
-                  <span class="font-heading font-black text-clay-foreground">{{ step.label }}</span>
-                  <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="stepBadgeClass(step.status)">
-                    {{ stepSubLabel(step) }}
-                  </span>
-                </div>
-                <p v-if="step.date" class="text-xs text-clay-muted mt-1">{{ step.date }}</p>
-              </div>
+              <p v-if="step.date">{{ step.date }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Reject note -->
-        <div v-if="progress?.rejectNote" class="mt-6 p-4 rounded-2xl bg-orange-50 border border-orange-200">
-          <p class="text-sm font-bold text-orange-700">驳回原因：{{ progress.rejectNote }}</p>
+        <div v-if="progress?.rejectNote" class="opc-alert opc-alert--warn">
+          驳回原因：{{ progress.rejectNote }}
         </div>
-      </div>
+      </section>
 
       <!-- Materials form -->
-      <div v-if="showMaterialsForm" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
-        <div
-          v-if="verifyMock"
-          class="mb-6 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-800 font-medium"
-        >
+      <section v-if="showMaterialsForm" class="opc-panel">
+        <div v-if="verifyMock" class="opc-alert opc-alert--info">
           开发模式：身份证 OCR、手机实名、三要素等真实性校验已 Mock，填写格式正确即可提交。
         </div>
-        <h2 class="font-heading font-black text-xl text-clay-foreground mb-6">注册资料提交</h2>
+        <h2 class="opc-panel__section-title">注册资料提交</h2>
 
         <ElForm ref="formRef" :model="formData" :rules="rules" label-position="top" class="space-y-6">
           <!-- 拟设公司 -->
           <section>
-            <h3 class="text-sm font-black text-clay-muted mb-4 uppercase tracking-wide">拟设公司信息</h3>
+            <h3 class="opc-form-section__title">拟设公司信息</h3>
             <div class="space-y-4">
               <ElFormItem label="备选公司名称（1~3个）" prop="proposedNames">
                 <div class="space-y-2">
@@ -98,12 +75,12 @@
                     v-model.trim="formData.proposedNames[idx]"
                     :placeholder="`备选名称 ${idx + 1}`"
                     size="large"
-                    class="clay-input"
+                    class="opc-field"
                   />
                   <button
                     v-if="formData.proposedNames.length < 3"
                     type="button"
-                    class="text-xs font-bold text-clay-accent hover:underline"
+                    class="opc-link-btn"
                     @click="formData.proposedNames.push('')"
                   >
                     + 添加备选名称
@@ -115,23 +92,23 @@
                   <ElInputNumber v-model="formData.registeredCapital" :min="0.01" :max="1000" :precision="2" class="w-full" />
                 </ElFormItem>
                 <ElFormItem label="认缴期限" prop="capitalTermYears">
-                  <ElSelect v-model="formData.capitalTermYears" placeholder="请选择" size="large" class="w-full clay-select">
+                  <ElSelect v-model="formData.capitalTermYears" placeholder="请选择" size="large" class="w-full opc-field">
                     <ElOption v-for="y in [5, 10, 20, 30]" :key="y" :label="`${y} 年`" :value="y" />
                   </ElSelect>
                 </ElFormItem>
               </div>
               <ElFormItem label="营业期限" prop="businessTermType">
                 <ElRadioGroup v-model="formData.businessTermType" class="flex flex-col gap-2">
-                  <ElRadio value="long_term" class="clay-radio">长期</ElRadio>
-                  <ElRadio value="fixed" class="clay-radio">固定期限</ElRadio>
+                  <ElRadio value="long_term" class="opc-check">长期</ElRadio>
+                  <ElRadio value="fixed" class="opc-check">固定期限</ElRadio>
                 </ElRadioGroup>
               </ElFormItem>
               <ElFormItem v-if="formData.businessTermType === 'fixed'" label="营业期限截止" prop="businessTermEnd">
                 <ElDatePicker v-model="formData.businessTermEnd" type="date" value-format="YYYY-MM-DD" class="w-full" />
               </ElFormItem>
               <ElFormItem label="经营范围" prop="businessScope">
-                <ElInput v-model="formData.businessScope" type="textarea" :rows="4" class="clay-textarea" />
-                <button type="button" class="text-xs font-bold text-clay-accent hover:underline mt-2" @click="applyRecommendedScope">
+                <ElInput v-model="formData.businessScope" type="textarea" :rows="4" class="opc-field" />
+                <button type="button" class="opc-link-btn mt-2" @click="applyRecommendedScope">
                   使用推荐模板
                 </button>
               </ElFormItem>
@@ -141,7 +118,7 @@
                 v-model:district="formData.registerDistrict"
               />
               <ElFormItem label="详细地址" prop="registerAddress">
-                <ElInput v-model.trim="formData.registerAddress" placeholder="街道门牌号" size="large" class="clay-input" />
+                <ElInput v-model.trim="formData.registerAddress" placeholder="街道门牌号" size="large" class="opc-field" />
               </ElFormItem>
               <ElFormItem label="地址证明" prop="addressProofFileId">
                 <MemberFileUpload v-model="formData.addressProofFileId" accept=".pdf,.jpg,.jpeg,.png" />
@@ -151,13 +128,13 @@
 
           <!-- 法人信息 -->
           <section>
-            <h3 class="text-sm font-black text-clay-muted mb-4 uppercase tracking-wide">法人（股东）信息</h3>
+            <h3 class="opc-form-section__title">法人（股东）信息</h3>
             <div class="space-y-4">
               <ElFormItem label="法人姓名" prop="legalPersonName">
-                <ElInput v-model.trim="formData.legalPersonName" size="large" class="clay-input" />
+                <ElInput v-model.trim="formData.legalPersonName" size="large" class="opc-field" />
               </ElFormItem>
               <ElFormItem label="身份证号" prop="idCardNumber">
-                <ElInput v-model.trim="formData.idCardNumber" maxlength="18" size="large" class="clay-input" />
+                <ElInput v-model.trim="formData.idCardNumber" maxlength="18" size="large" class="opc-field" />
               </ElFormItem>
               <div class="grid md:grid-cols-2 gap-4">
                 <ElFormItem label="身份证有效期起" prop="idCardValidFrom">
@@ -168,20 +145,20 @@
                 </ElFormItem>
               </div>
               <ElFormItem label="民族">
-                <ElInput v-model.trim="formData.ethnicity" size="large" class="clay-input" />
+                <ElInput v-model.trim="formData.ethnicity" size="large" class="opc-field" />
               </ElFormItem>
               <ElFormItem label="户籍地址" prop="householdAddress">
-                <ElInput v-model.trim="formData.householdAddress" size="large" class="clay-input" />
+                <ElInput v-model.trim="formData.householdAddress" size="large" class="opc-field" />
               </ElFormItem>
               <ElFormItem label="现居住地址" prop="residenceAddress">
-                <ElInput v-model.trim="formData.residenceAddress" size="large" class="clay-input" />
+                <ElInput v-model.trim="formData.residenceAddress" size="large" class="opc-field" />
               </ElFormItem>
               <div class="grid md:grid-cols-2 gap-4">
                 <ElFormItem label="手机号" prop="phone">
-                  <ElInput v-model.trim="formData.phone" maxlength="11" size="large" class="clay-input" />
+                  <ElInput v-model.trim="formData.phone" maxlength="11" size="large" class="opc-field" />
                 </ElFormItem>
                 <ElFormItem label="邮箱" prop="email">
-                  <ElInput v-model.trim="formData.email" size="large" class="clay-input" />
+                  <ElInput v-model.trim="formData.email" size="large" class="opc-field" />
                 </ElFormItem>
               </div>
               <ElFormItem label="身份证正面" prop="idCardFrontFileId">
@@ -195,97 +172,97 @@
 
           <!-- 授权确认 -->
           <section>
-            <h3 class="text-sm font-black text-clay-muted mb-4 uppercase tracking-wide">授权确认</h3>
+            <h3 class="opc-form-section__title">授权确认</h3>
             <div class="space-y-3">
-              <ElCheckbox v-model="formData.confirmations.infoTrue" class="clay-checkbox w-full">本人确认以上信息真实、完整</ElCheckbox>
-              <ElCheckbox v-model="formData.confirmations.authConsent" class="clay-checkbox w-full">同意用于工商、税务、银行开户申报</ElCheckbox>
-              <ElCheckbox v-model="formData.confirmations.opcLimitAck" class="clay-checkbox w-full">知晓自然人 3 年内不得再设立新一人有限责任公司</ElCheckbox>
-              <ElCheckbox v-model="formData.confirmations.eSignAuth" class="clay-checkbox w-full">电子签名授权（沿用签约姓名）</ElCheckbox>
+              <ElCheckbox v-model="formData.confirmations.infoTrue" class="opc-check w-full">本人确认以上信息真实、完整</ElCheckbox>
+              <ElCheckbox v-model="formData.confirmations.authConsent" class="opc-check w-full">同意用于工商、税务、银行开户申报</ElCheckbox>
+              <ElCheckbox v-model="formData.confirmations.opcLimitAck" class="opc-check w-full">知晓自然人 3 年内不得再设立新一人有限责任公司</ElCheckbox>
+              <ElCheckbox v-model="formData.confirmations.eSignAuth" class="opc-check w-full">电子签名授权（沿用签约姓名）</ElCheckbox>
             </div>
           </section>
 
           <button
             type="button"
-            class="w-full h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            class="opc-btn opc-btn--primary opc-btn--block"
             :disabled="submitting"
             @click="handleSubmitMaterials"
           >
-            <ArtSvgIcon v-if="submitting" icon="ri:loader-4-line" class="text-xl animate-spin" />
+            <ArtSvgIcon v-if="submitting" icon="ri:loader-4-line" class="text-lg animate-spin" />
             {{ submitting ? '提交中...' : '提交注册资料' }}
           </button>
         </ElForm>
-      </div>
+      </section>
 
       <!-- Readonly materials -->
-      <div v-else-if="showMaterialsOverview" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
-        <h2 class="font-heading font-black text-xl text-clay-foreground mb-2">已提交资料</h2>
-        <p class="text-sm text-clay-muted font-medium mb-6">以下为已提交申请资料的脱敏概览，点击可查看详情。</p>
+      <section v-else-if="showMaterialsOverview" class="opc-panel">
+        <h2 class="opc-panel__section-title">已提交资料</h2>
+        <p class="opc-panel__section-desc">以下为已提交申请资料的脱敏概览，点击可查看详情。</p>
 
-        <div v-if="materialsLoading" class="text-center py-6">
-          <ArtSvgIcon icon="ri:loader-4-line" class="text-2xl text-clay-accent animate-spin mx-auto" />
+        <div v-if="materialsLoading" class="opc-loading">
+          <ArtSvgIcon icon="ri:loader-4-line" class="opc-loading__icon" />
         </div>
-        <div v-else-if="materialsEntities.length === 0" class="text-sm text-clay-muted font-medium">
+        <div v-else-if="materialsEntities.length === 0" class="opc-empty-text">
           资料审核中或已进入后续流程，如需修改请等待顾问联系。
         </div>
-        <ul v-else class="space-y-3">
+        <ul v-else class="opc-list">
           <li
             v-for="entity in materialsEntities"
             :key="entity.opcId"
-            class="flex items-center gap-4 p-4 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed cursor-pointer hover:shadow-clay-card transition-all"
+            class="opc-list__item"
             @click="openMaterialsDetail(entity.opcId)"
           >
-            <div class="w-10 h-10 rounded-xl bg-white shadow-clay-btn flex items-center justify-center shrink-0">
-              <ArtSvgIcon icon="ri:building-2-line" class="text-clay-accent text-lg" />
+            <div class="opc-list__icon">
+              <ArtSvgIcon icon="ri:building-2-line" />
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-heading font-black text-clay-foreground">{{ entity.companyNameMasked }}</span>
-                <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="materialsStatusClass(entity.status)">
+            <div class="opc-list__body">
+              <div class="opc-list__row">
+                <span class="opc-list__title">{{ entity.companyNameMasked }}</span>
+                <span class="opc-badge" :class="materialsStatusClass(entity.status)">
                   {{ entity.statusLabel }}
                 </span>
               </div>
-              <p class="text-sm text-clay-muted font-medium truncate">{{ entity.legalPersonSummary }}</p>
+              <p class="opc-list__desc">{{ entity.legalPersonSummary }}</p>
             </div>
-            <ArtSvgIcon icon="ri:arrow-right-s-line" class="text-clay-muted shrink-0" />
+            <ArtSvgIcon icon="ri:arrow-right-s-line" class="opc-list__arrow" />
           </li>
         </ul>
-      </div>
+      </section>
 
       <!-- Materials detail dialog -->
       <ElDialog
         v-model="detailVisible"
         title="已提交资料详情"
         width="560px"
-        class="clay-dialog"
+        class="opc-dialog"
         destroy-on-close
         @closed="resetDetailState"
       >
-        <div v-if="detailLoading" class="text-center py-8">
-          <ArtSvgIcon icon="ri:loader-4-line" class="text-2xl text-clay-accent animate-spin mx-auto" />
+        <div v-if="detailLoading" class="opc-loading">
+          <ArtSvgIcon icon="ri:loader-4-line" class="opc-loading__icon" />
         </div>
         <template v-else-if="detailData">
           <div class="mb-4">
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="materialsStatusClass(detailData.status)">
+            <span class="opc-badge" :class="materialsStatusClass(detailData.status)">
               {{ detailData.statusLabel }}
             </span>
           </div>
 
-          <div v-for="section in displaySections" :key="section.key" class="mb-6 last:mb-0">
-            <h3 class="text-sm font-black text-clay-foreground mb-3">{{ section.title }}</h3>
-            <dl v-if="sectionDisplayFields(section).length" class="space-y-3">
-              <div v-for="field in sectionDisplayFields(section)" :key="field.label" class="grid grid-cols-3 gap-3 text-sm">
-                <dt class="text-clay-muted font-bold">{{ field.label }}</dt>
-                <dd class="col-span-2 text-clay-foreground font-medium break-all">{{ field.value || '—' }}</dd>
+          <div v-for="section in displaySections" :key="section.key" class="opc-detail-section">
+            <h3 class="opc-detail-section__title">{{ section.title }}</h3>
+            <dl v-if="sectionDisplayFields(section).length" class="opc-detail-fields">
+              <div v-for="field in sectionDisplayFields(section)" :key="field.label" class="opc-detail-field">
+                <dt>{{ field.label }}</dt>
+                <dd>{{ field.value || '—' }}</dd>
               </div>
             </dl>
-            <div v-if="sectionDisplayAttachments(section).length" class="space-y-4 mt-3">
-              <div v-for="item in sectionDisplayAttachments(section)" :key="item.fileId" class="rounded-2xl bg-[#f0f3f8] p-4 shadow-clay-pressed">
-                <p class="text-sm font-black text-clay-foreground mb-3">{{ item.label }}</p>
+            <div v-if="sectionDisplayAttachments(section).length" class="opc-detail-attachments">
+              <div v-for="item in sectionDisplayAttachments(section)" :key="item.fileId" class="opc-detail-attachment">
+                <p class="opc-detail-attachment__label">{{ item.label }}</p>
                 <img
                   v-if="isImageMime(item.mimeType)"
                   :src="getAttachmentSrc(item)"
                   :alt="item.fileName"
-                  class="w-full max-h-72 object-contain rounded-xl bg-white"
+                  class="opc-detail-attachment__img"
                   referrerpolicy="same-origin"
                   @error="refreshAttachmentUrl(item.fileId)"
                 />
@@ -294,7 +271,7 @@
                   :href="getAttachmentSrc(item)"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-2 text-sm font-bold text-clay-accent hover:underline"
+                  class="opc-link-btn"
                 >
                   <ArtSvgIcon icon="ri:file-pdf-line" />
                   查看 {{ item.fileName || '附件' }}
@@ -306,12 +283,12 @@
           <button
             v-if="!revealed"
             type="button"
-            class="mt-6 w-full h-11 rounded-2xl border-2 border-clay-accent text-clay-accent font-black hover:bg-blue-50 transition-all"
+            class="opc-btn opc-btn--ghost opc-btn--block mt-6"
             @click="passwordVisible = true"
           >
             查看完整信息
           </button>
-          <p v-else class="mt-4 text-xs text-clay-muted font-medium">已展示完整信息，关闭弹窗后将恢复脱敏显示。</p>
+          <p v-else class="opc-hint mt-4">已展示完整信息，关闭弹窗后将恢复脱敏显示。</p>
         </template>
       </ElDialog>
 
@@ -323,26 +300,23 @@
         destroy-on-close
         @closed="passwordInput = ''"
       >
-        <p class="text-sm text-clay-muted font-medium mb-4">请输入登录密码以查看完整资料信息</p>
+        <p class="opc-panel__desc mb-4">请输入登录密码以查看完整资料信息</p>
         <ElInput
           v-model="passwordInput"
           type="password"
           placeholder="请输入密码"
           size="large"
+          class="opc-field"
           show-password
           @keyup.enter="handleReveal"
         />
         <template #footer>
-          <button
-            type="button"
-            class="px-6 py-2 rounded-xl text-clay-muted font-bold hover:bg-gray-100"
-            @click="passwordVisible = false"
-          >
+          <button type="button" class="opc-btn opc-btn--ghost" @click="passwordVisible = false">
             取消
           </button>
           <button
             type="button"
-            class="px-6 py-2 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black disabled:opacity-50"
+            class="opc-btn opc-btn--primary"
             :disabled="revealSubmitting || !passwordInput"
             @click="handleReveal"
           >
@@ -352,46 +326,46 @@
       </ElDialog>
 
       <!-- Bank section -->
-      <div v-if="showBankSection" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
-        <h2 class="font-heading font-black text-xl text-clay-foreground mb-4">银行开户指引</h2>
+      <section v-if="showBankSection" class="opc-panel">
+        <h2 class="opc-panel__section-title">银行开户指引</h2>
         <ElCollapse>
           <ElCollapseItem title="开户材料清单（点击展开）" name="guide">
-            <ul class="space-y-2 text-sm text-clay-foreground font-medium">
-              <li>· 营业执照正副本原件</li>
-              <li>· 公章、财务章、法人章（刻章完成后）</li>
-              <li>· 公司章程</li>
-              <li>· 法人身份证原件</li>
-              <li>· 税务登记相关回执</li>
+            <ul class="opc-guide-list">
+              <li>营业执照正副本原件</li>
+              <li>公章、财务章、法人章（刻章完成后）</li>
+              <li>公司章程</li>
+              <li>法人身份证原件</li>
+              <li>税务登记相关回执</li>
             </ul>
           </ElCollapseItem>
         </ElCollapse>
 
         <div v-if="progress?.opcStatus === 'bank'" class="mt-6 space-y-4">
           <ElFormItem label="开户银行（选填）">
-            <ElInput v-model.trim="bankForm.bankName" placeholder="如：中国工商银行 XX 支行" size="large" class="clay-input" />
+            <ElInput v-model.trim="bankForm.bankName" placeholder="如：中国工商银行 XX 支行" size="large" class="opc-field" />
           </ElFormItem>
           <ElFormItem label="上传开户回执">
             <MemberFileUpload v-model="bankForm.bankReceiptFileId" accept=".pdf,.jpg,.jpeg,.png" />
           </ElFormItem>
           <button
             type="button"
-            class="px-8 py-3 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all disabled:opacity-50"
+            class="opc-btn opc-btn--primary"
             :disabled="!bankForm.bankReceiptFileId || bankSubmitting"
             @click="handleSubmitBankReceipt"
           >
             提交开户回执
           </button>
         </div>
-      </div>
+      </section>
 
       <!-- Active success -->
-      <div v-if="progress?.opcStatus === 'active'" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 text-center">
-        <ArtSvgIcon icon="ri:checkbox-circle-line" class="text-5xl text-clay-success mx-auto mb-4" />
-        <h2 class="font-heading font-black text-2xl text-clay-foreground mb-2">主体设立完成</h2>
-        <p class="text-clay-muted font-medium">收入台账、费用台账等功能已解锁</p>
-      </div>
+      <section v-if="progress?.opcStatus === 'active'" class="opc-panel opc-panel--success">
+        <ArtSvgIcon icon="ri:checkbox-circle-line" class="opc-success__icon" />
+        <h2 class="opc-panel__title">主体设立完成</h2>
+        <p class="opc-panel__desc">收入台账、费用台账等功能已解锁</p>
+      </section>
     </div>
-  </main>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -633,20 +607,6 @@ const rules: FormRules = {
   }],
 }
 
-function stepDotClass(status: OpcStepStatus) {
-  if (status === 'done') return 'bg-gradient-to-br from-blue-400 to-blue-600 shadow-clay-btn'
-  if (status === 'current') return 'bg-clay-accent shadow-clay-btn ring-4 ring-blue-100'
-  if (status === 'rejected') return 'bg-orange-500'
-  return 'bg-[#d1d9e6]'
-}
-
-function stepBadgeClass(status: OpcStepStatus) {
-  if (status === 'done') return 'bg-green-100 text-green-700'
-  if (status === 'current') return 'bg-blue-100 text-clay-accent'
-  if (status === 'rejected') return 'bg-orange-100 text-orange-700'
-  return 'bg-gray-100 text-clay-muted'
-}
-
 function stepSubLabel(step: OpcProgressStep) {
   if (step.subLabel) return step.subLabel
   const map: Record<OpcStepStatus, string> = {
@@ -664,12 +624,12 @@ function applyRecommendedScope() {
 
 function materialsStatusClass(status: string) {
   const map: Record<string, string> = {
-    approved: 'bg-green-100 text-green-700',
-    reviewing: 'bg-blue-100 text-clay-accent',
-    rejected: 'bg-orange-100 text-orange-700',
-    pending: 'bg-gray-100 text-clay-muted'
+    approved: 'opc-badge--done',
+    reviewing: 'opc-badge--current',
+    rejected: 'opc-badge--rejected',
+    pending: 'opc-badge--pending'
   }
-  return map[status] ?? 'bg-gray-100 text-clay-muted'
+  return map[status] ?? 'opc-badge--pending'
 }
 
 async function loadMaterialsOverview() {
@@ -797,48 +757,481 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.text-clay-foreground { color: #32325d; }
-.text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.text-clay-success { color: #71dd37; }
-.border-clay-accent { border-color: #5a8dee; }
-.bg-clay-accent { background-color: #5a8dee; }
-.shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
-}
-.shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
-}
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-
-.shadow-clay-deep {
-  box-shadow: 30px 30px 60px #d1d9e6, -30px -30px 60px #ffffff,
-    inset 10px 10px 20px rgba(90, 141, 238, 0.05), inset -10px -10px 20px rgba(255, 255, 255, 0.8);
-}
-.shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
-}
-.shadow-clay-btn-hover {
-  box-shadow: 16px 16px 32px rgba(90, 141, 238, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.5);
+.opc-page__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-:deep(.clay-input) .el-input__wrapper {
-  height: 48px; border-radius: 16px; background: #f0f3f8;
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff; border: none;
+.opc-panel {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
-:deep(.clay-textarea) .el-textarea__inner {
-  border-radius: 16px; background: #f0f3f8;
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff; border: none;
+
+.opc-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
 }
-:deep(.clay-select) .el-select__wrapper {
-  height: 48px; border-radius: 16px; background: #f0f3f8;
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff; border: none;
+
+.opc-panel__label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-:deep(.clay-checkbox), :deep(.clay-radio) {
-  padding: 12px 16px; border-radius: 16px; background: #f0f3f8;
-  box-shadow: inset 6px 6px 12px #e0e5ec, inset -6px -6px 12px #ffffff;
-  margin-right: 0 !important; height: auto;
+
+.opc-panel__title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1f36;
+
+  &--lg {
+    font-size: 24px;
+  }
+}
+
+.opc-panel__desc {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7c93;
+}
+
+.opc-panel__section-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-panel__section-desc {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.opc-panel--success {
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.opc-tag {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+
+  &--price {
+    font-size: 16px;
+  }
+}
+
+.opc-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opc-timeline__item {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+
+  &.is-done {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+
+    .opc-timeline__index {
+      background: #2563eb;
+      color: #fff;
+    }
+  }
+
+  &.is-current {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px #2563eb;
+  }
+}
+
+.opc-timeline__index {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.opc-timeline__body {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+}
+
+.opc-timeline__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.opc-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+
+  &--done {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &--current {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+
+  &--pending {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  &--rejected {
+    background: #ffedd5;
+    color: #c2410c;
+  }
+}
+
+.opc-alert {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+
+  &--warn {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #c2410c;
+  }
+
+  &--info {
+    margin-bottom: 16px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #b45309;
+  }
+}
+
+.opc-form-section__title {
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.opc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    color: #fff;
+    background: #2563eb;
+
+    &:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
+  }
+
+  &--ghost {
+    color: #334155;
+    background: #fff;
+    border: 1px solid #d8dee9;
+
+    &:hover:not(:disabled) {
+      background: #f8fafc;
+    }
+  }
+
+  &--block {
+    width: 100%;
+    padding: 12px 20px;
+  }
+}
+
+.opc-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.opc-loading {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.opc-loading__icon {
+  font-size: 28px;
+  color: #2563eb;
+  animation: spin 1s linear infinite;
+}
+
+.opc-empty-text {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.opc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opc-list__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: #2563eb;
+  }
+}
+
+.opc-list__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.opc-list__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.opc-list__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.opc-list__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-list__desc {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opc-list__arrow {
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.opc-guide-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #334155;
+
+  li::before {
+    content: '· ';
+    color: #94a3b8;
+  }
+}
+
+.opc-success__icon {
+  font-size: 48px;
+  color: #16a34a;
+  margin-bottom: 16px;
+}
+
+.opc-hint {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.opc-detail-section {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.opc-detail-section__title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-detail-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.opc-detail-field {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  font-size: 13px;
+
+  dt {
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  dd {
+    margin: 0;
+    color: #1a1f36;
+    word-break: break-all;
+  }
+}
+
+.opc-detail-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.opc-detail-attachment {
+  padding: 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.opc-detail-attachment__label {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1f36;
+}
+
+.opc-detail-attachment__img {
+  width: 100%;
+  max-height: 288px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+}
+
+:deep(.opc-field) .el-input__wrapper,
+:deep(.opc-field) .el-select__wrapper {
+  min-height: 40px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d8dee9 inset;
+}
+
+:deep(.opc-field) .el-textarea__inner {
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d8dee9 inset;
+}
+
+:deep(.opc-check) {
+  margin-right: 0 !important;
+  height: auto;
+  padding: 10px 12px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+:deep(.opc-dialog) .el-dialog {
+  border-radius: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

@@ -145,7 +145,7 @@ func (s *sComplianceTax) GetChecklist(ctx context.Context, in *compliancein.TaxC
 	if task.Id > 0 && task.Checklist != "" {
 		items = mergeChecklist(items, task.Checklist)
 	}
-	items = enrichChecklistForOpc(ctx, opc.Id, items)
+	items = enrichChecklistForOpc(ctx, in.MemberId, opc.Id, items, task.Period)
 
 	return &compliancein.TaxChecklistModel{
 		TaskId:      taskId,
@@ -239,7 +239,7 @@ func toCalendarItem(ctx context.Context, row taskRow) compliancein.TaxCalendarIt
 	if row.Checklist != "" {
 		items = mergeChecklist(items, row.Checklist)
 	}
-	items = enrichChecklistForOpc(ctx, row.OpcId, items)
+	items = enrichChecklistForOpc(ctx, 0, row.OpcId, items, row.Period)
 	return compliancein.TaxCalendarItem{
 		Id:               row.Id,
 		TaxType:          row.TaxType,

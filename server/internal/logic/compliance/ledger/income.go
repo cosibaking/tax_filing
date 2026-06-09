@@ -48,15 +48,20 @@ func (s *sComplianceLedger) ListIncome(ctx context.Context, in *compliancein.Inc
 	}
 
 	var rows []struct {
-		Id          uint64  `json:"id"`
-		Platform    string  `json:"platform"`
-		Category    string  `json:"category"`
-		GrossAmount float64 `json:"gross_amount"`
-		PlatformFee float64 `json:"platform_fee"`
-		NetAmount   float64 `json:"net_amount"`
-		OccurredAt  uint64  `json:"occurred_at"`
-		Source      string  `json:"source"`
-		Remark      string  `json:"remark"`
+		Id               uint64  `json:"id"`
+		Platform         string  `json:"platform"`
+		Category         string  `json:"category"`
+		GrossAmount      float64 `json:"gross_amount"`
+		PlatformFee      float64 `json:"platform_fee"`
+		NetAmount        float64 `json:"net_amount"`
+		OccurredAt       uint64  `json:"occurred_at"`
+		Source           string  `json:"source"`
+		SettlementType   string  `json:"settlement_type"`
+		McnName          string  `json:"mcn_name"`
+		McnSplitRatio    float64 `json:"mcn_split_ratio"`
+		McnShareAmount   float64 `json:"mcn_share_amount"`
+		GrossBeforeSplit float64 `json:"gross_before_split"`
+		Remark           string  `json:"remark"`
 	}
 	err = m.OrderDesc("occurred_at").OrderDesc("id").
 		Page(page, pageSize).
@@ -68,15 +73,20 @@ func (s *sComplianceLedger) ListIncome(ctx context.Context, in *compliancein.Inc
 	list := make([]compliancein.IncomeItem, 0, len(rows))
 	for _, r := range rows {
 		list = append(list, compliancein.IncomeItem{
-			Id:          r.Id,
-			Platform:    r.Platform,
-			Category:    r.Category,
-			GrossAmount: r.GrossAmount,
-			PlatformFee: r.PlatformFee,
-			NetAmount:   r.NetAmount,
-			OccurredAt:  formatOccurredAt(r.OccurredAt),
-			Source:      r.Source,
-			Remark:      r.Remark,
+			Id:               r.Id,
+			Platform:         r.Platform,
+			Category:         r.Category,
+			GrossAmount:      r.GrossAmount,
+			PlatformFee:      r.PlatformFee,
+			NetAmount:        r.NetAmount,
+			OccurredAt:       formatOccurredAt(r.OccurredAt),
+			Source:           r.Source,
+			SettlementType:   r.SettlementType,
+			McnName:          r.McnName,
+			McnSplitRatio:    r.McnSplitRatio,
+			McnShareAmount:   r.McnShareAmount,
+			GrossBeforeSplit: r.GrossBeforeSplit,
+			Remark:           r.Remark,
 		})
 	}
 
@@ -123,13 +133,18 @@ func (s *sComplianceLedger) CreateIncome(ctx context.Context, in *compliancein.I
 	if err = validateIncomeCategory(in.Category); err != nil {
 		return nil, err
 	}
-	if in.GrossAmount <= 0 {
+	var mcnCalc mcnCalcResult
+	if err = applyMcnFields(&mcnCalc, in.SettlementType, in.McnName, in.McnSplitRatio, in.GrossBeforeSplit, in.GrossAmount); err != nil {
+		return nil, err
+	}
+	grossAmount := mcnCalc.GrossAmount
+	if grossAmount <= 0 {
 		return nil, gerror.New("含税收入须大于0")
 	}
 	if in.PlatformFee < 0 {
 		return nil, gerror.New("平台服务费不能为负数")
 	}
-	if in.PlatformFee > in.GrossAmount {
+	if in.PlatformFee > grossAmount {
 		return nil, gerror.New("平台服务费不能大于含税收入")
 	}
 	occurredAt, err := parseOccurredAt(in.OccurredAt)
@@ -137,13 +152,13 @@ func (s *sComplianceLedger) CreateIncome(ctx context.Context, in *compliancein.I
 		return nil, err
 	}
 
-	netAmount := calcNet(in.GrossAmount, in.PlatformFee)
+	netAmount := calcNet(grossAmount, in.PlatformFee)
 	now := uint64(utility.NowUnix())
 	data := g.Map{
 		"opc_id":        opcId,
 		"platform":      strings.ToLower(strings.TrimSpace(in.Platform)),
 		"category":      strings.ToLower(strings.TrimSpace(in.Category)),
-		"gross_amount":  roundMoney(in.GrossAmount),
+		"gross_amount":  grossAmount,
 		"platform_fee":  roundMoney(in.PlatformFee),
 		"net_amount":    netAmount,
 		"occurred_at":   occurredAt,
@@ -152,6 +167,9 @@ func (s *sComplianceLedger) CreateIncome(ctx context.Context, in *compliancein.I
 		"deleted":       0,
 		"create_time":   now,
 		"update_time":   now,
+	}
+	for k, v := range mcnDataMap(mcnCalc) {
+		data[k] = v
 	}
 
 	result, err := g.DB().Model(tableIncomeEntry).Ctx(ctx).Data(data).Insert()
@@ -207,6 +225,7 @@ func (s *sComplianceLedger) ImportIncomeCSV(ctx context.Context, in *compliancei
 
 	out := &compliancein.IncomeImportModel{}
 	now := uint64(utility.NowUnix())
+	affectedMonths := map[string]struct{}{}
 
 	for i := 1; i < len(records); i++ {
 		row := records[i]
@@ -244,7 +263,19 @@ func (s *sComplianceLedger) ImportIncomeCSV(ctx context.Context, in *compliancei
 		id, _ := result.LastInsertId()
 		_ = audit.WriteAudit(ctx, "income_entry", uint64(id), "income.import", in.MemberId, "member", nil, data, in.Ip)
 		_ = RecordIncomeVoucher(ctx, opcId, uint64(id), item.gross, item.occurredAt)
+		y, m := yearMonthFromUnix(item.occurredAt)
+		affectedMonths[formatPeriod(y, m)] = struct{}{}
 		out.Imported++
+	}
+	for period := range affectedMonths {
+		parts := strings.Split(period, "-")
+		if len(parts) != 2 {
+			continue
+		}
+		y, _ := strconv.Atoi(parts[0])
+		mo, _ := strconv.Atoi(parts[1])
+		_ = refreshProfitSummary(ctx, opcId, y, mo)
+		_ = tax.RefreshOpcPeriodTaxAmounts(ctx, opcId, y, mo)
 	}
 	return out, nil
 }

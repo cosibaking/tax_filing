@@ -73,7 +73,7 @@ func (s *sComplianceTax) ListTasks(ctx context.Context, in *compliancein.FilingL
 		if row.Checklist != "" {
 			items = mergeChecklist(items, row.Checklist)
 		}
-		items = enrichChecklistForOpc(ctx, row.OpcId, items)
+		items = enrichChecklistForOpc(ctx, row.MemberId, row.OpcId, items, row.Period)
 		empInfo, _ := shared.LoadEmploymentStatus(ctx, row.OpcId)
 		list = append(list, compliancein.FilingTaskItem{
 			Id:               row.Id,
@@ -129,7 +129,7 @@ func (s *sComplianceTax) MarkFiled(ctx context.Context, in *compliancein.FilingM
 			items = mergeChecklist(items, task.Checklist)
 		}
 	}
-	items = enrichChecklistForOpc(ctx, task.OpcId, items)
+	items = enrichChecklistForOpc(ctx, 0, task.OpcId, items, task.Period)
 	if !checklistComplete(items) {
 		return nil, gerror.New("自查清单未全部勾选，无法标记已申报")
 	}

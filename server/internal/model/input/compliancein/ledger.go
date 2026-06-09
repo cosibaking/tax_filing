@@ -44,15 +44,20 @@ type IncomeListInp struct {
 
 // IncomeItem 收入台账条目
 type IncomeItem struct {
-	Id          uint64  `json:"id"`
-	Platform    string  `json:"platform"`
-	Category    string  `json:"category"`
-	GrossAmount float64 `json:"grossAmount"`
-	PlatformFee float64 `json:"platformFee"`
-	NetAmount   float64 `json:"netAmount"`
-	OccurredAt  string  `json:"occurredAt"`
-	Source      string  `json:"source"`
-	Remark      string  `json:"remark,omitempty"`
+	Id               uint64  `json:"id"`
+	Platform         string  `json:"platform"`
+	Category         string  `json:"category"`
+	GrossAmount      float64 `json:"grossAmount"`
+	PlatformFee      float64 `json:"platformFee"`
+	NetAmount        float64 `json:"netAmount"`
+	OccurredAt       string  `json:"occurredAt"`
+	Source           string  `json:"source"`
+	SettlementType   string  `json:"settlementType,omitempty"`
+	McnName          string  `json:"mcnName,omitempty"`
+	McnSplitRatio    float64 `json:"mcnSplitRatio,omitempty"`
+	McnShareAmount   float64 `json:"mcnShareAmount,omitempty"`
+	GrossBeforeSplit float64 `json:"grossBeforeSplit,omitempty"`
+	Remark           string  `json:"remark,omitempty"`
 }
 
 // IncomeListModel 收入台账列表出参
@@ -73,14 +78,18 @@ type IncomeSummary struct {
 
 // IncomeCreateInp 创建收入入参
 type IncomeCreateInp struct {
-	MemberId    uint64
-	Platform    string
-	Category    string
-	GrossAmount float64
-	PlatformFee float64
-	OccurredAt  string
-	Remark      string
-	Ip          string
+	MemberId         uint64
+	Platform         string
+	Category         string
+	GrossAmount      float64
+	PlatformFee      float64
+	OccurredAt       string
+	SettlementType   string
+	McnName          string
+	McnSplitRatio    float64
+	GrossBeforeSplit float64
+	Remark           string
+	Ip               string
 }
 
 // IncomeCreateModel 创建收入出参

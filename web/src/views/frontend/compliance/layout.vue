@@ -2,54 +2,40 @@
   | XYGo Admin — 会员合规壳层布局
   +---------------------------------------------------------------------- -->
 <template>
-  <main class="pt-12 pb-8 px-6 max-w-7xl mx-auto min-h-[calc(100vh-128px)] flex flex-col">
-    <div class="grid lg:grid-cols-12 gap-8 items-stretch flex-1">
+  <main class="compliance-layout">
+    <div class="compliance-layout__grid">
 
       <!-- 左侧侧栏 -->
-      <aside class="lg:col-span-3 flex flex-col gap-6">
+      <aside class="compliance-layout__sidebar">
         <!-- 用户信息卡片 -->
-        <div class="bg-white/70 backdrop-blur-xl rounded-[40px] shadow-clay-card border border-[#d1d9e6]/40 p-8 text-center relative overflow-hidden group">
-          <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-blue-500/5 blur-2xl group-hover:scale-150 transition-transform"></div>
-          <div class="relative inline-block mb-4">
-            <div class="w-24 h-24 rounded-[32px] bg-white shadow-clay-btn p-1 animate-breathe">
-              <ElAvatar :size="88" :src="userInfo.avatar" class="!rounded-[28px] !w-full !h-full">
-                {{ userInfo.nickname?.charAt(0) || 'U' }}
-              </ElAvatar>
-            </div>
-          </div>
-          <h2 class="font-heading font-black text-xl text-clay-foreground mb-1">{{ userInfo.nickname || userInfo.username }}</h2>
-          <p class="text-xs text-clay-muted font-medium">税务合规服务</p>
-          <RouterLink
-            to="/user"
-            class="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-[#f0f3f8] shadow-clay-pressed text-xs font-bold text-clay-muted hover:text-clay-accent transition-colors"
-          >
-            <ArtSvgIcon icon="ri:arrow-left-line" class="text-sm" />
+        <div class="compliance-card compliance-card--profile">
+          <ElAvatar :size="72" :src="userInfo.avatar" class="compliance-card__avatar">
+            {{ userInfo.nickname?.charAt(0) || 'U' }}
+          </ElAvatar>
+          <h2 class="compliance-card__name">{{ userInfo.nickname || userInfo.username }}</h2>
+          <p class="compliance-card__role">税务合规服务</p>
+          <RouterLink to="/user" class="compliance-card__back">
+            <ArtSvgIcon icon="ri:arrow-left-line" />
             返回会员中心
           </RouterLink>
         </div>
 
         <!-- 合规菜单 -->
-        <nav class="bg-white/70 backdrop-blur-xl rounded-[40px] shadow-clay-card border border-[#d1d9e6]/40 p-4 overflow-hidden flex-1">
+        <nav class="compliance-card compliance-card--nav">
           <template v-for="group in menuTree" :key="group.id">
-            <div class="px-4 py-3 mb-2" :class="{ 'mt-4': group !== menuTree[0] }">
-              <span class="text-xs font-black text-clay-muted uppercase tracking-widest">{{ group.name }}</span>
+            <div class="compliance-nav__group" :class="{ 'is-first': group === menuTree[0] }">
+              <span class="compliance-nav__label">{{ group.name }}</span>
             </div>
-            <ul class="space-y-2">
+            <ul class="compliance-nav__list">
               <li v-for="item in group.items" :key="item.id">
                 <RouterLink
                   :to="item.path"
-                  class="flex items-center gap-4 px-6 py-4 rounded-[24px] transition-all duration-300 group"
-                  :class="isActive(item.path)
-                    ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn'
-                    : 'text-clay-foreground hover:bg-white hover:shadow-clay-card'"
+                  class="compliance-nav__item"
+                  :class="{ 'is-active': isActive(item.path) }"
                 >
-                  <ArtSvgIcon
-                    :icon="item.icon"
-                    class="text-xl"
-                    :class="isActive(item.path) ? 'text-white' : 'text-clay-accent opacity-70 group-hover:opacity-100'"
-                  />
-                  <span class="font-bold text-sm">{{ item.name }}</span>
-                  <ArtSvgIcon v-if="isActive(item.path)" icon="ri:arrow-right-s-line" class="text-base ml-auto" />
+                  <ArtSvgIcon :icon="item.icon" class="compliance-nav__icon" />
+                  <span>{{ item.name }}</span>
+                  <ArtSvgIcon v-if="isActive(item.path)" icon="ri:arrow-right-s-line" class="compliance-nav__arrow" />
                 </RouterLink>
               </li>
             </ul>
@@ -58,7 +44,7 @@
       </aside>
 
       <!-- 右侧内容 -->
-      <div class="lg:col-span-9">
+      <div class="compliance-layout__content">
         <RouterView />
       </div>
     </div>
@@ -91,23 +77,132 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 </script>
 
 <style lang="scss" scoped>
-.text-clay-foreground { color: #32325d; }
-.text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-
-.shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
-}
-.shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
-}
-.shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
+.compliance-layout {
+  padding: 48px 24px 32px;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: calc(100vh - 128px);
 }
 
-@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-.animate-breathe { animation: breathe 6s ease-in-out infinite; }
+.compliance-layout__grid {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.compliance-card {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.compliance-card--profile {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.compliance-card__avatar {
+  margin-bottom: 12px;
+}
+
+.compliance-card__name {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1f36;
+}
+
+.compliance-card__role {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.compliance-card__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e8edf3;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: #2563eb;
+    border-color: #bfdbfe;
+    background: #eff6ff;
+  }
+}
+
+.compliance-nav__group {
+  padding: 12px 8px 8px;
+
+  &.is-first {
+    padding-top: 0;
+  }
+}
+
+.compliance-nav__label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.compliance-nav__list {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compliance-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  &:hover:not(.is-active) {
+    background: #f8fafc;
+    color: #2563eb;
+  }
+
+  &.is-active {
+    color: #fff;
+    background: #2563eb;
+  }
+}
+
+.compliance-nav__icon {
+  font-size: 18px;
+  opacity: 0.85;
+}
+
+.compliance-nav__arrow {
+  margin-left: auto;
+  font-size: 16px;
+}
+
+@media (max-width: 1024px) {
+  .compliance-layout__grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
