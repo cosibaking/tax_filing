@@ -104,10 +104,7 @@ func (s *sComplianceTax) MarkFiled(ctx context.Context, in *compliancein.FilingM
 		return nil, gerror.New("请指定申报任务")
 	}
 
-	var task struct {
-		taskRow
-		OpcId uint64 `json:"opc_id"`
-	}
+	var task taskRow
 	err := g.DB().Model(shared.TableTaxFilingTask).Ctx(ctx).
 		Where("id", in.TaskId).
 		Where("deleted", 0).
@@ -168,8 +165,16 @@ func (s *sComplianceTax) MarkFiled(ctx context.Context, in *compliancein.FilingM
 }
 
 type filingListRow struct {
-	taskRow
-	MemberId    uint64 `json:"member_id"`
-	CompanyName string `json:"company_name"`
-	MemberName  string `json:"member_name"`
+	Id               uint64  `json:"id"`
+	OpcId            uint64  `json:"opc_id"`
+	TaxType          string  `json:"tax_type"`
+	Period           string  `json:"period"`
+	DueDate          uint64  `json:"due_date"`
+	Status           string  `json:"status"`
+	CalculatedAmount float64 `json:"calculated_amount"`
+	FiledAmount      float64 `json:"filed_amount"`
+	Checklist        string  `json:"checklist"`
+	MemberId         uint64  `json:"member_id"`
+	CompanyName      string  `json:"company_name"`
+	MemberName       string  `json:"member_name"`
 }

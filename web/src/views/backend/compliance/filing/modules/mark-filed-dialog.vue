@@ -26,7 +26,7 @@
         <ElInputNumber v-model="filedAmount" :min="0" :precision="2" class="w-full" />
       </ElFormItem>
       <ElFormItem label="回执 PDF" required>
-        <ArtFileUpload v-model="receiptFileId" accept=".pdf" />
+        <ArtFileUpload v-model="receiptFileId" value-type="id" accept=".pdf,.jpg,.jpeg,.png" />
       </ElFormItem>
     </ElForm>
 
@@ -87,8 +87,8 @@ async function handleSubmit() {
     ElMessage.success('已标记为已申报')
     emit('update:visible', false)
     emit('success')
-  } catch {
-    ElMessage.error('操作失败，请重试')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '操作失败，请重试')
   } finally {
     submitting.value = false
   }

@@ -425,17 +425,20 @@ export const STATEMENT_STATUS_LABELS: Record<string, string> = {
 }
 
 function mapFilingItem(raw: Record<string, any>): FilingTaskItem {
+  const taxType = raw.taxType ?? raw.tax_type
+  const status = raw.status
+  const calculatedAmount = Number(raw.calculatedAmount ?? raw.calculated_amount ?? 0)
   return {
     id: raw.id,
-    memberId: raw.memberId,
-    memberName: raw.memberName,
-    opcCompanyName: raw.companyName ?? raw.opcCompanyName,
-    taxType: raw.taxType,
+    memberId: raw.memberId ?? raw.member_id,
+    memberName: raw.memberName ?? raw.member_name,
+    opcCompanyName: raw.companyName ?? raw.opcCompanyName ?? raw.company_name,
+    taxType,
     period: raw.period,
-    dueDate: raw.dueDate,
-    calculatedAmount: raw.calculatedAmount ?? 0,
-    filedAmount: raw.filedAmount,
-    status: raw.status
+    dueDate: raw.dueDate ?? raw.due_date,
+    calculatedAmount: Number.isFinite(calculatedAmount) ? calculatedAmount : 0,
+    filedAmount: raw.filedAmount ?? raw.filed_amount,
+    status
   }
 }
 

@@ -43,10 +43,10 @@
         </div>
       </div>
 
-      <!-- 本月任务列表 -->
+      <!-- 本年任务列表 -->
       <div class="mb-8">
-        <h3 class="text-sm font-black text-clay-muted uppercase tracking-widest mb-4">本月任务列表</h3>
-        <div v-if="tasks.length === 0" class="text-sm text-clay-muted py-4">本月暂无申报任务</div>
+        <h3 class="text-sm font-black text-clay-muted uppercase tracking-widest mb-4">本年任务列表</h3>
+        <div v-if="tasks.length === 0" class="text-sm text-clay-muted py-4">本年暂无申报任务</div>
         <div v-else class="space-y-3">
           <div
             v-for="task in tasks"
@@ -54,7 +54,7 @@
             class="p-4 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed flex flex-wrap items-center justify-between gap-3"
           >
             <div>
-              <span class="font-bold text-clay-foreground">{{ task.taxTypeLabel || TAX_TYPE_LABELS[task.taxType] }}</span>
+              <span class="font-bold text-clay-foreground">{{ formatTaskTitle(task) }}</span>
               <span class="ml-3 text-xs font-bold px-2 py-0.5 rounded-full" :class="statusClass(task.status)">
                 {{ TAX_STATUS_LABELS[task.status] }}
               </span>
@@ -166,6 +166,11 @@ const drawerTask = ref<TaxTask | null>(null)
 
 function isDueDay(day: number) {
   return dueDateSet.value.has(day)
+}
+
+function formatTaskTitle(task: TaxTask) {
+  const label = task.taxTypeLabel || TAX_TYPE_LABELS[task.taxType]
+  return task.period ? `${task.period}${label}` : label
 }
 
 function statusClass(status: string) {

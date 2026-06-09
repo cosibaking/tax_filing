@@ -2,6 +2,8 @@ package tax
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -98,7 +100,7 @@ func upsertTask(ctx context.Context, opcId uint64, taxType, period string, amoun
 		Where("period", period).
 		Where("deleted", 0).
 		Scan(&existing)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return 0, 0, err
 	}
 
