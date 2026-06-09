@@ -19,8 +19,6 @@ import (
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/os/gcmd"
 	"github.com/gogf/gf/v2/os/gfile"
-	"github.com/gogf/gf/v2/os/gres"
-
 	"xygo/internal/controller/admin"
 	"xygo/internal/controller/hello"
 	"xygo/internal/controller/member"
@@ -66,36 +64,41 @@ var (
 			// s.BindHandler("GET:/", site.PageIndex)
 			// site.RegisterNavRoutes(s)
 
-			// 静态文件服务
+			// 静态文件服务（packed 内可能含旧 dist，部署时优先读磁盘）
 			s.SetServerRoot("resource/public/dist")
-			// s.SetIndexFiles([]string{}) // 纯 HTML 模式时禁用，现已恢复 SPA 默认
 			s.BindHandler("GET:/attachment/*", attachmentaccess.ServeProtected)
 			s.AddStaticPath("/m", "resource/public/mobile")
 			s.SetIndexFolder(false)
 
-			// SPA 回退：History 模式下由 Vue Router 接管前端路由
+			// 优先从磁盘提供 dist（避免 packed 内嵌旧版 index.html / assets）
+			s.BindHookHandler("/*", ghttp.HookBeforeServe, func(r *ghttp.Request) {
+				if r.Method != http.MethodGet && r.Method != http.MethodHead {
+					return
+				}
+				path := r.URL.Path
+				switch {
+				case path == "/" || path == "/index.html":
+					if serveDistIndexFromDisk(r) {
+						r.ExitAll()
+					}
+				case strings.HasPrefix(path, "/assets/"):
+					rel := strings.TrimPrefix(path, "/")
+					if serveDistFileFromDisk(r, rel) {
+						r.ExitAll()
+					}
+				}
+			})
+
+			// SPA 回退：非 API 路径返回 index.html，供 Hash 路由接管
 			s.BindStatusHandler(http.StatusNotFound, func(r *ghttp.Request) {
 				if r.Method != http.MethodGet && r.Method != http.MethodHead {
 					return
 				}
-				if !strings.Contains(r.Header.Get("Accept"), "text/html") {
+				if isBackendOrApiPath(r.URL.Path) {
 					return
 				}
-				path := r.URL.Path
-				if path != "/" && strings.Contains(strings.TrimPrefix(path, "/"), ".") {
-					return
-				}
-				indexPath := "resource/public/dist/index.html"
-				r.Response.ClearBuffer()
-				r.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-				var content string
-				if gres.Contains(indexPath) {
-					content = string(gres.GetContent(indexPath))
-				} else if gfile.Exists(indexPath) {
-					content = gfile.GetContents(indexPath)
-				}
-				if content != "" {
-					r.Response.WriteStatus(http.StatusOK, content)
+				if serveDistIndexFromDisk(r) {
+					r.ExitAll()
 				}
 			})
 
@@ -174,3 +177,38 @@ var (
 		},
 	}
 )
+
+const distRoot = "resource/public/dist"
+
+func serveDistFileFromDisk(r *ghttp.Request, rel string) bool {
+	localPath := gfile.Join(distRoot, rel)
+	if !gfile.Exists(localPath) || gfile.IsDir(localPath) {
+		return false
+	}
+	r.Response.ServeFile(localPath)
+	return true
+}
+
+func serveDistIndexFromDisk(r *ghttp.Request) bool {
+	localPath := gfile.Join(distRoot, "index.html")
+	if !gfile.Exists(localPath) {
+		return false
+	}
+	r.Response.ClearBuffer()
+	r.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
+	r.Response.WriteStatus(http.StatusOK, gfile.GetContents(localPath))
+	return true
+}
+
+func isBackendOrApiPath(path string) bool {
+	prefixes := []string{
+		"/admin", "/member", "/wm", "/site", "/system", "/socket",
+		"/swagger", "/api", "/attachment", "/assets", "/captcha", "/hello", "/m/",
+	}
+	for _, prefix := range prefixes {
+		if path == prefix || strings.HasPrefix(path, prefix) {
+			return true
+		}
+	}
+	return false
+}

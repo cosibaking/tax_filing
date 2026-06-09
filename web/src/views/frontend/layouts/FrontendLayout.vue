@@ -90,24 +90,21 @@
         </div>
 
         <!-- 右侧操作区 -->
-        <div class="hidden md:flex items-center gap-4">
-          <!-- 语言切换 -->
-          <div class="flex items-center gap-2 px-3 py-2 rounded-full bg-white/50 cursor-pointer hover:bg-white transition-all" @click="toggleLang">
-            <ArtSvgIcon icon="ri:translate-2" class="text-base text-clay-muted" />
-            <span class="text-xs font-bold text-clay-muted">{{ currentLang }}</span>
-          </div>
-
-
-          <!-- 会员中心开启时才显示登录/用户菜单 -->
+        <div class="hidden md:flex items-center gap-3">
           <template v-if="memberCenterOpen">
-            <!-- 已登录：用户信息 -->
             <template v-if="isLoggedIn">
+              <RouterLink
+                to="/user/overview"
+                class="px-4 py-2 text-sm font-semibold text-clay-muted hover:text-clay-accent transition-colors"
+              >
+                会员中心
+              </RouterLink>
               <ElDropdown @command="handleUserCommand">
-                <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-clay-btn cursor-pointer">
-                  <ElAvatar :size="28" :src="memberInfo.avatar" class="border-2 border-white">
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#e8edf3] cursor-pointer">
+                  <ElAvatar :size="28" :src="memberInfo.avatar">
                     {{ memberInfo.nickname?.charAt(0) || 'U' }}
                   </ElAvatar>
-                  <span class="text-sm font-bold text-clay-foreground">{{ memberInfo.nickname || memberInfo.username }}</span>
+                  <span class="text-sm font-semibold text-clay-foreground">{{ memberInfo.nickname || memberInfo.username }}</span>
                 </div>
                 <template #dropdown>
                   <ElDropdownMenu>
@@ -133,14 +130,18 @@
                 </template>
               </ElDropdown>
             </template>
-
-            <!-- 未登录：登录按钮 -->
             <template v-else>
               <RouterLink
                 to="/user/login"
-                class="px-8 py-2.5 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white font-bold text-sm shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1 active:scale-95 active:shadow-clay-pressed transition-all duration-300"
+                class="px-4 py-2 text-sm font-semibold text-clay-muted hover:text-clay-accent transition-colors"
               >
-                登录 / 注册
+                登录
+              </RouterLink>
+              <RouterLink
+                to="/user/register"
+                class="px-5 py-2 rounded-lg bg-[#2563eb] text-white text-sm font-semibold hover:bg-[#1d4ed8] transition-colors"
+              >
+                注册
               </RouterLink>
             </template>
           </template>
@@ -217,13 +218,20 @@
               </RouterLink>
             </template>
           </div>
-          <div v-if="memberCenterOpen" class="mt-8 w-full">
+          <div v-if="memberCenterOpen && !isLoggedIn" class="mt-8 w-full flex flex-col gap-3">
             <RouterLink
               to="/user/login"
-              class="block w-full py-5 rounded-[24px] bg-gradient-to-br from-blue-400 to-blue-600 text-white text-center font-black text-lg shadow-clay-btn"
+              class="block w-full py-4 rounded-xl border border-[#d8dee9] text-clay-foreground text-center font-bold"
               @click="mobileMenuOpen = false"
             >
-              登录 / 进入工作台
+              登录
+            </RouterLink>
+            <RouterLink
+              to="/user/register"
+              class="block w-full py-4 rounded-xl bg-[#2563eb] text-white text-center font-bold"
+              @click="mobileMenuOpen = false"
+            >
+              注册
             </RouterLink>
           </div>
         </div>
@@ -252,13 +260,14 @@
               <span class="font-heading font-extrabold text-2xl text-clay-foreground tracking-tight">{{ siteNameFirst }}<span class="text-clay-accent">{{ siteNameLast }}</span></span>
             </div>
             <p class="text-clay-muted max-w-sm leading-relaxed">
-              {{ siteStore.getSiteSubtitle() || '基于 Vue3 + GoFrame 的开源中后台管理框架，开箱即用，快速启动你的业务开发。' }}
+              {{ siteStore.getSiteSubtitle() || '个人税务合规与申报一站式服务，让税务管理更省心。' }}
             </p>
           </div>
           <div>
             <h4 class="font-heading font-bold text-clay-foreground mb-6">产品</h4>
             <ul class="space-y-3">
               <li><RouterLink to="/diagnosis" class="text-clay-muted hover:text-clay-accent transition-colors">免费诊断</RouterLink></li>
+              <li><RouterLink to="/cases" class="text-clay-muted hover:text-clay-accent transition-colors">应用案例</RouterLink></li>
               <li><RouterLink to="/pricing" class="text-clay-muted hover:text-clay-accent transition-colors">服务价格</RouterLink></li>
             </ul>
           </div>
@@ -272,11 +281,6 @@
         </div>
         <div class="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <p class="text-sm text-clay-muted font-medium">&copy; {{ new Date().getFullYear() }} {{ siteName }}. All rights reserved.</p>
-          <div class="flex gap-4">
-            <a href="https://github.com/z312193608/xygo-admin" target="_blank" class="w-12 h-12 rounded-full bg-white shadow-clay-btn hover:shadow-clay-btn-hover flex items-center justify-center text-clay-foreground transition-all hover:-translate-y-1">
-              <ArtSvgIcon icon="ri:github-fill" class="text-[22px]" />
-            </a>
-          </div>
         </div>
       </div>
     </footer>
@@ -380,12 +384,12 @@ function handleNavTargetClick(c: NavTarget) {
 
 const hiddenNavNames = new Set(['docs', 'cases', 'community', 'changelog'])
 
-const diagnosisNavUrl = computed(() => (isLoggedIn.value ? '/diagnosis' : '/'))
-
 const navEntries = computed<NavEntry[]>(() => {
   const list: NavEntry[] = [
-    { key: 'nav-diagnosis', mode: 'link', name: '免费诊断', icon: 'ri:shield-check-line', url: diagnosisNavUrl.value, isExternal: false },
-    { key: 'nav-pricing', mode: 'link', name: '服务价格', icon: 'ri:price-tag-3-line', url: '/pricing', isExternal: false },
+    { key: 'nav-home', mode: 'link', name: '首页', icon: '', url: '/', isExternal: false },
+    { key: 'nav-diagnosis', mode: 'link', name: '免费诊断', icon: '', url: '/diagnosis', isExternal: false },
+    { key: 'nav-cases', mode: 'link', name: '应用案例', icon: '', url: '/cases', isExternal: false },
+    { key: 'nav-pricing', mode: 'link', name: '服务价格', icon: '', url: '/pricing', isExternal: false },
   ]
   for (const m of mainNavMenus.value) {
     if (hiddenNavNames.has(m.name)) continue
@@ -405,8 +409,8 @@ const navEntries = computed<NavEntry[]>(() => {
 function isActiveNav(url: string) {
   if (!url || url === '#') return false
   if (url === '/') return route.path === '/'
-  if (url === '/diagnosis' || url === diagnosisNavUrl.value) {
-    return route.path === '/diagnosis' || (!isLoggedIn.value && route.path === '/')
+  if (url === '/diagnosis') {
+    return route.path === '/diagnosis' || route.path.startsWith('/diagnosis/')
   }
   return route.path === url || route.path.startsWith(`${url}/`)
 }
