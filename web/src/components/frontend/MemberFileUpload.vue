@@ -111,7 +111,7 @@ const customUpload = async (options: UploadRequestOptions) => {
     ElMessage.success('上传成功')
     options.onSuccess(data)
   } catch (error) {
-    options.onError(error as Error)
+    options.onError(error as Parameters<NonNullable<typeof options.onError>>[0])
   }
 }
 

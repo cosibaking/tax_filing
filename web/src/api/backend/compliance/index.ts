@@ -137,6 +137,7 @@ export const OPC_STATUS_OPTIONS = [
 
 /** OPC 状态中文 */
 export const OPC_STATUS_LABELS: Record<OpcStatus, string> = {
+  unsigned: '未签约',
   pending: '待提交资料',
   materials: '资料待补正',
   materials_review: '资料审核中',
@@ -173,7 +174,6 @@ function mapOpcDetail(raw: Record<string, any>): OpcTaskDetail {
   return {
     ...mapOpcListItem(raw),
     memberName: raw.memberName,
-    rejectNote: raw.rejectNote,
     materialsSubmittedAt: raw.materialsSubmittedAt,
     proposedNames: raw.company?.proposedNames ?? raw.proposedNames,
     registeredCapital: raw.company?.registeredCapital,

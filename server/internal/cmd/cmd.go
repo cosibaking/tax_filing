@@ -27,6 +27,7 @@ import (
 	"xygo/internal/controller/system"
 	"xygo/internal/controller/wm"
 	"xygo/internal/addon"
+	"xygo/internal/library/attachmentaccess"
 	"xygo/internal/library/cache"
 	"xygo/internal/library/monitor"
 	"xygo/internal/library/queue"
@@ -67,7 +68,7 @@ var (
 			// 静态文件服务
 			s.SetServerRoot("resource/public/dist")
 			// s.SetIndexFiles([]string{}) // 纯 HTML 模式时禁用，现已恢复 SPA 默认
-			s.AddStaticPath("/attachment", "resource/public/attachment")
+			s.BindHandler("GET:/attachment/*", attachmentaccess.ServeProtected)
 			s.AddStaticPath("/m", "resource/public/mobile")
 			s.SetIndexFolder(false)
 

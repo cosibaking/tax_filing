@@ -35,6 +35,7 @@ import {
   OPC_STATUS_OPTIONS,
   type ComplianceCustomerItem
 } from '@/api/backend/compliance'
+import type { OpcStatus } from '@/api/frontend/compliance/opc'
 import { ElTag } from 'element-plus'
 
 defineOptions({ name: 'ComplianceCustomers' })
@@ -43,7 +44,7 @@ const { hasAuth } = useAuth()
 
 const searchForm = ref({
   q: undefined as string | undefined,
-  opcStatus: undefined as string | undefined
+  opcStatus: undefined as OpcStatus | '' | undefined
 })
 
 const formItems = computed(() => [
@@ -138,8 +139,8 @@ const {
   }
 })
 
-const handleSearch = (params: Record<string, any>) => {
-  Object.assign(searchParams, params)
+const handleSearch = () => {
+  Object.assign(searchParams, searchForm.value)
   getData()
 }
 </script>

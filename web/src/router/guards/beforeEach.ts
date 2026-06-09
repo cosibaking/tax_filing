@@ -53,6 +53,7 @@ import { useFieldPermStore } from '@/store/modules/fieldPerm'
 import { fetchGetUserInfo } from '@/api/backend/auth'
 import { ApiStatus } from '@/utils/http/status'
 import { isHttpError } from '@/utils/http/error'
+import { showLoginRequiredMessage } from '@/utils/auth/requireLogin'
 import { RouteRegistry, MenuProcessor, IframeRouteManager, RoutePermissionValidator } from '../core'
 import type { AppRouteRecord } from '@/types/router'
 import { loadFrontendRoutes, isFrontendRoutesLoaded } from '../frontend/loader'
@@ -268,7 +269,8 @@ function handleLoginStatus(
     }
 
     // 如果需要登录验证但会员未登录，跳转到前台登录页
-    if (requiresAuth(to) && !memberStore.isLogin) {
+    if (requiresAuth(to) && !memberStore.getIsLogin) {
+      showLoginRequiredMessage()
       next({
         path: '/user/login',
         query: { redirect: to.fullPath }
@@ -305,6 +307,7 @@ function handleLoginStatus(
   }
 
   // 5. 确实未登录，跳转到后台登录页
+  showLoginRequiredMessage()
   next({
     name: 'Login',
     query: { redirect: to.fullPath }
@@ -405,6 +408,7 @@ async function handleDynamicRoutes(
     // 否则从门户首页直接访问后台时会被带回前台登录/首页。
     if (isUnauthorizedError(error)) {
       routeInitInProgress = false
+      showLoginRequiredMessage()
       await useUserStore().logOut({ callApi: false, redirect: false })
       next({
         path: ADMIN_LOGIN_PATH,

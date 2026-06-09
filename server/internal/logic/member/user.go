@@ -6,9 +6,11 @@ package member
 
 import (
 	"context"
+	"unicode/utf8"
 
 	"github.com/gogf/gf/v2/crypto/gmd5"
 	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/util/grand"
 
 	"xygo/internal/consts"
@@ -58,9 +60,23 @@ func (s *sMemberUser) GetInfo(ctx context.Context, memberId uint64) (out *member
 
 // UpdateProfile 更新会员资料
 func (s *sMemberUser) UpdateProfile(ctx context.Context, memberId uint64, in *memberin.UpdateProfileInput) (err error) {
-	data := map[string]interface{}{}
+	var member *entity.Member
+	err = dao.Member.Ctx(ctx).
+		Where("id", memberId).
+		Scan(&member)
+	if err != nil {
+		return err
+	}
+	if member == nil {
+		return gerror.NewCode(consts.CodeDataNotFound, "会员不存在")
+	}
+
+	data := g.Map{}
 
 	if in.Nickname != "" {
+		if utf8.RuneCountInString(in.Nickname) > 64 {
+			return gerror.NewCode(consts.CodeBusinessError, "昵称不能超过64个字符")
+		}
 		data["nickname"] = in.Nickname
 	}
 	if in.Avatar != "" {
@@ -76,7 +92,23 @@ func (s *sMemberUser) UpdateProfile(ctx context.Context, memberId uint64, in *me
 		data["email"] = in.Email
 	}
 	if in.Mobile != "" {
+		if in.Mobile != member.Mobile {
+			count, countErr := dao.Member.Ctx(ctx).
+				Where("mobile", in.Mobile).
+				WhereNot("id", memberId).
+				Count()
+			if countErr != nil {
+				return countErr
+			}
+			if count > 0 {
+				return gerror.NewCode(consts.CodeBusinessError, "手机号已被其他账号使用")
+			}
+		}
 		data["mobile"] = in.Mobile
+	}
+
+	if len(data) == 0 {
+		return gerror.NewCode(consts.CodeBusinessError, "没有需要更新的内容")
 	}
 
 	_, err = dao.Member.Ctx(ctx).
@@ -85,6 +117,22 @@ func (s *sMemberUser) UpdateProfile(ctx context.Context, memberId uint64, in *me
 		Update()
 
 	return err
+}
+
+// VerifyPassword 验证会员登录密码
+func (s *sMemberUser) VerifyPassword(ctx context.Context, memberId uint64, password string) (err error) {
+	var member *entity.Member
+	err = dao.Member.Ctx(ctx).Where("id", memberId).Scan(&member)
+	if err != nil {
+		return err
+	}
+	if member == nil {
+		return gerror.NewCode(consts.CodeDataNotFound, "会员不存在")
+	}
+	if gmd5.MustEncryptString(password+member.Salt) != member.Password {
+		return gerror.NewCode(consts.CodeBusinessError, "密码错误")
+	}
+	return nil
 }
 
 // ChangePassword 修改密码

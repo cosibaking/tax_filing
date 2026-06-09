@@ -613,6 +613,58 @@ export function getDiagnosisHistory(params?: { page?: number; pageSize?: number 
 
 
 
+/** 登录后同步访客诊断缓存 */
+
+export function syncGuestDiagnoses(items: import('./diagnosis').DiagnosisSubmitParams[]) {
+
+  return memberRequest.post<{ savedIds: number[]; count: number }>({
+
+    url: '/compliance/diagnosis/sync',
+
+    data: { items },
+
+    showErrorMessage: false
+
+  })
+
+}
+
+
+
+/** 绑定匿名诊断记录到当前会员 */
+
+export function bindDiagnosisRecords(diagnosisIds: number[]) {
+
+  return memberRequest.post<{ boundCount: number }>({
+
+    url: '/compliance/diagnosis/bind',
+
+    data: { diagnosisIds },
+
+    showErrorMessage: false
+
+  })
+
+}
+
+
+
+/** 获取诊断详情（已登录，从历史页查看） */
+
+export function getDiagnosisDetail(id: number | string) {
+
+  return memberRequest.get<import('./diagnosis').DiagnosisSubmitResult>({
+
+    url: `/compliance/diagnosis/${id}`,
+
+    showErrorMessage: false
+
+  })
+
+}
+
+
+
 /**
 
  * 获取合规套餐/订单状态（驱动侧栏可见性）

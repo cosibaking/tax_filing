@@ -125,6 +125,7 @@
         <!-- CTA -->
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
+            v-if="!isGuestResult"
             type="button"
             class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover font-bold text-clay-foreground transition-all flex items-center justify-center gap-2"
             @click="handleDownloadPdf"
@@ -158,27 +159,40 @@ import {
   cacheDiagnosisResult,
   type DiagnosisSubmitResult
 } from '@/api/frontend/compliance/diagnosis'
+import { requireLogin } from '@/utils/auth/requireLogin'
+import { getDiagnosisDetail } from '@/api/frontend/compliance/member'
 import { useMemberStore } from '@/store/modules/member'
+import {
+  getGuestDiagnosis,
+  isGuestDiagnosisId,
+  saveGuestDiagnosis
+} from '@/utils/compliance/guestDiagnosisCache'
 
 defineOptions({ name: 'ComplianceDiagnosisResult' })
 
 const router = useRouter()
 const route = useRoute()
 const memberStore = useMemberStore()
-
 const loading = ref(true)
 const calculating = ref(false)
 const diagnosisResult = ref<DiagnosisSubmitResult | null>(null)
 const assumptionHints = ref<string[]>([])
 const calcIncome = ref(0)
 const calcCost = ref(0)
+const isGuestResult = computed(() => isGuestDiagnosisId(diagnosisResult.value?.id))
 
-const COLUMN_DEFS = [
+interface ComparisonColumnDef {
+  plan: string
+  label: string
+  warning?: boolean
+}
+
+const COLUMN_DEFS: ComparisonColumnDef[] = [
   { plan: 'none', label: '不报税', warning: true },
   { plan: 'labor', label: '纯劳务' },
   { plan: 'individual', label: '个体户' },
   { plan: 'opc', label: 'OPC' }
-] as const
+]
 
 function isPlanRecommended(plan: string, recommended?: string, itemRecommended?: boolean) {
   if (itemRecommended) return true
@@ -260,16 +274,51 @@ function loadResult() {
   if (state?.id) {
     diagnosisResult.value = state
     cacheDiagnosisResult(id, state)
-  } else {
-    diagnosisResult.value = getCachedDiagnosisResult(id)
+    finishLoadResult()
+    return
   }
 
+  if (isGuestDiagnosisId(id)) {
+    const guest = getGuestDiagnosis(id)
+    diagnosisResult.value = guest?.result ?? null
+    finishLoadResult()
+    return
+  }
+
+  diagnosisResult.value = getCachedDiagnosisResult(id)
+  if (diagnosisResult.value) {
+    finishLoadResult()
+    return
+  }
+
+  if (memberStore.getIsLogin && /^\d+$/.test(id)) {
+    loadResultFromServer(Number(id))
+    return
+  }
+
+  finishLoadResult()
+}
+
+async function loadResultFromServer(id: number) {
+  try {
+    const res = await getDiagnosisDetail(id)
+    if (res?.id) {
+      diagnosisResult.value = res
+      cacheDiagnosisResult(id, res)
+    }
+  } catch {
+    // 拦截器已处理
+  } finally {
+    finishLoadResult()
+  }
+}
+
+function finishLoadResult() {
   if (diagnosisResult.value?.taxComparison) {
     calcIncome.value = diagnosisResult.value.taxComparison.annualIncome || 0
     calcCost.value = diagnosisResult.value.taxComparison.annualCost || 0
   }
   assumptionHints.value = diagnosisResult.value?.assumptionHints || []
-
   loading.value = false
 }
 
@@ -280,7 +329,7 @@ async function handleRecalculate() {
     const res = await calculateTax({
       annualIncome: calcIncome.value,
       annualCost: calcCost.value,
-      diagnosisId: diagnosisResult.value.id
+      diagnosisId: isGuestResult.value ? undefined : diagnosisResult.value.id
     })
     if (res.taxComparison) {
       diagnosisResult.value = {
@@ -291,7 +340,14 @@ async function handleRecalculate() {
         assumptionHints: res.assumptionHints
       }
       assumptionHints.value = res.assumptionHints || []
-      cacheDiagnosisResult(diagnosisResult.value.id, diagnosisResult.value)
+      const id = String(diagnosisResult.value.id)
+      cacheDiagnosisResult(id, diagnosisResult.value)
+      if (isGuestResult.value) {
+        const guest = getGuestDiagnosis(id)
+        if (guest) {
+          saveGuestDiagnosis(id, guest.payload, diagnosisResult.value)
+        }
+      }
     }
   } catch {
     // 错误由拦截器处理
@@ -301,6 +357,7 @@ async function handleRecalculate() {
 }
 
 function handleDownloadPdf() {
+  if (isGuestResult.value) return
   const id = diagnosisResult.value?.id
   if (!id) return
   const base = import.meta.env.VITE_API_URL || ''
@@ -311,15 +368,10 @@ function handleSignUp() {
   const diagnosisId = diagnosisResult.value?.id
   const query: Record<string, string> = {}
   if (diagnosisId) query.diagnosisId = String(diagnosisId)
+  const target = `/user/compliance/plan${diagnosisId ? `?diagnosisId=${diagnosisId}` : ''}`
 
-  if (memberStore.isLogin) {
-    router.push({ path: '/user/compliance/plan', query })
-  } else {
-    router.push({
-      path: '/user/login',
-      query: { redirect: `/user/compliance/plan${diagnosisId ? `?diagnosisId=${diagnosisId}` : ''}` }
-    })
-  }
+  if (!requireLogin({ redirect: target })) return
+  router.push({ path: '/user/compliance/plan', query })
 }
 
 onMounted(loadResult)

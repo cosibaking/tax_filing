@@ -115,6 +115,7 @@ import { useMemberStore } from '@/store/modules/member'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { memberLogin, getMemberInfo } from '@/api/frontend'
 import ArtClickCaptcha from '@/components/core/forms/art-click-captcha/index.vue'
+import { syncGuestDiagnosisAfterLogin } from '@/utils/compliance/syncGuestDiagnosis'
 
 defineOptions({ name: 'UserLogin' })
 
@@ -169,6 +170,8 @@ const onCaptchaSuccess = async (captchaId: string, captchaInfo: string) => {
     memberStore.setToken(token)
     const info = await getMemberInfo()
     memberStore.setMemberInfo(info)
+
+    await syncGuestDiagnosisAfterLogin()
 
     ElMessage.success('登录成功')
     const redirect = route.query.redirect as string

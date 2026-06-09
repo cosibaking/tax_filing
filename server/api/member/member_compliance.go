@@ -64,6 +64,96 @@ type ComplianceDiagnosisHistoryRes struct {
 
 
 
+// ComplianceDiagnosisSyncItem 访客诊断同步项
+
+type ComplianceDiagnosisSyncItem struct {
+
+	Platforms          []string           `json:"platforms" v:"required#请选择直播平台"`
+
+	MonthlyIncomeRange string             `json:"monthlyIncomeRange" v:"required#请选择月收入区间"`
+
+	AnnualCostEstimate float64            `json:"annualCostEstimate"`
+
+	ExistingEntity     string             `json:"existingEntity" v:"required#请选择现有主体"`
+
+	HasFiledTax        string             `json:"hasFiledTax" v:"required#请选择报税状态"`
+
+	TaxBureauContact   bool               `json:"taxBureauContact"`
+
+	Notes              string             `json:"notes"`
+
+	CostBreakdown      map[string]float64 `json:"costBreakdown"`
+
+}
+
+
+
+// ComplianceDiagnosisSyncReq 登录后同步访客诊断
+
+type ComplianceDiagnosisSyncReq struct {
+
+	g.Meta `path:"/compliance/diagnosis/sync" method:"post" tags:"会员合规" summary:"同步访客诊断到账户"`
+
+	Items  []ComplianceDiagnosisSyncItem `json:"items" v:"required#请提供诊断数据"`
+
+}
+
+
+
+// ComplianceDiagnosisSyncRes 同步响应
+
+type ComplianceDiagnosisSyncRes struct {
+
+	*compliancein.DiagnosisSyncModel
+
+}
+
+
+
+// ComplianceDiagnosisBindReq 绑定匿名诊断记录
+
+type ComplianceDiagnosisBindReq struct {
+
+	g.Meta       `path:"/compliance/diagnosis/bind" method:"post" tags:"会员合规" summary:"绑定匿名诊断记录"`
+
+	DiagnosisIds []uint64 `json:"diagnosisIds" v:"required#请提供诊断ID"`
+
+}
+
+
+
+// ComplianceDiagnosisBindRes 绑定响应
+
+type ComplianceDiagnosisBindRes struct {
+
+	*compliancein.DiagnosisBindModel
+
+}
+
+
+
+// ComplianceDiagnosisDetailReq 诊断详情
+
+type ComplianceDiagnosisDetailReq struct {
+
+	g.Meta      `path:"/compliance/diagnosis/{id}" method:"get" tags:"会员合规" summary:"诊断详情"`
+
+	DiagnosisId uint64 `p:"id" json:"id" v:"required|min:1#请提供诊断ID|诊断ID无效"`
+
+}
+
+
+
+// ComplianceDiagnosisDetailRes 诊断详情响应
+
+type ComplianceDiagnosisDetailRes struct {
+
+	*compliancein.DiagnosisDetailModel
+
+}
+
+
+
 // ComplianceOrderCreateReq 创建服务订单
 
 type ComplianceOrderCreateReq struct {
@@ -270,6 +360,64 @@ type ComplianceOpcBankReceiptRes struct {
 
 	*compliancein.BankReceiptModel
 
+}
+
+// ComplianceOpcMaterialsOverviewReq 已提交资料概览
+type ComplianceOpcMaterialsOverviewReq struct {
+	g.Meta `path:"/compliance/opc/materials/overview" method:"get" tags:"会员合规" summary:"OPC已提交资料概览"`
+}
+
+// ComplianceOpcMaterialsOverviewRes 资料概览响应
+type ComplianceOpcMaterialsOverviewRes struct {
+	*compliancein.MaterialsOverviewModel
+}
+
+// ComplianceOpcMaterialsDetailReq 单个 OPC 实体完整资料（脱敏）
+type ComplianceOpcMaterialsDetailReq struct {
+	g.Meta `path:"/compliance/opc/materials/detail" method:"get" tags:"会员合规" summary:"OPC已提交资料详情"`
+	OpcId  uint64 `p:"opcId" json:"opcId" v:"required|min:1#请指定OPC主体"`
+}
+
+// ComplianceOpcMaterialsDetailRes 资料详情响应
+type ComplianceOpcMaterialsDetailRes struct {
+	*compliancein.MaterialsEntityDetailModel
+}
+
+// ComplianceOpcMaterialsSectionReq 资料分组详情（脱敏）
+type ComplianceOpcMaterialsSectionReq struct {
+	g.Meta  `path:"/compliance/opc/materials/section" method:"get" tags:"会员合规" summary:"OPC资料分组详情"`
+	OpcId   uint64 `p:"opcId" json:"opcId"`
+	Section string `p:"section" json:"section" v:"required#请指定资料分组"`
+}
+
+// ComplianceOpcMaterialsSectionRes 资料分组详情响应
+type ComplianceOpcMaterialsSectionRes struct {
+	*compliancein.MaterialsSectionDetailModel
+}
+
+// ComplianceOpcMaterialsRevealReq 密码验证查看完整资料
+type ComplianceOpcMaterialsRevealReq struct {
+	g.Meta   `path:"/compliance/opc/materials/reveal" method:"post" tags:"会员合规" summary:"密码验证查看完整OPC资料"`
+	OpcId    uint64 `json:"opcId" v:"required|min:1#请指定OPC主体"`
+	Section  string `json:"section"`
+	Password string `json:"password" v:"required#请输入密码"`
+}
+
+// ComplianceOpcMaterialsRevealRes 完整资料响应
+type ComplianceOpcMaterialsRevealRes struct {
+	*compliancein.MaterialsRevealModel
+}
+
+// ComplianceOpcMaterialsRevealAllReq 密码验证查看全部完整资料
+type ComplianceOpcMaterialsRevealAllReq struct {
+	g.Meta   `path:"/compliance/opc/materials/reveal-all" method:"post" tags:"会员合规" summary:"密码验证查看全部OPC资料"`
+	OpcId    uint64 `json:"opcId" v:"required|min:1#请指定OPC主体"`
+	Password string `json:"password" v:"required#请输入密码"`
+}
+
+// ComplianceOpcMaterialsRevealAllRes 全部完整资料响应
+type ComplianceOpcMaterialsRevealAllRes struct {
+	*compliancein.MaterialsRevealAllModel
 }
 
 // ComplianceIncomeListReq 收入台账列表

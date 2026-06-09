@@ -28,6 +28,7 @@ import (
 	"xygo/api/member"
 	"xygo/internal/consts"
 	"xygo/internal/dao"
+	"xygo/internal/library/attachmentaccess"
 	"xygo/internal/library/contexts"
 	"xygo/internal/model/do"
 	"xygo/internal/model/entity"
@@ -99,8 +100,13 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *member.UploadFileReq
 		return nil, gerror.Wrap(err, "保存附件记录失败")
 	}
 
+	accessURL, err := attachmentaccess.BuildSignedURL(ctx, memberId, attachmentId, 0)
+	if err != nil {
+		return nil, gerror.Wrap(err, "生成附件访问链接失败")
+	}
+
 	return &member.UploadFileRes{
-		Url:          url,
+		Url:          accessURL,
 		Name:         name,
 		Size:         upFile.Size,
 		AttachmentId: attachmentId,

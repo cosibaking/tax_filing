@@ -89,10 +89,15 @@ func (s *sComplianceOpc) GetProgress(ctx context.Context, memberId uint64) (*com
 		return nil, err
 	}
 	if row == nil {
+		planTier, planName, planAmount, signedAt := s.memberPlanInfo(ctx, memberId)
 		return &compliancein.OpcProgressModel{
 			OpcStatus:        opcPending,
 			EstimatedSlaDays: 14,
 			Steps:            buildProgressSteps(opcPending, 0),
+			PlanTier:         planTier,
+			PlanName:         planName,
+			PlanAmount:       planAmount,
+			SignedAt:         signedAt,
 		}, nil
 	}
 
@@ -121,15 +126,22 @@ func (s *sComplianceOpc) GetProgress(ctx context.Context, memberId uint64) (*com
 		}
 	}
 
+	planTier, planName, planAmount, signedAt := s.memberPlanInfo(ctx, memberId)
+
 	return &compliancein.OpcProgressModel{
-		OpcStatus:         row.Status,
-		CompanyName:       row.CompanyName,
-		CreditCode:        creditCode,
-		EstimatedSlaDays:  14,
-		Steps:             buildProgressSteps(row.Status, row.MaterialsSubmittedAt),
-		MaterialsReadonly: readonly,
-		RejectNote:        rejectNote,
-		BankAccountMasked: bankMasked,
+		OpcStatus:          row.Status,
+		CompanyName:        row.CompanyName,
+		CreditCode:         creditCode,
+		EstimatedSlaDays:   14,
+		Steps:              buildProgressSteps(row.Status, row.MaterialsSubmittedAt),
+		MaterialsReadonly:  readonly,
+		MaterialsSubmitted: row.MaterialsSubmittedAt > 0,
+		RejectNote:         rejectNote,
+		BankAccountMasked:  bankMasked,
+		PlanTier:           planTier,
+		PlanName:           planName,
+		PlanAmount:         planAmount,
+		SignedAt:           signedAt,
 	}, nil
 }
 
@@ -786,17 +798,27 @@ func (s *sComplianceOpc) getOpcStatus(ctx context.Context, opcId uint64) string 
 }
 
 func (s *sComplianceOpc) memberPlanTier(ctx context.Context, memberId uint64) string {
+	tier, _, _, _ := s.memberPlanInfo(ctx, memberId)
+	return tier
+}
+
+func (s *sComplianceOpc) memberPlanInfo(ctx context.Context, memberId uint64) (tier, name string, amount float64, signedAt string) {
 	var row struct {
-		Tier string `json:"tier"`
+		Tier      string  `json:"tier"`
+		Name      string  `json:"name"`
+		Amount    float64 `json:"amount"`
+		SignedAt  uint64  `json:"signed_at"`
 	}
 	_ = g.DB().Model(tableServiceOrder+" so").Ctx(ctx).
 		LeftJoin(tableServicePlan+" sp", "sp.id = so.plan_id").
 		Where("so.member_id", memberId).
 		Where("so.status", orderStatusActive).
 		Where("so.deleted", 0).
-		Fields("sp.tier").
+		Fields("sp.tier, sp.name, so.amount, so.signed_at").
+		OrderDesc("so.id").
+		Limit(1).
 		Scan(&row)
-	return row.Tier
+	return row.Tier, row.Name, row.Amount, formatUnix(row.SignedAt)
 }
 
 func (s *sComplianceOpc) writeProgressLog(ctx context.Context, opcId uint64, step, status, note string, operatedBy uint64) {

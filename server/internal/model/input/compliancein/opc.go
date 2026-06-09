@@ -70,14 +70,101 @@ type MaterialsReadonlySummary struct {
 
 // OpcProgressModel 进度时间轴出参
 type OpcProgressModel struct {
-	OpcStatus         string                    `json:"opcStatus"`
-	CompanyName       string                    `json:"companyName,omitempty"`
-	CreditCode        string                    `json:"creditCode,omitempty"`
-	EstimatedSlaDays  int                       `json:"estimatedSlaDays"`
-	Steps             []ProgressStepItem        `json:"steps"`
-	MaterialsReadonly *MaterialsReadonlySummary `json:"materialsReadonly,omitempty"`
-	RejectNote        string                    `json:"rejectNote,omitempty"`
-	BankAccountMasked string                    `json:"bankAccountMasked,omitempty"`
+	OpcStatus          string                    `json:"opcStatus"`
+	CompanyName        string                    `json:"companyName,omitempty"`
+	CreditCode         string                    `json:"creditCode,omitempty"`
+	EstimatedSlaDays   int                       `json:"estimatedSlaDays"`
+	Steps              []ProgressStepItem        `json:"steps"`
+	MaterialsReadonly  *MaterialsReadonlySummary `json:"materialsReadonly,omitempty"`
+	MaterialsSubmitted bool                      `json:"materialsSubmitted"`
+	RejectNote         string                    `json:"rejectNote,omitempty"`
+	BankAccountMasked  string                    `json:"bankAccountMasked,omitempty"`
+	PlanTier           string                    `json:"planTier,omitempty"`
+	PlanName           string                    `json:"planName,omitempty"`
+	PlanAmount         float64                   `json:"planAmount,omitempty"`
+	SignedAt           string                    `json:"signedAt,omitempty"`
+}
+
+// MaterialsEntityOverview 已提交资料实体卡片（脱敏）
+type MaterialsEntityOverview struct {
+	OpcId              uint64 `json:"opcId"`
+	CompanyNameMasked  string `json:"companyNameMasked"`
+	LegalPersonSummary string `json:"legalPersonSummary"`
+	Status             string `json:"status"`
+	StatusLabel        string `json:"statusLabel"`
+}
+
+// MaterialsOverviewModel 资料概览列表（按 OPC 实体）
+type MaterialsOverviewModel struct {
+	Entities []MaterialsEntityOverview `json:"entities"`
+}
+
+// MaterialsDetailSection 资料详情分组（脱敏）
+type MaterialsDetailSection struct {
+	Key    string                  `json:"key"`
+	Title  string                  `json:"title"`
+	Fields []MaterialsSectionField `json:"fields"`
+}
+
+// MaterialsEntityDetailModel 单个 OPC 实体完整资料（脱敏）
+type MaterialsEntityDetailModel struct {
+	OpcId       uint64                   `json:"opcId"`
+	Status      string                   `json:"status"`
+	StatusLabel string                   `json:"statusLabel"`
+	Sections    []MaterialsDetailSection `json:"sections"`
+}
+
+// MaterialsSectionField 资料分组字段
+type MaterialsSectionField struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+// MaterialsSectionDetailModel 资料分组详情（脱敏）
+type MaterialsSectionDetailModel struct {
+	Key         string                  `json:"key"`
+	Title       string                  `json:"title"`
+	Status      string                  `json:"status"`
+	StatusLabel string                  `json:"statusLabel"`
+	Fields      []MaterialsSectionField `json:"fields"`
+}
+
+// MaterialsRevealInp 密码验证后查看完整资料
+type MaterialsRevealInp struct {
+	MemberId uint64
+	OpcId    uint64
+	Section  string
+	Password string
+}
+
+// MaterialsRevealSectionModel 完整资料分组
+type MaterialsRevealSectionModel struct {
+	Key         string                      `json:"key"`
+	Title       string                      `json:"title"`
+	Fields      []MaterialsSectionField     `json:"fields"`
+	Attachments []MaterialsAttachmentReveal `json:"attachments,omitempty"`
+}
+
+// MaterialsRevealAllModel 完整资料（全部明细分组）
+type MaterialsRevealAllModel struct {
+	OpcId    uint64                        `json:"opcId"`
+	Sections []MaterialsRevealSectionModel `json:"sections"`
+}
+
+// MaterialsAttachmentReveal 完整资料附件项
+type MaterialsAttachmentReveal struct {
+	Label     string `json:"label"`
+	FileId    uint64 `json:"fileId"`
+	FileName  string `json:"fileName"`
+	MimeType  string `json:"mimeType"`
+	AccessUrl string `json:"accessUrl"`
+}
+
+// MaterialsRevealModel 完整资料（明文）
+type MaterialsRevealModel struct {
+	Key         string                      `json:"key"`
+	Fields      []MaterialsSectionField     `json:"fields"`
+	Attachments []MaterialsAttachmentReveal `json:"attachments,omitempty"`
 }
 
 // BankReceiptInp 开户回执提交入参

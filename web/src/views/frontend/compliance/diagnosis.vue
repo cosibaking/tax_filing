@@ -72,6 +72,15 @@
             </span>
           </div>
         </div>
+        <div class="mt-4 flex justify-end">
+          <RouterLink
+            :to="`/diagnosis/result?id=${item.id}`"
+            class="text-sm font-bold text-clay-accent hover:underline flex items-center gap-1"
+          >
+            查看详情
+            <ArtSvgIcon icon="ri:arrow-right-s-line" />
+          </RouterLink>
+        </div>
       </div>
 
       <div v-if="total > pageSize" class="pt-4 flex justify-center">
@@ -92,6 +101,7 @@
 <script setup lang="ts">
 import { getDiagnosisHistory, type DiagnosisHistoryItem } from '@/api/frontend/compliance/member'
 import type { RecommendedPlan } from '@/api/frontend/compliance/diagnosis'
+import { syncGuestDiagnosisAfterLogin } from '@/utils/compliance/syncGuestDiagnosis'
 
 defineOptions({ name: 'ComplianceDiagnosisHistory' })
 
@@ -146,7 +156,10 @@ function loadMore() {
   loadHistory(page.value + 1)
 }
 
-onMounted(() => loadHistory(1))
+onMounted(async () => {
+  await syncGuestDiagnosisAfterLogin()
+  loadHistory(1)
+})
 </script>
 
 <style lang="scss" scoped>

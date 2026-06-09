@@ -23,6 +23,12 @@ import { $t } from '@/locales'
 import { BaseResponse } from '@/types'
 import { router } from '@/router'
 import { ADMIN_LOGIN_PATH } from '@/router/routesAlias'
+import {
+  ensureRequestAuthorized,
+  LOGIN_REQUIRED_MESSAGE,
+  promptLoginAndRedirect,
+  showLoginRequiredMessage
+} from '@/utils/auth/requireLogin'
 
 /** 请求配置常量 */
 const REQUEST_TIMEOUT = 15000 // 临时改成1ms复现context canceled，测完改回15000
@@ -82,9 +88,20 @@ axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const url = request.url || ''
 
+    if (!ensureRequestAuthorized(url)) {
+      return Promise.reject(createHttpError(LOGIN_REQUIRED_MESSAGE, ApiStatus.unauthorized))
+    }
+
     // 根据请求 URL 区分 Token
     if (isMemberRequest(url)) {
       // 会员接口：使用 Xy-User-Token
+      const memberStore = useMemberStore()
+      const memberToken = memberStore.getToken()
+      if (memberToken) {
+        request.headers.set('Xy-User-Token', memberToken)
+      }
+    } else if (url.startsWith('/site/')) {
+      // 站点公开接口：已登录会员也附带 Token，便于关联 member_id
       const memberStore = useMemberStore()
       const memberToken = memberStore.getToken()
       if (memberToken) {
@@ -280,22 +297,24 @@ async function tryMemberRefresh(config: any): Promise<AxiosResponse | null> {
 }
 
 /** 处理401错误（带防抖） */
-function handleUnauthorizedError(message?: string, isMember: boolean = false): never {
-  const error = createHttpError(message || $t('httpMsg.unauthorized'), ApiStatus.unauthorized)
+function handleUnauthorizedError(_message?: string, isMember: boolean = false): never {
+  const error = createHttpError(LOGIN_REQUIRED_MESSAGE, ApiStatus.unauthorized)
 
   if (!isUnauthorizedErrorShown) {
     isUnauthorizedErrorShown = true
 
+    showLoginRequiredMessage()
+
     // 根据请求类型决定登出哪个账户
     if (isMember) {
-      logOutMember()
+      useMemberStore().logOut({ redirect: false })
+      promptLoginAndRedirect({ context: 'member', showMessage: false })
     } else {
-      logOut()
+      useUserStore().logOut({ redirect: false })
+      promptLoginAndRedirect({ context: 'admin', showMessage: false })
     }
 
     unauthorizedTimer = setTimeout(resetUnauthorizedError, UNAUTHORIZED_DEBOUNCE_TIME)
-
-    showError(error, true)
     throw error
   }
 

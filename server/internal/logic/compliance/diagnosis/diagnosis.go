@@ -22,45 +22,41 @@ func New() *sComplianceDiagnosis {
 	return &sComplianceDiagnosis{}
 }
 
+// Preview 计算诊断结果但不落库（访客模式）
+func (s *sComplianceDiagnosis) Preview(ctx context.Context, in *compliancein.DiagnosisSubmitInp) (*compliancein.DiagnosisSubmitModel, error) {
+	prepared, err := s.prepareDiagnosis(in)
+	if err != nil {
+		return nil, err
+	}
+	return &compliancein.DiagnosisSubmitModel{
+		Id:              0,
+		RecommendedPlan: prepared.recommendedPlan,
+		TaxComparison:   prepared.comparison,
+		Reasons:         prepared.reasons,
+		AssumptionHints: prepared.hints,
+	}, nil
+}
+
 // Submit 提交合规诊断问卷并保存
 func (s *sComplianceDiagnosis) Submit(ctx context.Context, in *compliancein.DiagnosisSubmitInp) (*compliancein.DiagnosisSubmitModel, error) {
-	annualIncome := AnnualIncomeFromRange(in.MonthlyIncomeRange)
-	if annualIncome <= 0 {
-		return nil, gerror.New("无效的月收入区间")
-	}
-
-	annualCost := in.AnnualCostEstimate
-	if annualCost < 0 {
-		annualCost = 0
-	}
-	if annualCost > annualIncome {
-		annualCost = annualIncome
-	}
-
-	comparison, recommendedPlan, reasons := CompareTaxSchemes(annualIncome, annualCost, in.TaxBureauContact)
-
-	platformsJson, err := gjson.Encode(in.Platforms)
+	prepared, err := s.prepareDiagnosis(in)
 	if err != nil {
-		return nil, gerror.Wrap(err, "平台数据编码失败")
-	}
-	comparisonJson, err := gjson.Encode(comparison)
-	if err != nil {
-		return nil, gerror.Wrap(err, "税负对比数据编码失败")
+		return nil, err
 	}
 
 	now := time.Now().Unix()
 	data := g.Map{
-		"platforms":             string(platformsJson),
-		"monthly_income_range":  in.MonthlyIncomeRange,
-		"annual_cost_estimate":  annualCost,
-		"existing_entity":       in.ExistingEntity,
-		"has_filed_tax":         in.HasFiledTax,
-		"tax_bureau_contact":    boolToInt(in.TaxBureauContact),
-		"recommended_plan":      recommendedPlan,
-		"tax_comparison":        string(comparisonJson),
-		"deleted":               0,
-		"create_time":           now,
-		"update_time":           now,
+		"platforms":            prepared.platformsJson,
+		"monthly_income_range": in.MonthlyIncomeRange,
+		"annual_cost_estimate": prepared.annualCost,
+		"existing_entity":      in.ExistingEntity,
+		"has_filed_tax":        in.HasFiledTax,
+		"tax_bureau_contact":   boolToInt(in.TaxBureauContact),
+		"recommended_plan":     prepared.recommendedPlan,
+		"tax_comparison":       prepared.comparisonJson,
+		"deleted":              0,
+		"create_time":          now,
+		"update_time":          now,
 	}
 	if in.MemberId > 0 {
 		data["member_id"] = in.MemberId
@@ -88,7 +84,158 @@ func (s *sComplianceDiagnosis) Submit(ctx context.Context, in *compliancein.Diag
 
 	return &compliancein.DiagnosisSubmitModel{
 		Id:              uint64(id),
-		RecommendedPlan: recommendedPlan,
+		RecommendedPlan: prepared.recommendedPlan,
+		TaxComparison:   prepared.comparison,
+		Reasons:         prepared.reasons,
+		AssumptionHints: prepared.hints,
+	}, nil
+}
+
+type preparedDiagnosis struct {
+	comparison      compliancein.TaxComparison
+	recommendedPlan string
+	reasons         []string
+	hints           []string
+	platformsJson   string
+	comparisonJson  string
+	annualCost      float64
+}
+
+func (s *sComplianceDiagnosis) prepareDiagnosis(in *compliancein.DiagnosisSubmitInp) (*preparedDiagnosis, error) {
+	annualIncome := AnnualIncomeFromRange(in.MonthlyIncomeRange)
+	if annualIncome <= 0 {
+		return nil, gerror.New("无效的月收入区间")
+	}
+
+	annualCost := in.AnnualCostEstimate
+	if annualCost < 0 {
+		annualCost = 0
+	}
+	if annualCost > annualIncome {
+		annualCost = annualIncome
+	}
+
+	comparison, recommendedPlan, reasons := CompareTaxSchemes(annualIncome, annualCost, in.TaxBureauContact)
+
+	platformsJson, err := gjson.Encode(in.Platforms)
+	if err != nil {
+		return nil, gerror.Wrap(err, "平台数据编码失败")
+	}
+	comparisonJson, err := gjson.Encode(comparison)
+	if err != nil {
+		return nil, gerror.Wrap(err, "税负对比数据编码失败")
+	}
+
+	return &preparedDiagnosis{
+		comparison:      comparison,
+		recommendedPlan: recommendedPlan,
+		reasons:         reasons,
+		hints:           BuildAssumptionHints(annualIncome, annualCost),
+		platformsJson:   string(platformsJson),
+		comparisonJson:  string(comparisonJson),
+		annualCost:      annualCost,
+	}, nil
+}
+
+// SyncGuest 登录后将访客缓存的诊断批量写入数据库
+func (s *sComplianceDiagnosis) SyncGuest(ctx context.Context, in *compliancein.DiagnosisSyncInp) (*compliancein.DiagnosisSyncModel, error) {
+	if in.MemberId == 0 {
+		return nil, gerror.New("会员ID无效")
+	}
+	if len(in.Items) == 0 {
+		return &compliancein.DiagnosisSyncModel{SavedIds: []uint64{}, Count: 0}, nil
+	}
+
+	savedIds := make([]uint64, 0, len(in.Items))
+	for i := range in.Items {
+		item := in.Items[i]
+		item.MemberId = in.MemberId
+		out, err := s.Submit(ctx, &item)
+		if err != nil {
+			return nil, gerror.Wrapf(err, "同步第 %d 条诊断失败", i+1)
+		}
+		savedIds = append(savedIds, out.Id)
+	}
+
+	return &compliancein.DiagnosisSyncModel{
+		SavedIds: savedIds,
+		Count:    len(savedIds),
+	}, nil
+}
+
+// BindToMember 将匿名诊断记录绑定到当前会员
+func (s *sComplianceDiagnosis) BindToMember(ctx context.Context, in *compliancein.DiagnosisBindInp) (*compliancein.DiagnosisBindModel, error) {
+	if in.MemberId == 0 {
+		return nil, gerror.New("会员ID无效")
+	}
+	if len(in.DiagnosisIds) == 0 {
+		return &compliancein.DiagnosisBindModel{BoundCount: 0}, nil
+	}
+
+	now := time.Now().Unix()
+	result, err := g.DB().Model(tableDiagnosis).Ctx(ctx).
+		WhereIn("id", in.DiagnosisIds).
+		Where("member_id", 0).
+		Where("deleted", 0).
+		Data(g.Map{
+			"member_id":   in.MemberId,
+			"update_time": now,
+		}).Update()
+	if err != nil {
+		return nil, gerror.Wrap(err, "绑定诊断记录失败")
+	}
+
+	affected, _ := result.RowsAffected()
+	return &compliancein.DiagnosisBindModel{BoundCount: int(affected)}, nil
+}
+
+// GetDetail 获取会员诊断详情
+func (s *sComplianceDiagnosis) GetDetail(ctx context.Context, in *compliancein.DiagnosisDetailInp) (*compliancein.DiagnosisDetailModel, error) {
+	if in.MemberId == 0 || in.DiagnosisId == 0 {
+		return nil, gerror.New("参数无效")
+	}
+
+	var row struct {
+		MemberId        uint64 `json:"member_id"`
+		RecommendedPlan string `json:"recommended_plan"`
+		TaxComparison   string `json:"tax_comparison"`
+		TaxBureauContact int   `json:"tax_bureau_contact"`
+		MonthlyIncomeRange string `json:"monthly_income_range"`
+		AnnualCostEstimate float64 `json:"annual_cost_estimate"`
+	}
+
+	err := g.DB().Model(tableDiagnosis).Ctx(ctx).
+		Where("id", in.DiagnosisId).
+		Where("deleted", 0).
+		Scan(&row)
+	if err != nil {
+		return nil, gerror.Wrap(err, "查询诊断详情失败")
+	}
+	if row.RecommendedPlan == "" {
+		return nil, gerror.New("诊断记录不存在")
+	}
+	if row.MemberId != in.MemberId {
+		return nil, gerror.New("无权查看该诊断记录")
+	}
+
+	var comparison compliancein.TaxComparison
+	if row.TaxComparison != "" {
+		_ = gjson.DecodeTo(row.TaxComparison, &comparison)
+	}
+
+	annualIncome := comparison.AnnualIncome
+	if annualIncome <= 0 {
+		annualIncome = AnnualIncomeFromRange(row.MonthlyIncomeRange)
+	}
+	annualCost := comparison.AnnualCost
+	if annualCost <= 0 {
+		annualCost = row.AnnualCostEstimate
+	}
+	_, _, reasons := CompareTaxSchemes(annualIncome, annualCost, row.TaxBureauContact == 1)
+
+	return &compliancein.DiagnosisDetailModel{
+		Id:              in.DiagnosisId,
+		RecommendedPlan: row.RecommendedPlan,
 		TaxComparison:   comparison,
 		Reasons:         reasons,
 		AssumptionHints: BuildAssumptionHints(annualIncome, annualCost),

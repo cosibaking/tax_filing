@@ -32,7 +32,8 @@ import {
   FILING_TAX_TYPE_LABELS,
   FILING_STATUS_LABELS,
   type FilingTaskItem,
-  type FilingStatus
+  type FilingStatus,
+  type FilingTaxType
 } from '@/api/backend/compliance'
 import FilingSearch from './modules/filing-search.vue'
 import MarkFiledDialog from './modules/mark-filed-dialog.vue'
@@ -47,9 +48,9 @@ const currentTask = ref<FilingTaskItem | null>(null)
 
 const searchForm = ref({
   q: undefined as string | undefined,
-  taxType: undefined as string | undefined,
+  taxType: undefined as FilingTaxType | '' | undefined,
   period: undefined as string | undefined,
-  status: undefined as string | undefined
+  status: undefined as FilingStatus | '' | undefined
 })
 
 const statusTagType = (status: FilingStatus) => {

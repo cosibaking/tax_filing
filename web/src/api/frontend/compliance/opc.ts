@@ -38,6 +38,79 @@ export interface OpcProgressResult {
   rejectNote?: string | null
   materialsEditable?: boolean
   materialsReadonly?: Record<string, unknown> | null
+  materialsSubmitted?: boolean
+  planTier?: string
+  planName?: string
+  planAmount?: number
+  signedAt?: string
+}
+
+/** 资料实体卡片 */
+export interface MaterialsEntityOverview {
+  opcId: number | string
+  companyNameMasked: string
+  legalPersonSummary: string
+  status: 'pending' | 'reviewing' | 'approved' | 'rejected'
+  statusLabel: string
+}
+
+/** 资料详情分组 */
+export interface MaterialsDetailSection {
+  key: string
+  title: string
+  fields: MaterialsSectionField[]
+}
+
+/** 单个 OPC 实体完整资料（脱敏） */
+export interface MaterialsEntityDetail {
+  opcId: number | string
+  status: string
+  statusLabel: string
+  sections: MaterialsDetailSection[]
+}
+
+/** 完整资料分组（明文） */
+export interface MaterialsRevealSection {
+  key: string
+  title: string
+  fields: MaterialsSectionField[]
+  attachments?: MaterialsAttachmentReveal[]
+}
+
+/** 全部完整资料 */
+export interface MaterialsRevealAllResult {
+  opcId: number | string
+  sections: MaterialsRevealSection[]
+}
+
+/** 资料字段 */
+export interface MaterialsSectionField {
+  label: string
+  value: string
+}
+
+/** 完整资料附件项 */
+export interface MaterialsAttachmentReveal {
+  label: string
+  fileId: number | string
+  fileName: string
+  mimeType: string
+  accessUrl: string
+}
+
+/** 资料分组详情 */
+export interface MaterialsSectionDetail {
+  key: string
+  title: string
+  status: string
+  statusLabel: string
+  fields: MaterialsSectionField[]
+}
+
+export const PLAN_TIER_LABELS: Record<string, string> = {
+  basic: '基础套餐',
+  advanced: '进阶套餐',
+  premium: '尊享套餐'
 }
 
 /** 注册资料提交参数 */
@@ -75,7 +148,7 @@ export interface OpcMaterialsParams {
 /** 银行回执提交 */
 export interface OpcBankReceiptParams {
   bankName?: string
-  bankReceiptFileId: string
+  bankReceiptFileId: number | string
 }
 
 /** OPC 主体信息 */
@@ -91,6 +164,49 @@ export interface OpcEntityInfo {
 export function getOpcProgress() {
   return memberRequest.get<OpcProgressResult>({
     url: '/compliance/opc/progress'
+  })
+}
+
+/** 获取已提交资料概览（按 OPC 实体） */
+export function getMaterialsOverview() {
+  return memberRequest.get<{ entities: MaterialsEntityOverview[] }>({
+    url: '/compliance/opc/materials/overview'
+  })
+}
+
+/** 获取单个 OPC 实体完整资料（脱敏） */
+export function getMaterialsDetail(opcId: number | string) {
+  return memberRequest.get<MaterialsEntityDetail>({
+    url: '/compliance/opc/materials/detail',
+    params: { opcId }
+  })
+}
+
+/** 获取资料分组详情（脱敏） */
+export function getMaterialsSection(section: string, opcId?: number | string) {
+  return memberRequest.get<MaterialsSectionDetail>({
+    url: '/compliance/opc/materials/section',
+    params: { section, opcId }
+  })
+}
+
+/** 密码验证后查看完整资料（单分组） */
+export function revealMaterialsSection(section: string, password: string, opcId: number | string) {
+  return memberRequest.post<{
+    key: string
+    fields: MaterialsSectionField[]
+    attachments?: MaterialsAttachmentReveal[]
+  }>({
+    url: '/compliance/opc/materials/reveal',
+    data: { section, password, opcId }
+  })
+}
+
+/** 密码验证后查看全部完整资料 */
+export function revealMaterialsAll(password: string, opcId: number | string) {
+  return memberRequest.post<MaterialsRevealAllResult>({
+    url: '/compliance/opc/materials/reveal-all',
+    data: { password, opcId }
   })
 }
 
@@ -202,6 +318,7 @@ export function submitBankReceipt(data: OpcBankReceiptParams) {
 
 /** 状态中文映射 */
 export const OPC_STATUS_LABELS: Record<OpcStatus, string> = {
+  unsigned: '未签约',
   pending: '待提交资料',
   materials: '资料待补正',
   materials_review: '资料审核中',

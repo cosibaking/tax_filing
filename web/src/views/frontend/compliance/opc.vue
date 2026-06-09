@@ -4,6 +4,25 @@
 <template>
   <main class="pt-8 pb-16 px-6">
     <div class="max-w-3xl mx-auto space-y-8">
+      <!-- Signed plan -->
+      <div
+        v-if="signedPlanLabel"
+        class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-6 md:p-8"
+      >
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p class="text-xs font-black text-clay-muted uppercase tracking-widest mb-2">当前签约套餐</p>
+            <h2 class="font-heading font-black text-2xl text-clay-foreground">{{ signedPlanLabel }}</h2>
+            <p v-if="progress?.signedAt" class="text-sm text-clay-muted font-medium mt-1">
+              签约时间：{{ progress.signedAt }}
+            </p>
+          </div>
+          <div v-if="progress?.planAmount" class="px-5 py-3 rounded-2xl bg-blue-50 text-clay-accent font-black text-lg">
+            ¥{{ progress.planAmount.toFixed(2) }}/月
+          </div>
+        </div>
+      </div>
+
       <!-- Header -->
       <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
@@ -200,10 +219,138 @@
       </div>
 
       <!-- Readonly materials -->
-      <div v-else-if="progress?.materialsReadonly" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
-        <h2 class="font-heading font-black text-xl text-clay-foreground mb-4">已提交资料</h2>
-        <p class="text-sm text-clay-muted font-medium">资料审核中或已进入后续流程，如需修改请等待顾问联系。</p>
+      <div v-else-if="showMaterialsOverview" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
+        <h2 class="font-heading font-black text-xl text-clay-foreground mb-2">已提交资料</h2>
+        <p class="text-sm text-clay-muted font-medium mb-6">以下为已提交申请资料的脱敏概览，点击可查看详情。</p>
+
+        <div v-if="materialsLoading" class="text-center py-6">
+          <ArtSvgIcon icon="ri:loader-4-line" class="text-2xl text-clay-accent animate-spin mx-auto" />
+        </div>
+        <div v-else-if="materialsEntities.length === 0" class="text-sm text-clay-muted font-medium">
+          资料审核中或已进入后续流程，如需修改请等待顾问联系。
+        </div>
+        <ul v-else class="space-y-3">
+          <li
+            v-for="entity in materialsEntities"
+            :key="entity.opcId"
+            class="flex items-center gap-4 p-4 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed cursor-pointer hover:shadow-clay-card transition-all"
+            @click="openMaterialsDetail(entity.opcId)"
+          >
+            <div class="w-10 h-10 rounded-xl bg-white shadow-clay-btn flex items-center justify-center shrink-0">
+              <ArtSvgIcon icon="ri:building-2-line" class="text-clay-accent text-lg" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-heading font-black text-clay-foreground">{{ entity.companyNameMasked }}</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="materialsStatusClass(entity.status)">
+                  {{ entity.statusLabel }}
+                </span>
+              </div>
+              <p class="text-sm text-clay-muted font-medium truncate">{{ entity.legalPersonSummary }}</p>
+            </div>
+            <ArtSvgIcon icon="ri:arrow-right-s-line" class="text-clay-muted shrink-0" />
+          </li>
+        </ul>
       </div>
+
+      <!-- Materials detail dialog -->
+      <ElDialog
+        v-model="detailVisible"
+        title="已提交资料详情"
+        width="560px"
+        class="clay-dialog"
+        destroy-on-close
+        @closed="resetDetailState"
+      >
+        <div v-if="detailLoading" class="text-center py-8">
+          <ArtSvgIcon icon="ri:loader-4-line" class="text-2xl text-clay-accent animate-spin mx-auto" />
+        </div>
+        <template v-else-if="detailData">
+          <div class="mb-4">
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" :class="materialsStatusClass(detailData.status)">
+              {{ detailData.statusLabel }}
+            </span>
+          </div>
+
+          <div v-for="section in displaySections" :key="section.key" class="mb-6 last:mb-0">
+            <h3 class="text-sm font-black text-clay-foreground mb-3">{{ section.title }}</h3>
+            <dl v-if="sectionDisplayFields(section).length" class="space-y-3">
+              <div v-for="field in sectionDisplayFields(section)" :key="field.label" class="grid grid-cols-3 gap-3 text-sm">
+                <dt class="text-clay-muted font-bold">{{ field.label }}</dt>
+                <dd class="col-span-2 text-clay-foreground font-medium break-all">{{ field.value || '—' }}</dd>
+              </div>
+            </dl>
+            <div v-if="sectionDisplayAttachments(section).length" class="space-y-4 mt-3">
+              <div v-for="item in sectionDisplayAttachments(section)" :key="item.fileId" class="rounded-2xl bg-[#f0f3f8] p-4 shadow-clay-pressed">
+                <p class="text-sm font-black text-clay-foreground mb-3">{{ item.label }}</p>
+                <img
+                  v-if="isImageMime(item.mimeType)"
+                  :src="item.accessUrl"
+                  :alt="item.fileName"
+                  class="w-full max-h-72 object-contain rounded-xl bg-white"
+                  referrerpolicy="same-origin"
+                />
+                <a
+                  v-else
+                  :href="item.accessUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 text-sm font-bold text-clay-accent hover:underline"
+                >
+                  <ArtSvgIcon icon="ri:file-pdf-line" />
+                  查看 {{ item.fileName || '附件' }}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <button
+            v-if="!revealed"
+            type="button"
+            class="mt-6 w-full h-11 rounded-2xl border-2 border-clay-accent text-clay-accent font-black hover:bg-blue-50 transition-all"
+            @click="passwordVisible = true"
+          >
+            查看完整信息
+          </button>
+          <p v-else class="mt-4 text-xs text-clay-muted font-medium">已展示完整信息，关闭弹窗后将恢复脱敏显示。</p>
+        </template>
+      </ElDialog>
+
+      <!-- Password verify dialog -->
+      <ElDialog
+        v-model="passwordVisible"
+        title="验证身份"
+        width="400px"
+        destroy-on-close
+        @closed="passwordInput = ''"
+      >
+        <p class="text-sm text-clay-muted font-medium mb-4">请输入登录密码以查看完整资料信息</p>
+        <ElInput
+          v-model="passwordInput"
+          type="password"
+          placeholder="请输入密码"
+          size="large"
+          show-password
+          @keyup.enter="handleReveal"
+        />
+        <template #footer>
+          <button
+            type="button"
+            class="px-6 py-2 rounded-xl text-clay-muted font-bold hover:bg-gray-100"
+            @click="passwordVisible = false"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            class="px-6 py-2 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black disabled:opacity-50"
+            :disabled="revealSubmitting || !passwordInput"
+            @click="handleReveal"
+          >
+            {{ revealSubmitting ? '验证中...' : '确认' }}
+          </button>
+        </template>
+      </ElDialog>
 
       <!-- Bank section -->
       <div v-if="showBankSection" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
@@ -253,9 +400,19 @@ import ChinaRegionSelect from '@/components/frontend/ChinaRegionSelect.vue'
 import MemberFileUpload from '@/components/frontend/MemberFileUpload.vue'
 import {
   getOpcProgress,
+  getMaterialsOverview,
+  getMaterialsDetail,
+  revealMaterialsAll,
   submitOpcMaterials,
   submitBankReceipt,
   RECOMMENDED_BUSINESS_SCOPE,
+  PLAN_TIER_LABELS,
+  type MaterialsEntityOverview,
+  type MaterialsEntityDetail,
+  type MaterialsDetailSection,
+  type MaterialsSectionField,
+  type MaterialsAttachmentReveal,
+  type MaterialsRevealSection,
   type OpcProgressResult,
   type OpcProgressStep,
   type OpcStepStatus
@@ -267,11 +424,11 @@ import {
 } from '@/config/complianceVerify'
 import { validateChineseIDCard, validateEmail, validatePhone } from '@/utils/form/validator'
 import { useMemberStore } from '@/store/modules/member'
+import { requireLogin } from '@/utils/auth/requireLogin'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 
 defineOptions({ name: 'ComplianceOpc' })
 
-const router = useRouter()
 const memberStore = useMemberStore()
 const verifyMock = isComplianceVerifyMock()
 
@@ -280,6 +437,18 @@ const submitting = ref(false)
 const bankSubmitting = ref(false)
 const progress = ref<OpcProgressResult | null>(null)
 const formRef = ref<FormInstance>()
+
+const materialsLoading = ref(false)
+const materialsEntities = ref<MaterialsEntityOverview[]>([])
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const detailData = ref<MaterialsEntityDetail | null>(null)
+const activeOpcId = ref<number | string>(0)
+const revealed = ref(false)
+const revealedSections = ref<MaterialsRevealSection[]>([])
+const passwordVisible = ref(false)
+const passwordInput = ref('')
+const revealSubmitting = ref(false)
 
 const DEFAULT_STEPS: OpcProgressStep[] = [
   { key: 'materials', label: '资料提交', status: 'current' },
@@ -298,6 +467,38 @@ const showMaterialsForm = computed(() =>
 const showBankSection = computed(() =>
   ['tax', 'bank', 'active'].includes(progress.value?.opcStatus ?? '')
 )
+
+const signedPlanLabel = computed(() => {
+  if (!progress.value?.planName && !progress.value?.planTier) return ''
+  return progress.value.planName
+    || PLAN_TIER_LABELS[progress.value.planTier ?? '']
+    || progress.value.planTier
+    || ''
+})
+
+const showMaterialsOverview = computed(() =>
+  !showMaterialsForm.value && !!progress.value?.materialsSubmitted
+)
+
+const displaySections = computed(() => {
+  if (revealed.value) {
+    return revealedSections.value
+  }
+  return detailData.value?.sections ?? []
+})
+
+function sectionDisplayFields(section: MaterialsDetailSection | MaterialsRevealSection): MaterialsSectionField[] {
+  return section.fields ?? []
+}
+
+function sectionDisplayAttachments(section: MaterialsDetailSection | MaterialsRevealSection): MaterialsAttachmentReveal[] {
+  if (!revealed.value) return []
+  return (section as MaterialsRevealSection).attachments ?? []
+}
+
+function isImageMime(mime?: string) {
+  return !!mime && mime.startsWith('image/')
+}
 
 const formData = reactive({
   proposedNames: [''],
@@ -437,6 +638,73 @@ function applyRecommendedScope() {
   formData.businessScope = RECOMMENDED_BUSINESS_SCOPE
 }
 
+function materialsStatusClass(status: string) {
+  const map: Record<string, string> = {
+    approved: 'bg-green-100 text-green-700',
+    reviewing: 'bg-blue-100 text-clay-accent',
+    rejected: 'bg-orange-100 text-orange-700',
+    pending: 'bg-gray-100 text-clay-muted'
+  }
+  return map[status] ?? 'bg-gray-100 text-clay-muted'
+}
+
+async function loadMaterialsOverview() {
+  if (!showMaterialsOverview.value) {
+    materialsEntities.value = []
+    return
+  }
+  materialsLoading.value = true
+  try {
+    const res = await getMaterialsOverview()
+    materialsEntities.value = res.entities ?? []
+  } catch {
+    materialsEntities.value = []
+  } finally {
+    materialsLoading.value = false
+  }
+}
+
+async function openMaterialsDetail(opcId: number | string) {
+  activeOpcId.value = opcId
+  detailVisible.value = true
+  detailLoading.value = true
+  revealed.value = false
+  revealedSections.value = []
+  try {
+    detailData.value = await getMaterialsDetail(opcId)
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : '加载资料详情失败'
+    ElMessage.error(msg)
+    detailVisible.value = false
+  } finally {
+    detailLoading.value = false
+  }
+}
+
+function resetDetailState() {
+  detailData.value = null
+  activeOpcId.value = 0
+  revealed.value = false
+  revealedSections.value = []
+}
+
+async function handleReveal() {
+  if (!passwordInput.value || !activeOpcId.value) return
+  revealSubmitting.value = true
+  try {
+    const res = await revealMaterialsAll(passwordInput.value, activeOpcId.value)
+    revealedSections.value = res.sections ?? []
+    revealed.value = true
+    passwordVisible.value = false
+    ElMessage.success('验证成功')
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : '密码验证失败'
+    ElMessage.error(msg)
+  } finally {
+    revealSubmitting.value = false
+  }
+}
+
 async function loadProgress() {
   loading.value = true
   try {
@@ -451,6 +719,7 @@ async function loadProgress() {
     }
   } finally {
     loading.value = false
+    await loadMaterialsOverview()
   }
 }
 
@@ -496,10 +765,7 @@ async function handleSubmitBankReceipt() {
 }
 
 onMounted(() => {
-  if (!memberStore.isLogin) {
-    router.replace({ path: '/user/login', query: { redirect: '/user/compliance/opc' } })
-    return
-  }
+  if (!requireLogin({ redirect: '/user/compliance/opc' })) return
   loadProgress()
 })
 </script>
@@ -509,7 +775,15 @@ onMounted(() => {
 .text-clay-muted { color: #8898aa; }
 .text-clay-accent { color: #5a8dee; }
 .text-clay-success { color: #71dd37; }
+.border-clay-accent { border-color: #5a8dee; }
 .bg-clay-accent { background-color: #5a8dee; }
+.shadow-clay-pressed {
+  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
+}
+.shadow-clay-card {
+  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
+    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
+}
 .font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
 
 .shadow-clay-deep {

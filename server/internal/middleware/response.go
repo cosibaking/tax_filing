@@ -76,7 +76,7 @@ func ResponseHandler(r *ghttp.Request) {
 
 	resp := JsonResponse{
 		Code:    code,
-		Message: gerror.Current(err).Error(),
+		Message: consts.ApiErrorMessage(r.Context(), err),
 		TraceID: traceID,
 	}
 

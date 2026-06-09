@@ -50,3 +50,21 @@ func MaskIDCard(idCard string) string {
 	}
 	return idCard[:3] + strings.Repeat("*", len(idCard)-7) + idCard[len(idCard)-4:]
 }
+
+// MaskAddress 地址脱敏：按 Unicode 字符保留首尾，中间用 * 代替
+func MaskAddress(addr string) string {
+	addr = strings.TrimSpace(addr)
+	runes := []rune(addr)
+	n := len(runes)
+	if n == 0 {
+		return addr
+	}
+	if n == 1 {
+		return addr
+	}
+	if n <= 4 {
+		return string(runes[0]) + strings.Repeat("*", n-2) + string(runes[n-1])
+	}
+	const head, tail = 2, 2
+	return string(runes[:head]) + strings.Repeat("*", n-head-tail) + string(runes[n-tail:])
+}

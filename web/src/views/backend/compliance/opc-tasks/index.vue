@@ -68,6 +68,8 @@ import {
 
 } from '@/api/backend/compliance'
 
+import type { OpcStatus } from '@/api/frontend/compliance/opc'
+
 import OpcTaskSearch from './modules/opc-task-search.vue'
 
 import OpcTaskDetailDialog from './modules/opc-task-detail-dialog.vue'
@@ -96,7 +98,7 @@ const searchForm = ref({
 
   q: undefined as string | undefined,
 
-  status: undefined as string | undefined
+  status: undefined as OpcStatus | '' | undefined
 
 })
 

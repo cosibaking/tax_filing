@@ -113,10 +113,19 @@ const userInfo = computed(() => memberStore.getMemberInfo)
 
 const planState = ref<CompliancePlanState>({ hasActiveOrder: false, opcStatus: 'none' })
 
+async function loadPlanState() {
+  if (!memberStore.getIsLogin) return
+  try { planState.value = await getCompliancePlanState() } catch { /* ignore */ }
+}
+
 onMounted(async () => {
   if (!memberStore.getIsLogin) return
   try { await memberMenuStore.fetchMenus() } catch { /* ignore */ }
-  try { planState.value = await getCompliancePlanState() } catch { /* ignore */ }
+  await loadPlanState()
+})
+
+watch(() => route.path, () => {
+  loadPlanState()
 })
 
 interface AccountMenuGroup {

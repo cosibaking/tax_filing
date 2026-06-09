@@ -211,6 +211,7 @@
 
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus'
+import type { HistoryState } from 'vue-router'
 import {
   submitDiagnosis,
   cacheDiagnosisResult,
@@ -219,10 +220,16 @@ import {
   type ExistingEntity,
   type HasFiledTax
 } from '@/api/frontend/compliance/diagnosis'
+import { useMemberStore } from '@/store/modules/member'
+import {
+  generateGuestDiagnosisId,
+  saveGuestDiagnosis
+} from '@/utils/compliance/guestDiagnosisCache'
 
 defineOptions({ name: 'ComplianceDiagnosis' })
 
 const router = useRouter()
+const memberStore = useMemberStore()
 const formRef = ref<FormInstance>()
 
 const stepLabels = ['平台收入', '现有主体', '风险信号', '成本细项']
@@ -248,7 +255,9 @@ const taxFiledOptions: { label: string; value: HasFiledTax }[] = [
   { label: '否，存在漏报', value: 'no' },
   { label: '不确定', value: 'unsure' }
 ]
-const costItems = [
+type CostBreakdownKey = 'device' | 'marketing' | 'venue' | 'other'
+
+const costItems: { key: CostBreakdownKey; label: string; placeholder: string }[] = [
   { key: 'device', label: '设备/器材', placeholder: '如相机、电脑等' },
   { key: 'marketing', label: '投流/推广', placeholder: '年度投流费用' },
   { key: 'venue', label: '场地/租赁', placeholder: '工作室、场地租金' },
@@ -314,9 +323,10 @@ function prevStep() {
 
 function buildPayload(): DiagnosisSubmitParams {
   const breakdown = Object.fromEntries(
-    Object.entries(formData.costBreakdown).filter(([, v]) => v != null && v > 0)
-  )
-  const breakdownSum = Object.values(breakdown).reduce((s, v) => s + Number(v), 0)
+    (Object.entries(formData.costBreakdown) as [CostBreakdownKey, number | undefined][])
+      .filter(([, v]) => v != null && v > 0)
+  ) as Record<string, number>
+  const breakdownSum = Object.values(breakdown).reduce((sum, v) => sum + v, 0)
   const annualCost = formData.annualCostEstimate || breakdownSum || undefined
 
   return {
@@ -343,12 +353,29 @@ async function handleSubmit() {
   submitting.value = true
   apiError.value = ''
   try {
-    const result = await submitDiagnosis(buildPayload())
+    const payload = buildPayload()
+    const result = await submitDiagnosis(payload)
+    const isLoggedIn = memberStore.getIsLogin
+
+    let resultId: string | number = result.id
+    if (!isLoggedIn || !result.id) {
+      resultId = generateGuestDiagnosisId()
+      const guestResult = { ...result, id: resultId }
+      saveGuestDiagnosis(resultId, payload, guestResult)
+      cacheDiagnosisResult(resultId, guestResult)
+      router.push({
+        path: '/diagnosis/result',
+        query: { id: String(resultId) },
+        state: { diagnosisResult: guestResult } as unknown as HistoryState
+      })
+      return
+    }
+
     cacheDiagnosisResult(result.id, result)
     router.push({
       path: '/diagnosis/result',
       query: { id: String(result.id) },
-      state: { diagnosisResult: result }
+      state: { diagnosisResult: result } as unknown as HistoryState
     })
   } catch (e: unknown) {
     const msg = (e as { message?: string })?.message

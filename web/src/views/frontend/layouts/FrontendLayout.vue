@@ -286,6 +286,7 @@
 <script setup lang="ts">
 import type { MemberMenuItem } from '@/api/frontend/member/user'
 import { memberMenuHref as resolveMemberMenuHref } from '@/utils/member-nav'
+import { memberPathRequiresAuth, requireLogin } from '@/utils/auth/requireLogin'
 import { useMemberStore } from '@/store/modules/member'
 import { useMemberMenuStore } from '@/store/modules/memberMenu'
 import { useSiteStore } from '@/store/modules/site'
@@ -369,6 +370,9 @@ function handleNavTargetClick(c: NavTarget) {
   }
   if (c.isExternal) {
     window.open(c.url, '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (memberPathRequiresAuth(c.url) && !requireLogin({ redirect: c.url })) {
     return
   }
   router.push(c.url)

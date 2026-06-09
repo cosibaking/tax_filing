@@ -126,6 +126,7 @@ import { useMemberStore } from '@/store/modules/member'
 import { useMemberMenuStore } from '@/store/modules/memberMenu'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { memberRegister, getMemberInfo } from '@/api/frontend'
+import { syncGuestDiagnosisAfterLogin } from '@/utils/compliance/syncGuestDiagnosis'
 
 defineOptions({ name: 'UserRegister' })
 
@@ -216,6 +217,8 @@ const handleSubmit = async () => {
     const info = await getMemberInfo()
     memberStore.setMemberInfo(info)
     await memberMenuStore.fetchMenus()
+
+    await syncGuestDiagnosisAfterLogin()
 
     ElMessage.success('注册成功，已自动登录')
     const redirect = route.query.redirect as string

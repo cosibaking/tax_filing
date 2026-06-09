@@ -166,6 +166,7 @@ import {
 } from '@/api/frontend/compliance/order'
 import { getCompliancePlanState } from '@/api/frontend/compliance/member'
 import { useMemberStore } from '@/store/modules/member'
+import { requireLogin } from '@/utils/auth/requireLogin'
 import { ElMessage } from 'element-plus'
 
 const PENDING_ORDER_KEY = 'compliance_pending_order_id'
@@ -362,13 +363,7 @@ async function handleSign() {
 }
 
 onMounted(async () => {
-  if (!memberStore.isLogin) {
-    router.replace({
-      path: '/user/login',
-      query: { redirect: route.fullPath }
-    })
-    return
-  }
+  if (!requireLogin({ redirect: route.fullPath })) return
   restoreOrderId()
   await loadPlans()
 

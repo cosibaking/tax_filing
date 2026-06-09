@@ -62,6 +62,8 @@ type (
 		UpdateProfile(ctx context.Context, memberId uint64, in *memberin.UpdateProfileInput) (err error)
 		// ChangePassword 修改密码
 		ChangePassword(ctx context.Context, memberId uint64, in *memberin.ChangePasswordInput) (err error)
+		// VerifyPassword 验证会员登录密码
+		VerifyPassword(ctx context.Context, memberId uint64, password string) (err error)
 		// GetByUsername 根据用户名获取会员
 		GetByUsername(ctx context.Context, username string) (out *model.MemberUser, err error)
 		// GetMenusByGroupId 根据分组ID获取菜单列表（前台会员用）

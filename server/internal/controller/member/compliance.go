@@ -128,6 +128,142 @@ func (c *ControllerV1) ComplianceDiagnosisHistory(ctx context.Context, req *memb
 
 
 
+// ComplianceDiagnosisSync 登录后同步访客诊断缓存
+
+func (c *ControllerV1) ComplianceDiagnosisSync(ctx context.Context, req *member.ComplianceDiagnosisSyncReq) (res *member.ComplianceDiagnosisSyncRes, err error) {
+
+	memberId, err := requireMemberId(ctx)
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+
+
+	items := make([]compliancein.DiagnosisSubmitInp, 0, len(req.Items))
+
+	for _, item := range req.Items {
+
+		items = append(items, compliancein.DiagnosisSubmitInp{
+
+			Platforms:          item.Platforms,
+
+			MonthlyIncomeRange: item.MonthlyIncomeRange,
+
+			AnnualCostEstimate: item.AnnualCostEstimate,
+
+			ExistingEntity:     item.ExistingEntity,
+
+			HasFiledTax:        item.HasFiledTax,
+
+			TaxBureauContact:   item.TaxBureauContact,
+
+			Notes:              item.Notes,
+
+			CostBreakdown:      item.CostBreakdown,
+
+		})
+
+	}
+
+
+
+	out, err := service.ComplianceDiagnosis().SyncGuest(ctx, &compliancein.DiagnosisSyncInp{
+
+		MemberId: memberId,
+
+		Items:    items,
+
+	})
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+
+
+	return &member.ComplianceDiagnosisSyncRes{DiagnosisSyncModel: out}, nil
+
+}
+
+
+
+// ComplianceDiagnosisBind 绑定匿名诊断记录到当前会员
+
+func (c *ControllerV1) ComplianceDiagnosisBind(ctx context.Context, req *member.ComplianceDiagnosisBindReq) (res *member.ComplianceDiagnosisBindRes, err error) {
+
+	memberId, err := requireMemberId(ctx)
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+
+
+	out, err := service.ComplianceDiagnosis().BindToMember(ctx, &compliancein.DiagnosisBindInp{
+
+		MemberId:     memberId,
+
+		DiagnosisIds: req.DiagnosisIds,
+
+	})
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+
+
+	return &member.ComplianceDiagnosisBindRes{DiagnosisBindModel: out}, nil
+
+}
+
+
+
+// ComplianceDiagnosisDetail 诊断详情
+
+func (c *ControllerV1) ComplianceDiagnosisDetail(ctx context.Context, req *member.ComplianceDiagnosisDetailReq) (res *member.ComplianceDiagnosisDetailRes, err error) {
+
+	memberId, err := requireMemberId(ctx)
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+
+
+	out, err := service.ComplianceDiagnosis().GetDetail(ctx, &compliancein.DiagnosisDetailInp{
+
+		MemberId:    memberId,
+
+		DiagnosisId: req.DiagnosisId,
+
+	})
+
+	if err != nil {
+
+		return nil, err
+
+	}
+
+
+
+	return &member.ComplianceDiagnosisDetailRes{DiagnosisDetailModel: out}, nil
+
+}
+
+
+
 // ComplianceOrderCreate 创建服务订单
 
 func (c *ControllerV1) ComplianceOrderCreate(ctx context.Context, req *member.ComplianceOrderCreateReq) (res *member.ComplianceOrderCreateRes, err error) {
@@ -429,6 +565,80 @@ func (c *ControllerV1) ComplianceOpcBankReceipt(ctx context.Context, req *member
 	}
 
 	return &member.ComplianceOpcBankReceiptRes{BankReceiptModel: out}, nil
+}
+
+// ComplianceOpcMaterialsOverview 已提交资料概览
+func (c *ControllerV1) ComplianceOpcMaterialsOverview(ctx context.Context, req *member.ComplianceOpcMaterialsOverviewReq) (res *member.ComplianceOpcMaterialsOverviewRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceOpc().GetMaterialsOverview(ctx, memberId)
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceOpcMaterialsOverviewRes{MaterialsOverviewModel: out}, nil
+}
+
+// ComplianceOpcMaterialsDetail 单个 OPC 实体完整资料（脱敏）
+func (c *ControllerV1) ComplianceOpcMaterialsDetail(ctx context.Context, req *member.ComplianceOpcMaterialsDetailReq) (res *member.ComplianceOpcMaterialsDetailRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceOpc().GetMaterialsDetail(ctx, memberId, req.OpcId)
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceOpcMaterialsDetailRes{MaterialsEntityDetailModel: out}, nil
+}
+
+// ComplianceOpcMaterialsSection 资料分组详情（脱敏）
+func (c *ControllerV1) ComplianceOpcMaterialsSection(ctx context.Context, req *member.ComplianceOpcMaterialsSectionReq) (res *member.ComplianceOpcMaterialsSectionRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceOpc().GetMaterialsSection(ctx, memberId, req.OpcId, req.Section)
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceOpcMaterialsSectionRes{MaterialsSectionDetailModel: out}, nil
+}
+
+// ComplianceOpcMaterialsReveal 密码验证查看完整资料
+func (c *ControllerV1) ComplianceOpcMaterialsReveal(ctx context.Context, req *member.ComplianceOpcMaterialsRevealReq) (res *member.ComplianceOpcMaterialsRevealRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceOpc().RevealMaterialsSection(ctx, &compliancein.MaterialsRevealInp{
+		MemberId: memberId,
+		OpcId:    req.OpcId,
+		Section:  req.Section,
+		Password: req.Password,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceOpcMaterialsRevealRes{MaterialsRevealModel: out}, nil
+}
+
+// ComplianceOpcMaterialsRevealAll 密码验证查看全部完整资料
+func (c *ControllerV1) ComplianceOpcMaterialsRevealAll(ctx context.Context, req *member.ComplianceOpcMaterialsRevealAllReq) (res *member.ComplianceOpcMaterialsRevealAllRes, err error) {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out, err := service.ComplianceOpc().RevealMaterialsAll(ctx, &compliancein.MaterialsRevealInp{
+		MemberId: memberId,
+		OpcId:    req.OpcId,
+		Password: req.Password,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceOpcMaterialsRevealAllRes{MaterialsRevealAllModel: out}, nil
 }
 
 func readUploadCSV(ctx context.Context, field string, fallback string) string {

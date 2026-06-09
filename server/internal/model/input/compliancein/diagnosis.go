@@ -100,3 +100,41 @@ type DiagnosisHistoryModel struct {
 	PageSize int                    `json:"pageSize"`
 	Total    int                    `json:"total"`
 }
+
+// DiagnosisSyncInp 登录后同步访客诊断入参
+type DiagnosisSyncInp struct {
+	MemberId uint64
+	Items    []DiagnosisSubmitInp
+}
+
+// DiagnosisSyncModel 同步出参
+type DiagnosisSyncModel struct {
+	SavedIds []uint64 `json:"savedIds"`
+	Count    int      `json:"count"`
+}
+
+// DiagnosisBindInp 绑定匿名诊断入参
+type DiagnosisBindInp struct {
+	MemberId     uint64
+	DiagnosisIds []uint64
+}
+
+// DiagnosisBindModel 绑定出参
+type DiagnosisBindModel struct {
+	BoundCount int `json:"boundCount"`
+}
+
+// DiagnosisDetailInp 诊断详情查询入参
+type DiagnosisDetailInp struct {
+	MemberId    uint64
+	DiagnosisId uint64
+}
+
+// DiagnosisDetailModel 诊断详情出参
+type DiagnosisDetailModel struct {
+	Id              uint64        `json:"id"`
+	RecommendedPlan string        `json:"recommendedPlan"`
+	TaxComparison   TaxComparison `json:"taxComparison"`
+	Reasons         []string      `json:"reasons,omitempty"`
+	AssumptionHints []string      `json:"assumptionHints,omitempty"`
+}

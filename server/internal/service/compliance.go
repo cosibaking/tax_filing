@@ -12,7 +12,11 @@ import (
 
 type (
 	IComplianceDiagnosis interface {
+		Preview(ctx context.Context, in *compliancein.DiagnosisSubmitInp) (*compliancein.DiagnosisSubmitModel, error)
 		Submit(ctx context.Context, in *compliancein.DiagnosisSubmitInp) (*compliancein.DiagnosisSubmitModel, error)
+		SyncGuest(ctx context.Context, in *compliancein.DiagnosisSyncInp) (*compliancein.DiagnosisSyncModel, error)
+		BindToMember(ctx context.Context, in *compliancein.DiagnosisBindInp) (*compliancein.DiagnosisBindModel, error)
+		GetDetail(ctx context.Context, in *compliancein.DiagnosisDetailInp) (*compliancein.DiagnosisDetailModel, error)
 		Calculate(ctx context.Context, in *compliancein.TaxCalculatorInp) (*compliancein.TaxCalculatorModel, error)
 		ListPlans(ctx context.Context) (*compliancein.ServicePlansModel, error)
 		ListHistory(ctx context.Context, in *compliancein.DiagnosisHistoryInp) (*compliancein.DiagnosisHistoryModel, error)
@@ -28,6 +32,11 @@ type (
 	IComplianceOpc interface {
 		GetSummary(ctx context.Context, memberId uint64) (*compliancein.OpcSummaryModel, error)
 		GetProgress(ctx context.Context, memberId uint64) (*compliancein.OpcProgressModel, error)
+		GetMaterialsOverview(ctx context.Context, memberId uint64) (*compliancein.MaterialsOverviewModel, error)
+		GetMaterialsDetail(ctx context.Context, memberId, opcId uint64) (*compliancein.MaterialsEntityDetailModel, error)
+		GetMaterialsSection(ctx context.Context, memberId, opcId uint64, section string) (*compliancein.MaterialsSectionDetailModel, error)
+		RevealMaterialsSection(ctx context.Context, in *compliancein.MaterialsRevealInp) (*compliancein.MaterialsRevealModel, error)
+		RevealMaterialsAll(ctx context.Context, in *compliancein.MaterialsRevealInp) (*compliancein.MaterialsRevealAllModel, error)
 		SubmitMaterials(ctx context.Context, in *compliancein.MaterialsSubmitInp) (*compliancein.MaterialsSubmitModel, error)
 		SubmitBankReceipt(ctx context.Context, in *compliancein.BankReceiptInp) (*compliancein.BankReceiptModel, error)
 		ListTasks(ctx context.Context, in *compliancein.OpcTaskListInp) (*compliancein.OpcTaskListModel, error)

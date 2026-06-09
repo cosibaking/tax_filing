@@ -83,12 +83,11 @@
 
 <script setup lang="ts">
 import { fetchServicePlans, type ServicePlan } from '@/api/frontend/compliance/diagnosis'
-import { useMemberStore } from '@/store/modules/member'
+import { requireLogin } from '@/utils/auth/requireLogin'
 
 defineOptions({ name: 'CompliancePricing' })
 
 const router = useRouter()
-const memberStore = useMemberStore()
 
 const loading = ref(true)
 const plans = ref<ServicePlan[]>([])
@@ -136,15 +135,9 @@ async function loadPlans() {
 }
 
 function handleSelectPlan(tier: string) {
-  const query = { plan: tier }
-  if (memberStore.isLogin) {
-    router.push({ path: '/user/compliance/plan', query })
-  } else {
-    router.push({
-      path: '/user/login',
-      query: { redirect: `/user/compliance/plan?plan=${tier}` }
-    })
-  }
+  const target = `/user/compliance/plan?plan=${tier}`
+  if (!requireLogin({ redirect: target })) return
+  router.push({ path: '/user/compliance/plan', query: { plan: tier } })
 }
 
 onMounted(loadPlans)

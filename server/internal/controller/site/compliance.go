@@ -41,10 +41,9 @@ func optionalMemberId(ctx context.Context) uint64 {
 	return memberUser.Id
 }
 
-// ComplianceDiagnosis 提交合规诊断问卷
+// ComplianceDiagnosis 提交合规诊断问卷（已登录落库，未登录仅预览）
 func (c *ControllerV1) ComplianceDiagnosis(ctx context.Context, req *api.ComplianceDiagnosisReq) (res *api.ComplianceDiagnosisRes, err error) {
-	out, err := service.ComplianceDiagnosis().Submit(ctx, &compliancein.DiagnosisSubmitInp{
-		MemberId:           optionalMemberId(ctx),
+	inp := &compliancein.DiagnosisSubmitInp{
 		Platforms:          req.Platforms,
 		MonthlyIncomeRange: req.MonthlyIncomeRange,
 		AnnualCostEstimate: req.AnnualCostEstimate,
@@ -53,7 +52,16 @@ func (c *ControllerV1) ComplianceDiagnosis(ctx context.Context, req *api.Complia
 		TaxBureauContact:   req.TaxBureauContact,
 		Notes:              req.Notes,
 		CostBreakdown:      req.CostBreakdown,
-	})
+	}
+
+	memberId := optionalMemberId(ctx)
+	var out *compliancein.DiagnosisSubmitModel
+	if memberId > 0 {
+		inp.MemberId = memberId
+		out, err = service.ComplianceDiagnosis().Submit(ctx, inp)
+	} else {
+		out, err = service.ComplianceDiagnosis().Preview(ctx, inp)
+	}
 	if err != nil {
 		return nil, err
 	}
