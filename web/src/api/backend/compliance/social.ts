@@ -26,6 +26,12 @@ export const ADMIN_SOCIAL_CONSULT_STATUS_LABELS: Record<AdminSocialConsultStatus
   closed: '已关闭'
 }
 
+export const ADMIN_SOCIAL_CONSULT_CATEGORY_LABELS: Record<string, string> = {
+  founder: '创始人参保',
+  employee: '雇员社保',
+  other: '其他'
+}
+
 export function getSocialConsultList(params?: {
   page?: number
   pageSize?: number

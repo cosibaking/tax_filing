@@ -274,7 +274,7 @@ type ComplianceSocialConsultListRes struct {
 // ComplianceSocialConsultReplyReq 回复或关闭社保咨询
 type ComplianceSocialConsultReplyReq struct {
 	g.Meta `path:"/admin/compliance/social-consults/{id}" method:"patch" tags:"合规服务" summary:"回复或关闭社保咨询"`
-	Id     uint64 `p:"id" in:"path" json:"id" v:"required|min:1#请指定工单"`
+	Id     uint64 `p:"id" in:"path" v:"required|min:1#请指定工单"`
 	Reply  string `json:"reply"`
 	Action string `json:"action" d:"reply" v:"in:reply,close#操作无效"`
 }

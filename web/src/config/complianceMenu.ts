@@ -21,6 +21,8 @@ export interface ComplianceMenuItem {
   name: string
   icon: string
   path: string
+  /** 侧栏分组：service=合规服务，ledger=台账与申报 */
+  menuGroup: 'service' | 'ledger'
   /** 是否需要 OPC 已 active（台账类路由） */
   requiresOpcActive?: boolean
   visible: (plan: CompliancePlanState) => boolean
@@ -41,6 +43,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '诊断历史',
     icon: 'ri:file-search-line',
     path: '/user/compliance/diagnosis',
+    menuGroup: 'service',
     visible: always
   },
   {
@@ -48,6 +51,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '方案与签约',
     icon: 'ri:file-list-3-line',
     path: '/user/compliance/plan',
+    menuGroup: 'service',
     visible: (plan) => !plan.hasActiveOrder
   },
   {
@@ -55,13 +59,24 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '主体设立',
     icon: 'ri:building-2-line',
     path: '/user/compliance/opc',
+    menuGroup: 'service',
     visible: (plan) => plan.hasActiveOrder && plan.opcStatus !== 'active'
+  },
+  {
+    id: 'social-consult',
+    name: '社保咨询',
+    icon: 'ri:question-answer-line',
+    path: '/user/compliance/social-consult',
+    menuGroup: 'service',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
   },
   {
     id: 'income',
     name: '收入台账',
     icon: 'ri:money-cny-circle-line',
     path: '/user/compliance/income',
+    menuGroup: 'ledger',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },
@@ -70,6 +85,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '费用台账',
     icon: 'ri:wallet-3-line',
     path: '/user/compliance/expense',
+    menuGroup: 'ledger',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },
@@ -78,6 +94,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '利润报表',
     icon: 'ri:line-chart-line',
     path: '/user/compliance/ledger',
+    menuGroup: 'ledger',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },
@@ -86,6 +103,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '报税中心',
     icon: 'ri:file-edit-line',
     path: '/user/compliance/filing',
+    menuGroup: 'ledger',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },
@@ -94,6 +112,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '申报管理',
     icon: 'ri:file-paper-2-line',
     path: '/user/compliance/tax',
+    menuGroup: 'ledger',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },
@@ -102,14 +121,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '社保指引',
     icon: 'ri:heart-pulse-line',
     path: '/user/compliance/social-guide',
-    requiresOpcActive: true,
-    visible: (plan) => plan.opcStatus === 'active'
-  },
-  {
-    id: 'social-consult',
-    name: '社保咨询',
-    icon: 'ri:question-answer-line',
-    path: '/user/compliance/social-consult',
+    menuGroup: 'ledger',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },
@@ -118,6 +130,7 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     name: '对账单',
     icon: 'ri:file-chart-line',
     path: '/user/compliance/statement',
+    menuGroup: 'ledger',
     requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   }
@@ -128,10 +141,8 @@ export function buildComplianceMenuTree(plan: CompliancePlanState): ComplianceMe
   const visible = complianceMenuItems.filter((item) => item.visible(plan))
   if (visible.length === 0) return []
 
-  const serviceItems = visible.filter((item) =>
-    ['diagnosis', 'plan', 'opc'].includes(item.id)
-  )
-  const ledgerItems = visible.filter((item) => item.requiresOpcActive)
+  const serviceItems = visible.filter((item) => item.menuGroup === 'service')
+  const ledgerItems = visible.filter((item) => item.menuGroup === 'ledger')
 
   const groups: ComplianceMenuGroup[] = []
   if (serviceItems.length > 0) {

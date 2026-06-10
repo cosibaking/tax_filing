@@ -273,9 +273,18 @@ func (s *sComplianceSocial) ListAdminConsults(ctx context.Context, in *complianc
 
 	var rows []adminConsultRow
 	err = m.Fields(
-		"c.id", "c.member_id", "c.opc_id", "c.category", "c.question", "c.region_code",
-		"c.status", "c.reply", "c.replied_at", "c.create_time",
-		"m.nickname AS member_name", "o.company_name",
+		"c.id AS id",
+		"c.member_id AS member_id",
+		"c.opc_id AS opc_id",
+		"c.category AS category",
+		"c.question AS question",
+		"c.region_code AS region_code",
+		"c.status AS status",
+		"c.reply AS reply",
+		"c.replied_at AS replied_at",
+		"c.create_time AS create_time",
+		"m.nickname AS member_name",
+		"o.company_name AS company_name",
 	).OrderDesc("c.create_time").Page(page, pageSize).Scan(&rows)
 	if err != nil {
 		return nil, gerror.Wrap(err, "查询咨询失败")
@@ -390,22 +399,32 @@ func (s *sComplianceSocial) hasConsultPrivilege(ctx context.Context, memberId ui
 }
 
 type consultRow struct {
-	Id         uint64 `json:"id"`
-	MemberId   uint64 `json:"member_id"`
-	OpcId      uint64 `json:"opc_id"`
-	Category   string `json:"category"`
-	Question   string `json:"question"`
-	RegionCode string `json:"region_code"`
-	Status     string `json:"status"`
-	Reply      string `json:"reply"`
-	RepliedAt  uint64 `json:"replied_at"`
-	CreateTime uint64 `json:"create_time"`
+	Id         uint64 `json:"id" orm:"id"`
+	MemberId   uint64 `json:"member_id" orm:"member_id"`
+	OpcId      uint64 `json:"opc_id" orm:"opc_id"`
+	Category   string `json:"category" orm:"category"`
+	Question   string `json:"question" orm:"question"`
+	RegionCode string `json:"region_code" orm:"region_code"`
+	Status     string `json:"status" orm:"status"`
+	Reply      string `json:"reply" orm:"reply"`
+	RepliedAt  uint64 `json:"replied_at" orm:"replied_at"`
+	CreateTime uint64 `json:"create_time" orm:"create_time"`
 }
 
+// adminConsultRow 管理端联表查询行（勿嵌入 consultRow，否则 GoFrame Scan 无法填充内层字段）
 type adminConsultRow struct {
-	consultRow
-	MemberName  string `json:"member_name"`
-	CompanyName string `json:"company_name"`
+	Id          uint64 `json:"id" orm:"id"`
+	MemberId    uint64 `json:"member_id" orm:"member_id"`
+	OpcId       uint64 `json:"opc_id" orm:"opc_id"`
+	Category    string `json:"category" orm:"category"`
+	Question    string `json:"question" orm:"question"`
+	RegionCode  string `json:"region_code" orm:"region_code"`
+	Status      string `json:"status" orm:"status"`
+	Reply       string `json:"reply" orm:"reply"`
+	RepliedAt   uint64 `json:"replied_at" orm:"replied_at"`
+	CreateTime  uint64 `json:"create_time" orm:"create_time"`
+	MemberName  string `json:"member_name" orm:"member_name"`
+	CompanyName string `json:"company_name" orm:"company_name"`
 }
 
 func toConsultItem(row consultRow) compliancein.SocialConsultItem {

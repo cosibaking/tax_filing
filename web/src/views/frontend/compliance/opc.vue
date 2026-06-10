@@ -30,24 +30,26 @@
           <ArtSvgIcon icon="ri:loader-4-line" class="opc-loading__icon" />
         </div>
         <div v-else class="opc-timeline">
-          <div
+          <button
             v-for="(step, idx) in timelineSteps"
             :key="step.key"
+            type="button"
             class="opc-timeline__item"
             :class="{
               'is-done': step.status === 'done',
               'is-current': step.status === 'current'
             }"
+            @click="handleStepClick(step)"
           >
             <span class="opc-timeline__index">{{ idx + 1 }}</span>
             <div class="opc-timeline__body">
               <div class="opc-timeline__row">
-                <h3>{{ step.label }}</h3>
+                <span class="opc-timeline__label">{{ step.label }}</span>
                 <span class="opc-badge" :class="`opc-badge--${step.status}`">{{ stepSubLabel(step) }}</span>
               </div>
-              <p v-if="step.date">{{ step.date }}</p>
+              <span v-if="step.date" class="opc-timeline__date">{{ step.date }}</span>
             </div>
-          </div>
+          </button>
         </div>
 
         <div v-if="progress?.rejectNote" class="opc-alert opc-alert--warn">
@@ -65,7 +67,7 @@
       </section>
 
       <!-- Materials form -->
-      <section v-if="showMaterialsForm" class="opc-panel">
+      <section v-if="showMaterialsForm" ref="materialsFormRef" class="opc-panel opc-scroll-target">
         <div v-if="verifyMock" class="opc-alert opc-alert--info">
           开发模式：身份证 OCR、手机实名、三要素等真实性校验已 Mock，填写格式正确即可提交。
         </div>
@@ -203,7 +205,11 @@
       </section>
 
       <!-- 审核中提示 -->
-      <section v-else-if="showMaterialsReviewing && !showMaterialsOverview" class="opc-panel">
+      <section
+        v-else-if="showMaterialsReviewing && !showMaterialsOverview"
+        ref="materialsDisplayRef"
+        class="opc-panel opc-scroll-target"
+      >
         <h2 class="opc-panel__section-title">资料审核中</h2>
         <p class="opc-panel__section-desc">
           您的注册资料已提交成功，顾问正在审核。审核通过后将进入工商注册流程；如需补正，系统会通知您重新提交。
@@ -214,7 +220,7 @@
       </section>
 
       <!-- Readonly materials -->
-      <section v-else-if="showMaterialsOverview" class="opc-panel">
+      <section v-else-if="showMaterialsOverview" ref="materialsDisplayRef" class="opc-panel opc-scroll-target">
         <h2 class="opc-panel__section-title">已提交资料</h2>
         <p class="opc-panel__section-desc">以下为已提交申请资料的脱敏概览，点击可查看详情。</p>
 
@@ -449,6 +455,11 @@ const revealSubmitting = ref(false)
 const attachmentUrlOverrides = ref<Record<string, string>>({})
 const attachmentUrlRefreshing = ref<Record<string, boolean>>({})
 
+const materialsFormRef = ref<HTMLElement | null>(null)
+const materialsDisplayRef = ref<HTMLElement | null>(null)
+
+const SCROLL_NAV_OFFSET = 96
+
 const DEFAULT_STEPS: OpcProgressStep[] = [
   { key: 'materials', label: '资料提交', status: 'current' },
   { key: 'business', label: '工商注册', status: 'pending' },
@@ -645,6 +656,26 @@ function stepSubLabel(step: OpcProgressStep) {
     rejected: '已退回'
   }
   return map[step.status] ?? '待开始'
+}
+
+function scrollToElement(el: HTMLElement | null | undefined) {
+  if (!el) return
+  const top = el.getBoundingClientRect().top + window.scrollY - SCROLL_NAV_OFFSET
+  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+}
+
+function scrollToMaterialsSection() {
+  nextTick(() => {
+    if (showMaterialsForm.value) {
+      scrollToElement(materialsFormRef.value)
+      return
+    }
+    scrollToElement(materialsDisplayRef.value)
+  })
+}
+
+function handleStepClick(_step: OpcProgressStep) {
+  scrollToMaterialsSection()
 }
 
 function applyRecommendedScope() {
@@ -879,10 +910,25 @@ onMounted(() => {
 .opc-timeline__item {
   display: flex;
   gap: 12px;
+  width: 100%;
   padding: 16px;
   border: 1px solid #e8edf3;
   border-radius: 10px;
   background: #f8fafc;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: #93c5fd;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
 
   &.is-done {
     border-color: #bfdbfe;
@@ -898,6 +944,10 @@ onMounted(() => {
     border-color: #2563eb;
     box-shadow: 0 0 0 1px #2563eb;
   }
+}
+
+.opc-scroll-target {
+  scroll-margin-top: 96px;
 }
 
 .opc-timeline__index {
@@ -918,14 +968,17 @@ onMounted(() => {
   flex: 1;
   min-width: 0;
 
-  h3 {
+  h3,
+  .opc-timeline__label {
     margin: 0;
     font-size: 14px;
     font-weight: 700;
     color: #1a1f36;
   }
 
-  p {
+  p,
+  .opc-timeline__date {
+    display: block;
     margin: 4px 0 0;
     font-size: 12px;
     color: #94a3b8;

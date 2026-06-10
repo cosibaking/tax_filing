@@ -2,13 +2,14 @@ package compliancein
 
 // DashboardOverviewModel 合规工作台概览
 type DashboardOverviewModel struct {
-	ActiveCustomers int                    `json:"activeCustomers"`
-	PendingOpcTasks int                    `json:"pendingOpcTasks"`
-	PendingFilings  int                    `json:"pendingFilings"`
-	OverdueFilings  int                    `json:"overdueFilings"`
-	DraftStatements int                    `json:"draftStatements"`
-	OpcTasks        []DashboardOpcTaskItem `json:"opcTasks"`
-	FilingTasks     []DashboardFilingItem  `json:"filingTasks"`
+	ActiveCustomers        int                    `json:"activeCustomers"`
+	PendingOpcTasks        int                    `json:"pendingOpcTasks"`
+	PendingFilings         int                    `json:"pendingFilings"`
+	OverdueFilings         int                    `json:"overdueFilings"`
+	DraftStatements        int                    `json:"draftStatements"`
+	PendingSocialConsults  int                    `json:"pendingSocialConsults"`
+	OpcTasks               []DashboardOpcTaskItem `json:"opcTasks"`
+	FilingTasks            []DashboardFilingItem  `json:"filingTasks"`
 }
 
 // DashboardOpcTaskItem 待办 OPC 任务

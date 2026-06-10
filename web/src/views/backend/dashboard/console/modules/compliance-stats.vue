@@ -58,6 +58,14 @@ const cards = computed(() => {
       icon: 'ri:file-chart-line',
       hint: '待发送通知',
       path: '/compliance/statements'
+    },
+    {
+      key: 'social-consults',
+      label: '社保咨询待办',
+      value: s?.pendingSocialConsults ?? 0,
+      icon: 'ri:question-answer-line',
+      hint: '待首次回复',
+      path: '/compliance/social-consults'
     }
   ]
 })

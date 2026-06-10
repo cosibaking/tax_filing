@@ -150,6 +150,7 @@
   import { useCommon } from '@/hooks/core/useCommon'
   import { ADMIN_BASE_PATH } from '@/router/routesAlias'
   import { useWindowSize, useTimeoutFn } from '@vueuse/core'
+  import { useComplianceMenuBadges } from '@/hooks/compliance/useComplianceMenuBadges'
 
   defineOptions({ name: 'ArtSidebarMenu' })
 
@@ -173,6 +174,7 @@
 
   // 使用 VueUse 的窗口尺寸监听
   const { width } = useWindowSize()
+  const { refreshComplianceMenuBadges } = useComplianceMenuBadges()
 
   // 菜单宽度相关
   const menuopenwidth = computed(() => getMenuOpenWidth.value)
@@ -338,6 +340,17 @@
       showMobileModal.value = false
     }
   })
+
+  onMounted(() => {
+    refreshComplianceMenuBadges()
+  })
+
+  watch(
+    () => route.path,
+    () => {
+      refreshComplianceMenuBadges()
+    }
+  )
 
   /**
    * 监听菜单开关状态变化

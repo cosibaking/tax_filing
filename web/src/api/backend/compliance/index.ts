@@ -512,6 +512,7 @@ export interface ComplianceDashboardData {
   pendingFilings: number
   overdueFilings: number
   draftStatements: number
+  pendingSocialConsults: number
   opcTasks: Array<{
     opcId: number
     memberName?: string

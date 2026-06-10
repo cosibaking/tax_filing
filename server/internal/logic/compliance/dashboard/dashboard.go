@@ -72,6 +72,15 @@ func (s *sComplianceDashboard) GetOverview(ctx context.Context) (*compliancein.D
 	}
 	out.DraftStatements = draftStatements
 
+	pendingSocialConsults, err := g.DB().Model("xy_compliance_social_consult").Ctx(ctx).
+		Where("deleted", 0).
+		Where("status", "open").
+		Count()
+	if err != nil {
+		return nil, gerror.Wrap(err, "统计待回复社保咨询失败")
+	}
+	out.PendingSocialConsults = pendingSocialConsults
+
 	out.OpcTasks, err = s.loadPendingOpcTasks(ctx)
 	if err != nil {
 		return nil, err

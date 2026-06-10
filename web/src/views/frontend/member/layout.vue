@@ -27,6 +27,7 @@
                 >
                   <ArtSvgIcon :icon="item.icon" class="member-nav__icon" />
                   <span>{{ item.name }}</span>
+                  <span v-if="item.showBadge" class="member-nav__badge" aria-label="有新回复" />
                 </RouterLink>
               </li>
             </ul>
@@ -66,6 +67,7 @@ import { useMemberMenuStore } from '@/store/modules/memberMenu'
 import { buildComplianceMenuTree } from '@/config/complianceMenu'
 import type { CompliancePlanState } from '@/config/complianceMenu'
 import { getCompliancePlanState } from '@/api/frontend/compliance/member'
+import { getSocialConsults } from '@/api/frontend/compliance/social'
 import { memberMenuHref } from '@/utils/member-nav'
 import ComplianceGuideBanner, { type GuideBanner } from '@/components/member/ComplianceGuideBanner.vue'
 
@@ -80,20 +82,39 @@ const userInfo = computed(() => memberStore.getMemberInfo)
 const hiddenAccountPaths = new Set(['/user/checkin', '/user/points', '/user/balance'])
 
 const planState = ref<CompliancePlanState>({ hasActiveOrder: false, opcStatus: 'none' })
+const socialConsultHasReply = ref(false)
 
 async function loadPlanState() {
   if (!memberStore.getIsLogin) return
   try { planState.value = await getCompliancePlanState() } catch { /* ignore */ }
 }
 
+async function loadSocialConsultBadge() {
+  if (!memberStore.getIsLogin || planState.value.opcStatus !== 'active') {
+    socialConsultHasReply.value = false
+    return
+  }
+  try {
+    const res = await getSocialConsults({ page: 1, pageSize: 50 })
+    socialConsultHasReply.value = (res.list || []).some((item) => item.status === 'replied')
+  } catch {
+    socialConsultHasReply.value = false
+  }
+}
+
+async function refreshMemberShell() {
+  await loadPlanState()
+  await loadSocialConsultBadge()
+}
+
 onMounted(async () => {
   if (!memberStore.getIsLogin) return
   try { await memberMenuStore.fetchMenus() } catch { /* ignore */ }
-  await loadPlanState()
+  await refreshMemberShell()
 })
 
 watch(() => route.path, () => {
-  loadPlanState()
+  refreshMemberShell()
 })
 
 interface AccountMenuGroup {
@@ -109,17 +130,28 @@ const complianceMenuTree = computed(() => {
     name: '服务概览',
     icon: 'ri:home-4-line',
     path: '/user/overview',
-    requiresOpcActive: false,
-    visible: () => true
+    showBadge: false,
   }
+  const withBadges = (items: typeof tree[0]['items']) =>
+    items.map((item) => ({
+      ...item,
+      showBadge: item.id === 'social-consult' && socialConsultHasReply.value,
+    }))
+
   if (tree.length === 0) {
     return [{ id: 'service', name: '合规服务', items: [overviewItem] }]
   }
   const serviceGroup = tree.find((g) => g.id === 'service')
   if (serviceGroup) {
-    return [{ ...serviceGroup, items: [overviewItem, ...serviceGroup.items] }, ...tree.filter((g) => g.id !== 'service')]
+    return [
+      { ...serviceGroup, items: [overviewItem, ...withBadges(serviceGroup.items)] },
+      ...tree.filter((g) => g.id !== 'service').map((g) => ({ ...g, items: withBadges(g.items) })),
+    ]
   }
-  return [{ id: 'service', name: '合规服务', items: [overviewItem] }, ...tree]
+  return [
+    { id: 'service', name: '合规服务', items: [overviewItem] },
+    ...tree.map((g) => ({ ...g, items: withBadges(g.items) })),
+  ]
 })
 
 const accountMenuTree = computed<AccountMenuGroup[]>(() => {
@@ -296,6 +328,29 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 .member-nav__icon {
   font-size: 18px;
   flex-shrink: 0;
+}
+
+.member-nav__badge {
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  background: #ef4444;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: member-nav-badge-breathe 1.5s ease-in-out infinite;
+}
+
+@keyframes member-nav-badge-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.65;
+    transform: scale(0.92);
+  }
 }
 
 @media (max-width: 960px) {
