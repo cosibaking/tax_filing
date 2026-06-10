@@ -3,7 +3,7 @@
     "host": "127.0.0.1",
     "port": 3306,
     "database": "xygo",
-    "appUser": "yxgo",
+    "appUser": "xygo",
     "appPassword": "123456",
     "searchBinPaths": [
       "E:\\mysql-9.7.0-winx64\\bin",
