@@ -23,7 +23,8 @@ function Show-Help {
     Write-Host ''
     Write-Host '用法:'
     Write-Host '  .\start.ps1              启动后端 + 前端（各开独立窗口）'
-    Write-Host '  .\start.ps1 -Init        首次初始化（复制配置、安装前端依赖）'
+    Write-Host '  .\start.ps1 -Init        从零初始化（配置、数据库、依赖、迁移）'
+    Write-Host '  .\scripts\init.ps1 -Start  同上，完成后自动启动'
     Write-Host '  .\start.ps1 -Migrate     启动前先执行数据库迁移'
     Write-Host '  .\start.ps1 -Restart     重启服务（先停后启）'
     Write-Host '  .\start.ps1 -Stop        停止服务（按端口 4096/5173）'
@@ -43,14 +44,21 @@ function Test-CommandExists {
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-function Get-BackendRunCommand {
-    if (Test-CommandExists 'gf') {
-        return 'gf run main.go'
+function Get-GoToolPaths {
+    if (-not (Test-CommandExists 'go')) {
+        return @{ GoBin = ''; GoRootBin = '' }
     }
+    return @{
+        GoBin     = Join-Path (go env GOPATH) 'bin'
+        GoRootBin = Join-Path (go env GOROOT) 'bin'
+    }
+}
 
-    $goBin = Join-Path (go env GOPATH) 'bin\gf.exe'
-    if (Test-Path $goBin) {
-        return "& '$goBin' run main.go"
+function Get-BackendRunCommand {
+    $paths = Get-GoToolPaths
+    $gfExe = Join-Path $paths.GoBin 'gf.exe'
+    if (Test-Path $gfExe) {
+        return "& '$gfExe' run main.go"
     }
 
     if (Test-CommandExists 'go') {
@@ -165,27 +173,11 @@ function Ensure-Config {
 }
 
 function Invoke-Init {
-    Write-Host '========== 初始化项目 ==========' -ForegroundColor Cyan
-    Ensure-Config
-
-    if (-not (Test-Path (Join-Path $WebDir 'node_modules'))) {
-        Write-Host '前端: 安装依赖...' -ForegroundColor Yellow
-        Push-Location $WebDir
-        try {
-            pnpm install
-        } finally {
-            Pop-Location
-        }
-    } else {
-        Write-Host '前端: node_modules 已存在，跳过 pnpm install' -ForegroundColor Green
+    $initScript = Join-Path $Root 'scripts\init.ps1'
+    if (-not (Test-Path $initScript)) {
+        throw "缺少初始化脚本: $initScript"
     }
-
-    Write-Host ''
-    Write-Host '初始化完成。下一步:' -ForegroundColor Green
-    Write-Host '  1. 确认 MySQL / Redis 已启动，并编辑 server/manifest/config/config.yaml'
-    Write-Host '  2. 导入数据库: mysql -u root -p xygo < mysql_install.sql'
-    Write-Host '  3. 执行迁移: .\start.ps1 -Migrate -BackendOnly'
-    Write-Host '  4. 启动开发: .\start.ps1'
+    & $initScript
 }
 
 function Invoke-Migrate {
@@ -202,8 +194,11 @@ function Invoke-Migrate {
 
 function Start-Backend {
     $runCmd = Get-BackendRunCommand
+    $paths = Get-GoToolPaths
+    $pathPrefix = (@($paths.GoBin, $paths.GoRootBin) | Where-Object { $_ }) -join ';'
     Write-Host '后端: 启动中 -> http://localhost:4096' -ForegroundColor Green
     $script = @"
+if ('$pathPrefix') { `$env:Path = '$pathPrefix;' + `$env:Path }
 Set-Location -LiteralPath '$ServerDir'
 $runCmd
 "@
@@ -293,7 +288,7 @@ if ($startFrontend) { Start-Frontend }
 
 if ($startBackend -or $startFrontend) {
     Start-Sleep -Seconds 2
-    $backendOk = -not $startBackend -or (Wait-PortListening -Port $BackendPort -Label '后端')
+    $backendOk = -not $startBackend -or (Wait-PortListening -Port $BackendPort -Label '后端' -TimeoutSec 60)
     $frontendOk = -not $startFrontend -or (Wait-PortListening -Port $FrontendPort -Label '前端')
     Show-StartupSummary -Backend $startBackend -Frontend $startFrontend -IsRestart:$Restart
     if (-not $backendOk -or -not $frontendOk) {

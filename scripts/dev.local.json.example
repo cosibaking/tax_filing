@@ -1,0 +1,8 @@
+{
+  "mysql": {
+    "bin": "E:\\mysql-9.7.0-winx64\\bin",
+    "port": 3307,
+    "database": "xygo",
+    "rootPassword": ""
+  }
+}

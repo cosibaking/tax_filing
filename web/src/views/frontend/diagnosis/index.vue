@@ -505,14 +505,26 @@ async function validateStep(step: number): Promise<boolean> {
   }
 }
 
+function scrollPageToTop() {
+  nextTick(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+}
+
 async function nextStep() {
   const valid = await validateStep(currentStep.value)
   if (!valid) return
-  if (currentStep.value < totalSteps) currentStep.value++
+  if (currentStep.value < totalSteps) {
+    currentStep.value++
+    scrollPageToTop()
+  }
 }
 
 function prevStep() {
-  if (currentStep.value > 1) currentStep.value--
+  if (currentStep.value > 1) {
+    currentStep.value--
+    scrollPageToTop()
+  }
 }
 
 async function handleSubmit() {

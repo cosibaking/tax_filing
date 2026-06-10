@@ -47,15 +47,19 @@ export function useCommon() {
     settingStore.reload()
   }
 
+  const getScrollContainer = () => document.getElementById('app-main')
+
   /**
    * 滚动到页面顶部
-   * 查找主内容区域并将其滚动位置重置为顶部
+   * 后台滚动 #app-main，前台回退到 window
    */
   const scrollToTop = () => {
-    const scrollContainer = document.getElementById('app-main')
+    const scrollContainer = getScrollContainer()
     if (scrollContainer) {
       scrollContainer.scrollTop = 0
+      return
     }
+    window.scrollTo(0, 0)
   }
 
   /**
@@ -63,13 +67,15 @@ export function useCommon() {
    * 使用 smooth 行为实现平滑滚动效果
    */
   const smoothScrollToTop = () => {
-    const scrollContainer = document.getElementById('app-main')
+    const scrollContainer = getScrollContainer()
     if (scrollContainer) {
       scrollContainer.scrollTo({
         top: 0,
         behavior: 'smooth'
       })
+      return
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   /**
@@ -78,13 +84,18 @@ export function useCommon() {
    * @param smooth 是否使用平滑滚动
    */
   const scrollTo = (top: number, smooth: boolean = false) => {
-    const scrollContainer = document.getElementById('app-main')
+    const scrollContainer = getScrollContainer()
     if (scrollContainer) {
       scrollContainer.scrollTo({
         top,
         behavior: smooth ? 'smooth' : 'auto'
       })
+      return
     }
+    window.scrollTo({
+      top,
+      behavior: smooth ? 'smooth' : 'auto'
+    })
   }
 
   return {

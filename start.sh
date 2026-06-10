@@ -22,7 +22,8 @@ show_help() {
     echo ""
     echo "用法:"
     echo "  ./start.sh                启动后端 + 前端"
-    echo "  ./start.sh --init         首次初始化（复制配置、安装前端依赖）"
+    echo "  ./start.sh --init         从零初始化（配置、数据库、依赖、迁移）"
+    echo "  ./scripts/init.sh --start 同上，完成后自动启动"
     echo "  ./start.sh --migrate      启动前先执行数据库迁移"
     echo "  ./start.sh --restart      重启服务（先停后启）"
     echo "  ./start.sh --stop         停止服务"
@@ -69,22 +70,7 @@ ensure_config() {
 }
 
 run_init() {
-    echo "========== 初始化项目 =========="
-    ensure_config
-
-    if [[ ! -d "$WEB_DIR/node_modules" ]]; then
-        echo "前端: 安装依赖..."
-        (cd "$WEB_DIR" && pnpm install)
-    else
-        echo "前端: node_modules 已存在，跳过 pnpm install"
-    fi
-
-    echo ""
-    echo "初始化完成。下一步:"
-    echo "  1. 确认 MySQL / Redis 已启动，并编辑 server/manifest/config/config.yaml"
-    echo "  2. 导入数据库: mysql -u root -p xygo < mysql_install.sql"
-    echo "  3. 执行迁移: ./start.sh --migrate --backend-only"
-    echo "  4. 启动开发: ./start.sh"
+    bash "$ROOT/scripts/init.sh" "$@"
 }
 
 run_migrate() {

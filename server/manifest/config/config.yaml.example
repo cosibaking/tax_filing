@@ -57,7 +57,7 @@ auth:
 
 # 缓存配置（Token 存储）
 cache:
-  adapter: "redis"               # 缓存适配器：memory=内存, redis=Redis（生产推荐）
+  adapter: "memory"              # 本地开发用 memory；生产环境改为 redis
 
 # Redis 配置
 redis:
@@ -74,7 +74,7 @@ storage:
 # https://goframe.org/docs/core/gdb-config-file
 database:
   default:
-    link:   "mysql:root:your-password@tcp(127.0.0.1:3306)/xygo?loc=Local&parseTime=true"
+    link:   "mysql:yxgo:123456@tcp(127.0.0.1:3306)/xygo?loc=Local&parseTime=true"
   # link:   "pgsql:postgres:your-password@tcp(127.0.0.1:5432)/xygo"
     Prefix: "xy_"
     debug:  true
@@ -92,7 +92,7 @@ performance:
 
 # 消息队列配置
 queue:
-  driver: "redis"                # 驱动：redis（生产推荐）或 disk（无Redis时兜底）
+  driver: "disk"                 # 本地开发用 disk；生产环境改为 redis
   diskPath: "storage/queue"      # disk 驱动的本地存储路径
 
 # 合规模块（OPC 资料加密、真实性校验）

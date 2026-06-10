@@ -1,0 +1,26 @@
+{
+  "mysql": {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "database": "xygo",
+    "appUser": "yxgo",
+    "appPassword": "123456",
+    "searchBinPaths": [
+      "E:\\mysql-9.7.0-winx64\\bin",
+      "C:\\Program Files\\MySQL\\MySQL Server 9.7\\bin",
+      "C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin",
+      "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin",
+      "C:\\xampp\\mysql\\bin"
+    ],
+    "myIniPaths": [
+      "H:\\mysql_data\\my.ini",
+      "C:\\ProgramData\\MySQL\\MySQL Server 9.7\\my.ini",
+      "C:\\ProgramData\\MySQL\\MySQL Server 8.4\\my.ini",
+      "C:\\ProgramData\\MySQL\\MySQL Server 8.0\\my.ini"
+    ]
+  },
+  "dev": {
+    "cacheAdapter": "memory",
+    "queueDriver": "disk"
+  }
+}

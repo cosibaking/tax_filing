@@ -325,8 +325,8 @@ VALUES
 -- ============================================================
 -- 九、后台菜单（合规模块）
 -- ============================================================
-INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
-SELECT 0, 1, '合规服务', 'Compliance', '/compliance', '/index/index', '', 'ri:shield-check-line', 0, 0, '', '', '', 0, 0, 0, '', '', 0, 0, 90, 1, 'OPC合规服务管理', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
+INSERT INTO `xy_admin_menu` (`id`, `parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)
+SELECT (SELECT IFNULL(MAX(`id`), 0) + 1 FROM `xy_admin_menu`), 0, 1, '合规服务', 'Compliance', '/compliance', '/index/index', '', 'ri:shield-check-line', 0, 0, '', '', '', 0, 0, 0, '', '', 0, 0, 90, 1, 'OPC合规服务管理', 0, 0, UNIX_TIMESTAMP(), UNIX_TIMESTAMP()
 WHERE NOT EXISTS (SELECT 1 FROM `xy_admin_menu` t WHERE t.name = 'Compliance' AND t.type = 1);
 
 INSERT INTO `xy_admin_menu` (`parent_id`, `type`, `title`, `name`, `path`, `component`, `resource`, `icon`, `hidden`, `keep_alive`, `redirect`, `frame_src`, `perms`, `is_frame`, `affix`, `show_badge`, `badge_text`, `active_path`, `hide_tab`, `is_full_page`, `sort`, `status`, `remark`, `created_by`, `updated_by`, `create_time`, `update_time`)

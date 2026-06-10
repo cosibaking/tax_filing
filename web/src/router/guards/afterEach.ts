@@ -21,7 +21,9 @@ export function setupAfterEachGuard(router: Router) {
   const { scrollToTop } = useCommon()
 
   router.afterEach(() => {
-    scrollToTop()
+    nextTick(() => {
+      scrollToTop()
+    })
 
     // 关闭进度条
     const settingStore = useSettingStore()

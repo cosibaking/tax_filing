@@ -76,7 +76,30 @@
 
 ### 快速开始
 
-**环境要求**：Node.js ≥ 20.19、pnpm ≥ 8.8、Go ≥ 1.24、MySQL 8、Redis 7
+**环境要求**：Node.js ≥ 20.19、pnpm ≥ 8.8、Go ≥ 1.24、MySQL 8（Redis 7 可选，本地默认可不装）
+
+### 一键从零初始化（推荐）
+
+**Windows（PowerShell）**
+
+```powershell
+# 复制 scripts/dev.local.json.example 为 scripts/dev.local.json，按需填写 mysql.bin / mysql.port
+.\scripts\init.ps1 -RootPassword '你的root密码' -Start
+# 或
+.\start.ps1 -Init
+.\start.ps1
+```
+
+**macOS / Linux**
+
+```bash
+chmod +x scripts/init.sh scripts/import-mysql.sh start.sh
+MYSQL_ROOT_PASSWORD='你的root密码' ./scripts/init.sh --start
+```
+
+初始化脚本会自动完成：复制配置、导入 `mysql_install.sql`、创建 `yxgo` 用户、安装依赖、执行迁移，并写入本地开发配置（`memory` 缓存 + `disk` 队列，无需 Redis）。
+
+### 手动分步（可选）
 
 ```bash
 # 1. 初始化数据库
@@ -86,15 +109,13 @@ mysql -u root -p xygo < mysql_install.sql
 # 2. 后端配置与迁移
 cd server
 cp manifest/config/config.yaml.example manifest/config/config.yaml
-# 编辑 config.yaml：database.default.link、redis、auth.jwt.secret
-go run tools.go migrate up    # 执行合规 MVP 等增量迁移
-gf run main.go                # 默认 http://localhost:4096
+go run tools.go migrate up
 
 # 3. 前端开发
 cd web
 pnpm install
-cp .env.development .env.local   # 按需调整 VITE_API_PROXY_URL
-pnpm dev                         # 默认 http://localhost:5173
+cp .env.development .env.local
+pnpm dev
 ```
 
 **冒烟路径**（详见 [docs/03-验收记录.md](./docs/03-验收记录.md)）：
