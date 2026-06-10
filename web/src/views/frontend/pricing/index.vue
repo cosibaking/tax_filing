@@ -44,6 +44,14 @@
       </article>
     </div>
 
+    <section class="pricing-page__sla">
+      <ComplianceSlaPanel
+        title="服务时效承诺（SLA）"
+        subtitle="签约后各环节交付时效，减少等待焦虑"
+        :items="SERVICE_SLA_ITEMS"
+      />
+    </section>
+
     <div class="pricing-page__cta">
       <p>还不确定选哪个？先做免费合规诊断</p>
       <RouterLink to="/diagnosis" class="opc-btn opc-btn--secondary">
@@ -57,6 +65,8 @@
 <script setup lang="ts">
 import { fetchServicePlans, type ServicePlan } from '@/api/frontend/compliance/diagnosis'
 import { requireLogin } from '@/utils/auth/requireLogin'
+import ComplianceSlaPanel from '@/components/frontend/ComplianceSlaPanel.vue'
+import { SERVICE_SLA_ITEMS } from '@/data/frontend/complianceSla'
 
 defineOptions({ name: 'CompliancePricing' })
 
@@ -289,6 +299,15 @@ onMounted(loadPlans)
       border-color: #1d4ed8;
     }
   }
+}
+
+.pricing-page__sla {
+  margin-bottom: 48px;
+  padding: 28px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .pricing-page__cta {

@@ -102,6 +102,10 @@ func (s *sComplianceStatement) SendStatement(ctx context.Context, in *compliance
 	_ = audit.WriteAudit(ctx, "monthly_statement", stmtId, "send", in.AdminId, "admin",
 		nil, g.Map{"opc_id": opc.Id, "year": in.Year, "month": in.Month}, in.Ip)
 
+	if row, loadErr := loadStatementRow(ctx, stmtId); loadErr == nil {
+		_, _ = s.ensureStatementPdf(ctx, row)
+	}
+
 	return &compliancein.StatementSendModel{
 		Id:     stmtId,
 		OpcId:  opc.Id,
@@ -193,6 +197,7 @@ func (s *sComplianceStatement) ListStatements(ctx context.Context, in *complianc
 		if row.SentAt > 0 {
 			item.SentAt = utility.UnixToGTime(int64(row.SentAt)).Format("Y-m-d H:i:s")
 		}
+		item.PdfUrl = statementPdfUrlIfExists(row.Id)
 		list = append(list, item)
 	}
 

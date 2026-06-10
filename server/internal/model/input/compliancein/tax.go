@@ -77,6 +77,18 @@ type MemberStatementItem struct {
 	CumulativeProfit float64 `json:"cumulativeProfit"`
 	FilingStatus     string  `json:"filingStatus,omitempty"`
 	Status           string  `json:"status"`
+	PdfUrl           string  `json:"pdfUrl,omitempty"`
+}
+
+// StatementPdfInp 对账单 PDF 入参
+type StatementPdfInp struct {
+	MemberId    uint64
+	StatementId uint64
+}
+
+// StatementPdfModel 对账单 PDF 出参
+type StatementPdfModel struct {
+	Url string `json:"url"`
 }
 
 // MemberStatementListModel 会员对账单列表出参

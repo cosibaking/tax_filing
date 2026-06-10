@@ -22,6 +22,16 @@ fi
 # 前端在本地构建后 rsync 同步（服务器 pnpm build 易失败）
 test -f server/resource/public/dist/index.html || { echo "缺少 dist，请先在本地 web 目录执行 vite build"; exit 1; }
 
+# 对账单 PDF 目录与中文字体
+mkdir -p server/resource/public/attachment/upload/statements
+if [ ! -f server/resource/font/statement.ttf ]; then
+  sudo apt-get install -y fonts-arphic-ukai >/dev/null 2>&1 || true
+fi
+if [ ! -f server/resource/font/statement.ttf ] && [ ! -f /usr/share/fonts/truetype/arphic/ukai.ttf ]; then
+  echo "缺少 PDF 中文字体：请 rsync resource/font/statement.ttf 或在服务器安装 fonts-arphic-ukai"
+  exit 1
+fi
+
 cd "$APP/server"
 test -x tax-filing-server || { echo "缺少 tax-filing-server 二进制，请本地 GOOS=linux GOARCH=amd64 go build"; exit 1; }
 

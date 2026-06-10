@@ -61,6 +61,23 @@
               </div>
             </ElFormItem>
 
+            <ElFormItem v-if="formData.persona === 'MCN签约主播'" prop="mcnSettlement" class="diag-field">
+              <label class="diag-label">MCN 结算方式 <span class="req">*</span></label>
+              <p class="diag-hint">影响 OPC 落地节奏与收入台账口径</p>
+              <div class="diag-list">
+                <button
+                  v-for="item in mcnSettlementOptions"
+                  :key="item.value"
+                  type="button"
+                  class="diag-list-item"
+                  :class="{ 'is-active': formData.mcnSettlement === item.value }"
+                  @click="formData.mcnSettlement = item.value"
+                >
+                  <span class="diag-list-item__title">{{ item.label }}</span>
+                </button>
+              </div>
+            </ElFormItem>
+
             <ElFormItem prop="platforms" class="diag-field">
               <label class="diag-label">主要收入渠道 <span class="req">*</span></label>
               <p class="diag-hint">可多选，包含平台、店铺或接单渠道</p>
@@ -340,7 +357,8 @@ import {
   taxFiledOptions,
   riskSignalOptions,
   concernOptions,
-  costItemOptions
+  costItemOptions,
+  mcnSettlementOptions
 } from '@/data/frontend/diagnosisQuestionnaire'
 
 defineOptions({ name: 'ComplianceDiagnosis' })
@@ -358,6 +376,7 @@ const costKeys = costItemOptions.map((item) => item.key)
 
 const formData = reactive({
   persona: '',
+  mcnSettlement: '',
   platforms: [] as string[],
   incomeTypes: [] as string[],
   monthlyIncomeRange: '' as MonthlyIncomeRange | '',
@@ -375,6 +394,16 @@ const progressPercent = computed(() => Math.round((currentStep.value / totalStep
 
 const rules: FormRules = {
   persona: [{ required: true, message: '请选择从业类型', trigger: 'change' }],
+  mcnSettlement: [{
+    validator: (_r, _v, cb) => {
+      if (formData.persona === 'MCN签约主播' && !formData.mcnSettlement) {
+        cb(new Error('请选择 MCN 结算方式'))
+        return
+      }
+      cb()
+    },
+    trigger: 'change'
+  }],
   platforms: [{
     type: 'array',
     required: true,
@@ -402,7 +431,7 @@ const rules: FormRules = {
 }
 
 const stepFields: Record<number, string[]> = {
-  1: ['persona', 'platforms', 'incomeTypes'],
+  1: ['persona', 'mcnSettlement', 'platforms', 'incomeTypes'],
   2: ['monthlyIncomeRange'],
   3: ['existingEntity', 'hasFiledTax'],
   4: ['riskSignals']
@@ -427,6 +456,9 @@ function toggleRiskSignal(value: string) {
 function buildNotes(): string | undefined {
   const parts: string[] = []
   if (formData.persona) parts.push(`从业类型：${formData.persona}`)
+  if (formData.persona === 'MCN签约主播' && formData.mcnSettlement) {
+    parts.push(`MCN结算：${formData.mcnSettlement}`)
+  }
   if (formData.incomeTypes.length) parts.push(`收入构成：${formData.incomeTypes.join('、')}`)
   if (formData.riskSignals.length) {
     const labels = formData.riskSignals

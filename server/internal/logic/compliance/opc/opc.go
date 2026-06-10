@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/gogf/gf/v2/encoding/gjson"
@@ -104,13 +105,14 @@ func (s *sComplianceOpc) GetProgress(ctx context.Context, memberId uint64) (*com
 	if row == nil {
 		planTier, planName, planAmount, signedAt := s.memberPlanInfo(ctx, memberId)
 		return &compliancein.OpcProgressModel{
-			OpcStatus:        opcPending,
-			EstimatedSlaDays: 14,
-			Steps:            buildProgressSteps(opcPending, 0),
-			PlanTier:         planTier,
-			PlanName:         planName,
-			PlanAmount:       planAmount,
-			SignedAt:         signedAt,
+			OpcStatus:         opcPending,
+			EstimatedSlaDays:  14,
+			Steps:             buildProgressSteps(opcPending, 0),
+			MaterialsEditable: true,
+			PlanTier:          planTier,
+			PlanName:          planName,
+			PlanAmount:        planAmount,
+			SignedAt:          signedAt,
 		}, nil
 	}
 
@@ -149,6 +151,7 @@ func (s *sComplianceOpc) GetProgress(ctx context.Context, memberId uint64) (*com
 		Steps:              buildProgressSteps(row.Status, row.MaterialsSubmittedAt),
 		MaterialsReadonly:  readonly,
 		MaterialsSubmitted: row.MaterialsSubmittedAt > 0,
+		MaterialsEditable:  row.Status == opcPending || row.Status == opcMaterials,
 		RejectNote:         rejectNote,
 		BankAccountMasked:  bankMasked,
 		PlanTier:           planTier,
@@ -194,7 +197,7 @@ func (s *sComplianceOpc) SubmitMaterials(ctx context.Context, in *compliancein.M
 		return nil, gerror.New("OPC主体未创建，请重新签约")
 	}
 	if row.Status != opcPending && row.Status != opcMaterials {
-		return nil, gerror.New("当前状态不允许提交资料")
+		return nil, gerror.New(materialsSubmitDeniedMessage(row.Status))
 	}
 
 	encIdCard, err := compliancecrypto.Encrypt(ctx, strings.TrimSpace(in.IdCard))
@@ -942,6 +945,17 @@ func allowedActions(status string) []string {
 		return []string{"complete_bank"}
 	default:
 		return []string{}
+	}
+}
+
+func materialsSubmitDeniedMessage(status string) string {
+	switch status {
+	case opcMaterialsReview:
+		return "资料已提交，正在审核中，请耐心等待顾问反馈"
+	case opcRegistering, opcTax, opcBank, opcActive:
+		return fmt.Sprintf("资料已进入「%s」阶段，如需修改请联系顾问", statusLabel(status))
+	default:
+		return fmt.Sprintf("当前状态（%s）不允许提交资料", statusLabel(status))
 	}
 }
 

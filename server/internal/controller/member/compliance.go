@@ -1092,12 +1092,20 @@ func (c *ControllerV1) ComplianceMemberStatements(ctx context.Context, req *memb
 	return &member.ComplianceMemberStatementsRes{MemberStatementListModel: out}, nil
 }
 
-// ComplianceStatementPdf 对账单 PDF（MVP 以 JSON 摘要为准，无 PDF 文件）
+// ComplianceStatementPdf 对账单 PDF 下载地址
 func (c *ControllerV1) ComplianceStatementPdf(ctx context.Context, req *member.ComplianceStatementPdfReq) (res *member.ComplianceStatementPdfRes, err error) {
-	if _, err = requireMemberId(ctx); err != nil {
+	memberId, err := requireMemberId(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return &member.ComplianceStatementPdfRes{Url: ""}, nil
+	out, err := service.ComplianceStatement().GetStatementPdfUrl(ctx, &compliancein.StatementPdfInp{
+		MemberId:    memberId,
+		StatementId: req.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &member.ComplianceStatementPdfRes{Url: out.Url}, nil
 }
 
 // ComplianceEmploymentGet 获取用工状态

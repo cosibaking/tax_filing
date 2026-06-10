@@ -54,12 +54,17 @@ export interface DiagnosisSubmitParams {
 }
 
 /** 诊断提交响应 */
+export type ComplianceRiskLevel = 'green' | 'yellow' | 'red'
+
 export interface DiagnosisSubmitResult {
   id: number | string
   recommendedPlan: RecommendedPlan
   taxComparison: TaxComparison
   reasons?: string[]
   assumptionHints?: string[]
+  riskLevel?: ComplianceRiskLevel
+  complianceAlerts?: string[]
+  mcnGuidance?: string[]
 }
 
 /** 税负计算器参数 */

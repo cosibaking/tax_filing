@@ -55,6 +55,15 @@
         </div>
       </section>
 
+      <!-- 服务 SLA -->
+      <section class="opc-panel">
+        <ComplianceSlaPanel
+          title="服务时效承诺"
+          subtitle="主体设立各环节预计时效，顾问将按 SLA 推进"
+          :items="SERVICE_SLA_ITEMS"
+        />
+      </section>
+
       <!-- Materials form -->
       <section v-if="showMaterialsForm" class="opc-panel">
         <div v-if="verifyMock" class="opc-alert opc-alert--info">
@@ -191,6 +200,17 @@
             {{ submitting ? '提交中...' : '提交注册资料' }}
           </button>
         </ElForm>
+      </section>
+
+      <!-- 审核中提示 -->
+      <section v-else-if="showMaterialsReviewing && !showMaterialsOverview" class="opc-panel">
+        <h2 class="opc-panel__section-title">资料审核中</h2>
+        <p class="opc-panel__section-desc">
+          您的注册资料已提交成功，顾问正在审核。审核通过后将进入工商注册流程；如需补正，系统会通知您重新提交。
+        </p>
+        <div class="opc-alert opc-alert--info">
+          当前状态：资料审核中，请勿重复提交。
+        </div>
       </section>
 
       <!-- Readonly materials -->
@@ -401,6 +421,8 @@ import { useMemberStore } from '@/store/modules/member'
 import { requireLogin } from '@/utils/auth/requireLogin'
 import { sanitizeErrorMessage } from '@/utils/http/error'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import ComplianceSlaPanel from '@/components/frontend/ComplianceSlaPanel.vue'
+import { SERVICE_SLA_ITEMS } from '@/data/frontend/complianceSla'
 
 defineOptions({ name: 'ComplianceOpc' })
 
@@ -436,9 +458,16 @@ const DEFAULT_STEPS: OpcProgressStep[] = [
 
 const timelineSteps = computed(() => progress.value?.steps?.length ? progress.value.steps : DEFAULT_STEPS)
 
-const showMaterialsForm = computed(() =>
-  progress.value?.materialsEditable !== false &&
-  ['pending', 'materials'].includes(progress.value?.opcStatus ?? 'pending')
+const showMaterialsForm = computed(() => {
+  const p = progress.value
+  if (!p) return false
+  if (p.materialsEditable === false) return false
+  return ['pending', 'materials'].includes(p.opcStatus ?? 'pending')
+})
+
+const showMaterialsReviewing = computed(() =>
+  !showMaterialsForm.value &&
+  progress.value?.opcStatus === 'materials_review'
 )
 
 const showBankSection = computed(() =>
@@ -695,14 +724,10 @@ async function loadProgress() {
   loading.value = true
   try {
     progress.value = await getOpcProgress()
-  } catch {
-    progress.value = {
-      opcId: 0,
-      opcStatus: 'pending',
-      estimatedSlaDays: 14,
-      steps: DEFAULT_STEPS,
-      materialsEditable: true
-    }
+  } catch (e: unknown) {
+    progress.value = null
+    const msg = sanitizeErrorMessage(e instanceof Error ? e.message : '加载主体设立进度失败')
+    ElMessage.error(msg)
   } finally {
     loading.value = false
     await loadMaterialsOverview()
@@ -710,6 +735,14 @@ async function loadProgress() {
 }
 
 async function handleSubmitMaterials() {
+  if (!showMaterialsForm.value) {
+    ElMessage.warning(
+      progress.value?.opcStatus === 'materials_review'
+        ? '资料已提交，正在审核中，请勿重复提交'
+        : '当前状态不允许提交资料'
+    )
+    return
+  }
   if (!formRef.value) return
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return

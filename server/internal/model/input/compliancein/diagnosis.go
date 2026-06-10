@@ -33,11 +33,14 @@ type DiagnosisSubmitInp struct {
 
 // DiagnosisSubmitModel 诊断提交出参
 type DiagnosisSubmitModel struct {
-	Id              uint64        `json:"id"`
-	RecommendedPlan string        `json:"recommendedPlan"`
-	TaxComparison   TaxComparison `json:"taxComparison"`
-	Reasons         []string      `json:"reasons,omitempty"`
-	AssumptionHints []string      `json:"assumptionHints,omitempty"`
+	Id               uint64        `json:"id"`
+	RecommendedPlan  string        `json:"recommendedPlan"`
+	TaxComparison    TaxComparison `json:"taxComparison"`
+	Reasons          []string      `json:"reasons,omitempty"`
+	AssumptionHints  []string      `json:"assumptionHints,omitempty"`
+	RiskLevel        string        `json:"riskLevel,omitempty"`
+	ComplianceAlerts []string      `json:"complianceAlerts,omitempty"`
+	McnGuidance      []string      `json:"mcnGuidance,omitempty"`
 }
 
 // TaxCalculatorInp 税负计算器入参
@@ -132,9 +135,12 @@ type DiagnosisDetailInp struct {
 
 // DiagnosisDetailModel 诊断详情出参
 type DiagnosisDetailModel struct {
-	Id              uint64        `json:"id"`
-	RecommendedPlan string        `json:"recommendedPlan"`
-	TaxComparison   TaxComparison `json:"taxComparison"`
-	Reasons         []string      `json:"reasons,omitempty"`
-	AssumptionHints []string      `json:"assumptionHints,omitempty"`
+	Id               uint64        `json:"id"`
+	RecommendedPlan  string        `json:"recommendedPlan"`
+	TaxComparison    TaxComparison `json:"taxComparison"`
+	Reasons          []string      `json:"reasons,omitempty"`
+	AssumptionHints  []string      `json:"assumptionHints,omitempty"`
+	RiskLevel        string        `json:"riskLevel,omitempty"`
+	ComplianceAlerts []string      `json:"complianceAlerts,omitempty"`
+	McnGuidance      []string      `json:"mcnGuidance,omitempty"`
 }

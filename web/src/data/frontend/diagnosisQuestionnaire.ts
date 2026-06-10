@@ -67,6 +67,7 @@ export const diagnosisSteps = [
 ] as const
 
 export const personaOptions: PersonaOption[] = [
+  { value: 'MCN签约主播', label: 'MCN签约主播', desc: '与机构签约，涉及分成与对公结算', icon: 'ri:team-line' },
   { value: '内容创作', label: '内容创作', desc: '短视频、直播、广告合作等', icon: 'ri:video-line' },
   { value: '自由职业', label: '自由职业接单', desc: '设计、咨询、翻译等项目制收入', icon: 'ri:palette-line' },
   { value: '电商个体', label: '电商网店', desc: '淘宝、拼多多、跨境小店等', icon: 'ri:store-2-line' },
@@ -125,6 +126,13 @@ export const riskSignalOptions: RiskOption[] = [
   { value: 'platform_notice', label: '收到平台补税/合规通知', desc: '平台要求补税、升级资质等', severity: 'high' },
   { value: 'overdue', label: '曾有申报逾期或滞纳金', desc: '历史存在逾期记录', severity: 'medium' },
   { value: 'none', label: '暂无上述情况', desc: '目前未遇到明显合规压力', severity: 'low' }
+]
+
+/** MCN 结算方式（F-06） */
+export const mcnSettlementOptions: ConcernOption[] = [
+  { value: '个人提现', label: '以个人卡提现为主' },
+  { value: 'MCN对公', label: 'MCN 对公结算后分成' },
+  { value: '混合结算', label: '个人提现 + 对公混合' },
 ]
 
 export const concernOptions: ConcernOption[] = [

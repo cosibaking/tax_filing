@@ -231,6 +231,16 @@ type ComplianceStatementNotifyRes struct {
 	*compliancein.StatementNotifyModel
 }
 
+// ComplianceStatementPdfReq 对账单 PDF 下载地址
+type ComplianceStatementPdfReq struct {
+	g.Meta `path:"/admin/compliance/statements/{id}/pdf" method:"get" tags:"合规服务" summary:"对账单PDF下载地址"`
+	Id     uint64 `p:"id" in:"path" json:"id" v:"required|min:1#请指定对账单|对账单无效"`
+}
+
+type ComplianceStatementPdfRes struct {
+	Url string `json:"url"`
+}
+
 // ComplianceAuditExportReq 合规留痕 CSV 导出
 type ComplianceAuditExportReq struct {
 	g.Meta   `path:"/admin/compliance/audit/export" method:"get" tags:"合规服务" summary:"导出合规留痕CSV"`

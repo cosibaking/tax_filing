@@ -108,6 +108,14 @@
                 </div>
               </div>
 
+              <section v-if="complianceState.hasActiveOrder" class="overview-sla">
+                <ComplianceSlaPanel
+                  title="服务时效承诺"
+                  subtitle="您的专属顾问将按以下 SLA 推进服务"
+                  :items="slaPreviewItems"
+                />
+              </section>
+
               <div v-if="todoList.length > 0" class="overview-todos">
                 <h3 class="overview-todos__title">待办提醒</h3>
                 <ul>
@@ -398,6 +406,8 @@ import {
 } from '@/api/frontend/compliance/member'
 import type { CompliancePlanState } from '@/config/complianceMenu'
 import { formatTimestamp } from '@/utils/time'
+import ComplianceSlaPanel from '@/components/frontend/ComplianceSlaPanel.vue'
+import { SERVICE_SLA_ITEMS } from '@/data/frontend/complianceSla'
 
 defineOptions({ name: 'UserCenter' })
 
@@ -431,6 +441,7 @@ const activeMenu = computed(() => {
 
 // ===== 合规概览数据（P-07） =====
 const complianceState = ref<CompliancePlanState>({ hasActiveOrder: false, opcStatus: 'none' })
+const slaPreviewItems = computed(() => SERVICE_SLA_ITEMS.slice(0, 4))
 const monthSummary = reactive({ revenue: 0, profit: 0 })
 const todoList = ref<{ text: string; path?: string; urgent?: boolean }[]>([])
 
@@ -1002,6 +1013,10 @@ const handleChangePassword = async () => {
   &.is-success {
     color: #16a34a;
   }
+}
+
+.overview-sla {
+  margin-bottom: 20px;
 }
 
 .overview-todos__title {

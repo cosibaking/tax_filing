@@ -66,6 +66,7 @@ func (s *sComplianceStatement) ListMemberStatements(ctx context.Context, in *com
 			CumulativeProfit:  cumulative,
 			FilingStatus:      filingStatus,
 			Status:            status,
+			PdfUrl:            statementPdfUrlIfExists(row.Id),
 		})
 	}
 

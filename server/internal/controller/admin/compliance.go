@@ -258,6 +258,15 @@ func (c *ControllerV1) ComplianceStatementNotify(ctx context.Context, req *api.C
 	return &api.ComplianceStatementNotifyRes{StatementNotifyModel: out}, nil
 }
 
+// ComplianceStatementPdf 对账单 PDF 下载地址
+func (c *ControllerV1) ComplianceStatementPdf(ctx context.Context, req *api.ComplianceStatementPdfReq) (res *api.ComplianceStatementPdfRes, err error) {
+	out, err := service.ComplianceStatement().AdminStatementPdfUrl(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceStatementPdfRes{Url: out.Url}, nil
+}
+
 // ComplianceStatementSend 单主体生成并发送月度对账单
 func (c *ControllerV1) ComplianceStatementSend(ctx context.Context, req *api.ComplianceStatementSendReq) (res *api.ComplianceStatementSendRes, err error) {
 	ip := ""

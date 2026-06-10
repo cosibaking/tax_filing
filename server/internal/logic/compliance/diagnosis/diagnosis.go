@@ -29,11 +29,14 @@ func (s *sComplianceDiagnosis) Preview(ctx context.Context, in *compliancein.Dia
 		return nil, err
 	}
 	return &compliancein.DiagnosisSubmitModel{
-		Id:              0,
-		RecommendedPlan: prepared.recommendedPlan,
-		TaxComparison:   prepared.comparison,
-		Reasons:         prepared.reasons,
-		AssumptionHints: prepared.hints,
+		Id:               0,
+		RecommendedPlan:  prepared.recommendedPlan,
+		TaxComparison:    prepared.comparison,
+		Reasons:          prepared.reasons,
+		AssumptionHints:  prepared.hints,
+		RiskLevel:        prepared.riskLevel,
+		ComplianceAlerts: prepared.complianceAlerts,
+		McnGuidance:      prepared.mcnGuidance,
 	}, nil
 }
 
@@ -83,11 +86,14 @@ func (s *sComplianceDiagnosis) Submit(ctx context.Context, in *compliancein.Diag
 	}
 
 	return &compliancein.DiagnosisSubmitModel{
-		Id:              uint64(id),
-		RecommendedPlan: prepared.recommendedPlan,
-		TaxComparison:   prepared.comparison,
-		Reasons:         prepared.reasons,
-		AssumptionHints: prepared.hints,
+		Id:               uint64(id),
+		RecommendedPlan:  prepared.recommendedPlan,
+		TaxComparison:    prepared.comparison,
+		Reasons:          prepared.reasons,
+		AssumptionHints:  prepared.hints,
+		RiskLevel:        prepared.riskLevel,
+		ComplianceAlerts: prepared.complianceAlerts,
+		McnGuidance:      prepared.mcnGuidance,
 	}, nil
 }
 
@@ -97,8 +103,11 @@ type preparedDiagnosis struct {
 	reasons         []string
 	hints           []string
 	platformsJson   string
-	comparisonJson  string
-	annualCost      float64
+	comparisonJson   string
+	annualCost       float64
+	riskLevel        string
+	complianceAlerts []string
+	mcnGuidance      []string
 }
 
 func (s *sComplianceDiagnosis) prepareDiagnosis(in *compliancein.DiagnosisSubmitInp) (*preparedDiagnosis, error) {
@@ -116,6 +125,7 @@ func (s *sComplianceDiagnosis) prepareDiagnosis(in *compliancein.DiagnosisSubmit
 	}
 
 	comparison, recommendedPlan, reasons := CompareTaxSchemes(annualIncome, annualCost, in.TaxBureauContact)
+	riskLevel, alerts, mcnGuidance := BuildComplianceInsights(in)
 
 	platformsJson, err := gjson.Encode(in.Platforms)
 	if err != nil {
@@ -127,13 +137,16 @@ func (s *sComplianceDiagnosis) prepareDiagnosis(in *compliancein.DiagnosisSubmit
 	}
 
 	return &preparedDiagnosis{
-		comparison:      comparison,
-		recommendedPlan: recommendedPlan,
-		reasons:         reasons,
-		hints:           BuildAssumptionHints(annualIncome, annualCost),
-		platformsJson:   string(platformsJson),
-		comparisonJson:  string(comparisonJson),
-		annualCost:      annualCost,
+		comparison:       comparison,
+		recommendedPlan:  recommendedPlan,
+		reasons:          reasons,
+		hints:            BuildAssumptionHints(annualIncome, annualCost),
+		platformsJson:    string(platformsJson),
+		comparisonJson:   string(comparisonJson),
+		annualCost:       annualCost,
+		riskLevel:        riskLevel,
+		complianceAlerts: alerts,
+		mcnGuidance:      mcnGuidance,
 	}, nil
 }
 
@@ -196,12 +209,15 @@ func (s *sComplianceDiagnosis) GetDetail(ctx context.Context, in *compliancein.D
 	}
 
 	var row struct {
-		MemberId        uint64 `json:"member_id"`
-		RecommendedPlan string `json:"recommended_plan"`
-		TaxComparison   string `json:"tax_comparison"`
-		TaxBureauContact int   `json:"tax_bureau_contact"`
-		MonthlyIncomeRange string `json:"monthly_income_range"`
+		MemberId           uint64  `json:"member_id"`
+		RecommendedPlan    string  `json:"recommended_plan"`
+		TaxComparison      string  `json:"tax_comparison"`
+		TaxBureauContact   int     `json:"tax_bureau_contact"`
+		MonthlyIncomeRange string  `json:"monthly_income_range"`
 		AnnualCostEstimate float64 `json:"annual_cost_estimate"`
+		ExistingEntity     string  `json:"existing_entity"`
+		HasFiledTax        string  `json:"has_filed_tax"`
+		Notes              string  `json:"notes"`
 	}
 
 	err := g.DB().Model(tableDiagnosis).Ctx(ctx).
@@ -232,13 +248,23 @@ func (s *sComplianceDiagnosis) GetDetail(ctx context.Context, in *compliancein.D
 		annualCost = row.AnnualCostEstimate
 	}
 	_, _, reasons := CompareTaxSchemes(annualIncome, annualCost, row.TaxBureauContact == 1)
+	riskLevel, alerts, mcnGuidance := BuildComplianceInsights(&compliancein.DiagnosisSubmitInp{
+		MonthlyIncomeRange: row.MonthlyIncomeRange,
+		ExistingEntity:     row.ExistingEntity,
+		HasFiledTax:        row.HasFiledTax,
+		TaxBureauContact:   row.TaxBureauContact == 1,
+		Notes:              row.Notes,
+	})
 
 	return &compliancein.DiagnosisDetailModel{
-		Id:              in.DiagnosisId,
-		RecommendedPlan: row.RecommendedPlan,
-		TaxComparison:   comparison,
-		Reasons:         reasons,
-		AssumptionHints: BuildAssumptionHints(annualIncome, annualCost),
+		Id:               in.DiagnosisId,
+		RecommendedPlan:  row.RecommendedPlan,
+		TaxComparison:    comparison,
+		Reasons:          reasons,
+		AssumptionHints:  BuildAssumptionHints(annualIncome, annualCost),
+		RiskLevel:        riskLevel,
+		ComplianceAlerts: alerts,
+		McnGuidance:      mcnGuidance,
 	}, nil
 }
 

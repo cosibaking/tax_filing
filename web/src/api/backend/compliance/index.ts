@@ -498,6 +498,13 @@ export function sendStatementNotifications(data: SendStatementsParams) {
   })
 }
 
+/** 获取对账单 PDF 下载地址 */
+export function getAdminStatementPdfUrl(id: number | string) {
+  return adminRequest.get<{ url: string }>({
+    url: `/compliance/statements/${id}/pdf`
+  })
+}
+
 /** 工作台概览数据 */
 export interface ComplianceDashboardData {
   activeCustomers: number

@@ -650,7 +650,7 @@ type ComplianceMemberStatementsRes struct {
 }
 
 type ComplianceStatementPdfReq struct {
-	g.Meta `path:"/compliance/statements/{id}/pdf" method:"get" tags:"会员合规" summary:"对账单PDF（MVP未实现）"`
+	g.Meta `path:"/compliance/statements/{id}/pdf" method:"get" tags:"会员合规" summary:"对账单PDF下载地址"`
 	Id     uint64 `p:"id" in:"path" json:"id" v:"required|min:1#请指定对账单|对账单无效"`
 }
 

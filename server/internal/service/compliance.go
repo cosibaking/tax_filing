@@ -82,6 +82,8 @@ type (
 	IComplianceStatement interface {
 		ListStatements(ctx context.Context, in *compliancein.StatementListInp) (*compliancein.StatementListModel, error)
 		ListMemberStatements(ctx context.Context, in *compliancein.MemberStatementListInp) (*compliancein.MemberStatementListModel, error)
+		GetStatementPdfUrl(ctx context.Context, in *compliancein.StatementPdfInp) (*compliancein.StatementPdfModel, error)
+		AdminStatementPdfUrl(ctx context.Context, statementId uint64) (*compliancein.StatementPdfModel, error)
 		GenerateStatements(ctx context.Context, in *compliancein.StatementGenerateInp) (*compliancein.StatementGenerateModel, error)
 		NotifyStatements(ctx context.Context, in *compliancein.StatementNotifyInp) (*compliancein.StatementNotifyModel, error)
 		SendStatement(ctx context.Context, in *compliancein.StatementSendInp) (*compliancein.StatementSendModel, error)

@@ -28,6 +28,54 @@
       </div>
 
       <template v-else>
+        <!-- 合规风险评级 -->
+        <div
+          v-if="riskLevelMeta"
+          class="rounded-[32px] p-6 border flex flex-wrap items-center gap-4"
+          :class="riskLevelMeta.panelClass"
+        >
+          <span class="px-4 py-2 rounded-full text-sm font-black" :class="riskLevelMeta.badgeClass">
+            {{ riskLevelMeta.label }}
+          </span>
+          <p class="text-sm font-medium flex-1 min-w-[200px]" :class="riskLevelMeta.textClass">
+            {{ riskLevelMeta.desc }}
+          </p>
+        </div>
+
+        <!-- 漏报/合规提示 -->
+        <div
+          v-if="complianceAlerts.length"
+          class="bg-orange-50/80 rounded-[32px] border border-orange-200 p-6 md:p-8"
+        >
+          <h2 class="font-heading font-black text-lg text-orange-800 mb-4 flex items-center gap-2">
+            <ArtSvgIcon icon="ri:alert-line" />
+            合规风险提示
+          </h2>
+          <ul class="space-y-3">
+            <li v-for="(alert, idx) in complianceAlerts" :key="idx" class="text-sm text-orange-900 leading-relaxed flex gap-2">
+              <span class="font-bold shrink-0">·</span>
+              <span>{{ alert }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- MCN 指引 -->
+        <div
+          v-if="mcnGuidance.length"
+          class="bg-blue-50/70 rounded-[32px] border border-blue-100 p-6 md:p-8"
+        >
+          <h2 class="font-heading font-black text-lg text-clay-foreground mb-4 flex items-center gap-2">
+            <ArtSvgIcon icon="ri:team-line" class="text-clay-accent" />
+            MCN 签约主播专项指引
+          </h2>
+          <ul class="space-y-3">
+            <li v-for="(tip, idx) in mcnGuidance" :key="idx" class="text-sm text-clay-foreground leading-relaxed flex gap-2">
+              <span class="text-clay-accent font-bold shrink-0">·</span>
+              <span>{{ tip }}</span>
+            </li>
+          </ul>
+        </div>
+
         <!-- Four-column comparison -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           <div
@@ -143,6 +191,15 @@
           </button>
         </div>
 
+        <!-- 服务 SLA -->
+        <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
+          <ComplianceSlaPanel
+            title="签约后服务时效承诺"
+            subtitle="对齐商业计划书 SLA，让您清楚每个环节的交付时间"
+            :items="SERVICE_SLA_ITEMS"
+          />
+        </div>
+
         <!-- Disclaimer -->
         <p class="text-center text-xs text-clay-muted font-medium leading-relaxed max-w-2xl mx-auto">
           以上税负数据均为估算值，实际税负取决于真实收入、成本及税收政策变化。本服务为合规方案，非逃税方案。
@@ -167,6 +224,9 @@ import {
   isGuestDiagnosisId,
   saveGuestDiagnosis
 } from '@/utils/compliance/guestDiagnosisCache'
+import ComplianceSlaPanel from '@/components/frontend/ComplianceSlaPanel.vue'
+import { SERVICE_SLA_ITEMS } from '@/data/frontend/complianceSla'
+import type { ComplianceRiskLevel } from '@/api/frontend/compliance/diagnosis'
 
 defineOptions({ name: 'ComplianceDiagnosisResult' })
 
@@ -222,6 +282,38 @@ const comparisonColumns = computed(() => {
           : 'bg-white/70 border-[#d1d9e6]/40 shadow-clay-card'
     }
   })
+})
+
+const complianceAlerts = computed(() => diagnosisResult.value?.complianceAlerts || [])
+const mcnGuidance = computed(() => diagnosisResult.value?.mcnGuidance || [])
+
+const riskLevelMeta = computed(() => {
+  const level = diagnosisResult.value?.riskLevel as ComplianceRiskLevel | undefined
+  if (!level) return null
+  const map: Record<ComplianceRiskLevel, { label: string; desc: string; panelClass: string; badgeClass: string; textClass: string }> = {
+    green: {
+      label: '合规风险：低',
+      desc: '当前未发现明显高危信号，建议按推荐方案推进合规落地并保留完整凭证。',
+      panelClass: 'bg-green-50/80 border-green-200',
+      badgeClass: 'bg-green-600 text-white',
+      textClass: 'text-green-900'
+    },
+    yellow: {
+      label: '合规风险：中',
+      desc: '存在需关注的合规信号，建议尽快梳理申报记录与平台收入台账。',
+      panelClass: 'bg-yellow-50/80 border-yellow-200',
+      badgeClass: 'bg-yellow-500 text-white',
+      textClass: 'text-yellow-900'
+    },
+    red: {
+      label: '合规风险：高',
+      desc: '存在漏报、税局联系或高收入无主体等高危因素，建议优先咨询顾问制定整改路径。',
+      panelClass: 'bg-red-50/80 border-red-200',
+      badgeClass: 'bg-red-600 text-white',
+      textClass: 'text-red-900'
+    }
+  }
+  return map[level] || null
 })
 
 const recommendationReasons = computed(() => {

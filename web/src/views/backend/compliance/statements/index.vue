@@ -58,9 +58,9 @@
         </ElDescriptionsItem>
         <ElDescriptionsItem label="发送时间">{{ summaryRow.sentAt || '—' }}</ElDescriptionsItem>
       </ElDescriptions>
-      <p class="text-xs text-gray-400 mt-3">MVP 阶段以 JSON 摘要为准，PDF 导出后续版本提供。</p>
       <template #footer>
         <ElButton @click="summaryVisible = false">关闭</ElButton>
+        <ElButton type="primary" :loading="pdfLoading" @click="downloadSummaryPdf">下载 PDF</ElButton>
       </template>
     </ElDialog>
   </div>
@@ -73,6 +73,7 @@ import {
   getAdminStatementList,
   batchGenerateStatements,
   sendStatementNotifications,
+  getAdminStatementPdfUrl,
   STATEMENT_STATUS_LABELS,
   type AdminStatementItem
 } from '@/api/backend/compliance'
@@ -89,6 +90,7 @@ const generating = ref(false)
 const sending = ref(false)
 const summaryVisible = ref(false)
 const summaryRow = ref<AdminStatementItem | null>(null)
+const pdfLoading = ref(false)
 
 const now = new Date()
 batchPeriod.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -190,6 +192,24 @@ const {
 function openSummary(row: AdminStatementItem) {
   summaryRow.value = row
   summaryVisible.value = true
+}
+
+async function downloadSummaryPdf() {
+  if (!summaryRow.value) return
+  if (summaryRow.value.pdfUrl) {
+    window.open(summaryRow.value.pdfUrl, '_blank')
+    return
+  }
+  pdfLoading.value = true
+  try {
+    const res = await getAdminStatementPdfUrl(summaryRow.value.id)
+    if (res.url) window.open(res.url, '_blank')
+    else ElMessage.warning('PDF 生成失败')
+  } catch {
+    ElMessage.error('PDF 下载失败')
+  } finally {
+    pdfLoading.value = false
+  }
 }
 
 const handleSearch = (params: Record<string, any>) => {

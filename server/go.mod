@@ -17,9 +17,11 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/qiniu/go-sdk/v7 v7.25.6
 	github.com/shirou/gopsutil/v4 v4.26.5
+	github.com/signintech/gopdf v0.36.1
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.96
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.93
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.72
+	github.com/xuri/excelize/v2 v2.10.1
 	golang.org/x/image v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -59,6 +61,8 @@ require (
 	github.com/olekukonko/ll v0.0.9 // indirect
 	github.com/olekukonko/tablewriter v1.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.1-0.20220228012449-10b1cf09e00b // indirect
+	github.com/phpdave11/gofpdi v1.0.14-0.20211212211723-1f10f9844311 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/redis/go-redis/v9 v9.12.1 // indirect
 	github.com/richardlehane/mscfb v1.0.6 // indirect
@@ -68,7 +72,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
-	github.com/xuri/excelize/v2 v2.10.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect

@@ -79,6 +79,7 @@ type OpcProgressModel struct {
 	Steps              []ProgressStepItem        `json:"steps"`
 	MaterialsReadonly  *MaterialsReadonlySummary `json:"materialsReadonly,omitempty"`
 	MaterialsSubmitted bool                      `json:"materialsSubmitted"`
+	MaterialsEditable  bool                      `json:"materialsEditable"`
 	RejectNote         string                    `json:"rejectNote,omitempty"`
 	BankAccountMasked  string                    `json:"bankAccountMasked,omitempty"`
 	PlanTier           string                    `json:"planTier,omitempty"`

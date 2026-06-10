@@ -16,6 +16,10 @@ web/src/addons/tenant/
 server/resource/public/attachment/upload/*
 !server/resource/public/attachment/upload/.gitkeep
 
+# PDF 中文字体（体积较大，部署时 rsync 或 apt install fonts-arphic-ukai）
+server/resource/font/*.ttf
+server/internal/library/statementpdf/fonts/*.ttf
+
 # 前端构建产物（嵌入 Go 静态目录，可 pnpm build 重建）
 server/resource/public/dist/
 
