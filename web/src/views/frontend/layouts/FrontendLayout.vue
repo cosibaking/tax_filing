@@ -256,7 +256,7 @@
               <span class="font-heading font-extrabold text-2xl text-clay-foreground tracking-tight">{{ siteNameFirst }}<span class="text-clay-accent">{{ siteNameLast }}</span></span>
             </div>
             <p class="text-clay-muted max-w-sm leading-relaxed">
-              {{ siteStore.getSiteSubtitle() || '个人税务合规与申报一站式服务，让税务管理更省心。' }}
+              {{ '个人税务合规与申报一站式服务，让税务管理更省心。' }}
             </p>
           </div>
           <div>
