@@ -18,6 +18,22 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { fetchSiteIndex, type SiteInfo } from '@/api/site'
+import defaultLogo from '@imgs/common/jinshui-logo.png'
+
+const BRAND_SITE_NAME = '金税管家'
+const LEGACY_SITE_NAMES = new Set(['XYGo Admin', 'XYgoAdmin', 'XYGo'])
+const LEGACY_LOGO_MARKERS = ['995f9919-23d3-4ce2-8564-2460e4b1261d', 'logo.webp']
+
+function normalizeSiteInfo(info: Partial<SiteInfo>): Partial<SiteInfo> {
+  const normalized = { ...info }
+  if (!normalized.siteName || LEGACY_SITE_NAMES.has(normalized.siteName)) {
+    normalized.siteName = BRAND_SITE_NAME
+  }
+  if (!normalized.logo || LEGACY_LOGO_MARKERS.some((marker) => normalized.logo?.includes(marker))) {
+    normalized.logo = ''
+  }
+  return normalized
+}
 
 /**
  * 站点信息状态管理
@@ -57,7 +73,7 @@ export const useSiteStore = defineStore(
     const loadSiteInfo = async (): Promise<void> => {
       try {
         const res = await fetchSiteIndex()
-        siteInfo.value = res
+        siteInfo.value = normalizeSiteInfo(res)
         loaded.value = true
 
         // 同步后端开关到前台配置
@@ -72,7 +88,7 @@ export const useSiteStore = defineStore(
      * 获取站点名称
      */
     const getSiteName = (): string => {
-      return siteInfo.value.siteName || '金税管家'
+      return siteInfo.value.siteName || BRAND_SITE_NAME
     }
 
     /**
@@ -86,7 +102,7 @@ export const useSiteStore = defineStore(
      * 获取Logo
      */
     const getLogo = (): string => {
-      return siteInfo.value.logo || ''
+      return siteInfo.value.logo || defaultLogo
     }
 
     /**

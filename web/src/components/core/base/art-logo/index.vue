@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
   import { useSiteStore } from '@/store/modules/site'
-  import defaultLogo from '@imgs/common/logo.webp'
+  import defaultLogo from '@imgs/common/jinshui-logo.png'
 
   defineOptions({ name: 'ArtLogo' })
 

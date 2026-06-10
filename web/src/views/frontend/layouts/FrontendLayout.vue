@@ -24,10 +24,7 @@
       <div class="max-w-[1440px] mx-auto px-8 flex items-center justify-between">
         <!-- Logo（读取站点配置） -->
         <div class="flex items-center gap-3 cursor-pointer group" @click="router.push('/')">
-          <img v-if="siteStore.getLogo()" :src="siteStore.getLogo()" alt="logo" class="w-10 h-10 rounded-full shadow-clay-btn group-hover:scale-105 transition-transform object-cover" />
-          <div v-else class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-clay-btn flex items-center justify-center text-white font-bold text-xl group-hover:scale-105 transition-transform">
-            {{ siteName.charAt(0) }}
-          </div>
+          <img :src="brandLogo" alt="金税管家" class="h-10 w-10 rounded-lg shadow-clay-btn group-hover:scale-105 transition-transform object-cover object-[center_35%]" />
           <span class="font-heading font-extrabold text-2xl text-clay-foreground tracking-tight">{{ siteNameFirst }}<span class="text-clay-accent">{{ siteNameLast }}</span></span>
         </div>
 
@@ -255,8 +252,7 @@
         <div class="grid md:grid-cols-4 gap-12 mb-12">
           <div class="col-span-1 md:col-span-2">
             <div class="flex items-center gap-3 mb-6">
-              <img v-if="siteStore.getLogo()" :src="siteStore.getLogo()" alt="logo" class="w-10 h-10 rounded-full shadow-clay-btn object-cover" />
-              <div v-else class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 shadow-clay-btn flex items-center justify-center text-white font-bold text-xl">{{ siteName.charAt(0) }}</div>
+              <img :src="brandLogo" alt="金税管家" class="h-10 w-10 rounded-lg shadow-clay-btn object-cover object-[center_35%]" />
               <span class="font-heading font-extrabold text-2xl text-clay-foreground tracking-tight">{{ siteNameFirst }}<span class="text-clay-accent">{{ siteNameLast }}</span></span>
             </div>
             <p class="text-clay-muted max-w-sm leading-relaxed">
@@ -311,6 +307,7 @@ const siteStore = useSiteStore()
 const settingStore = useSettingStore()
 
 const siteName = computed(() => siteStore.getSiteName())
+const brandLogo = computed(() => siteStore.getLogo())
 // 站点名称拆分：前半深色 + 后半蓝色（保持渐变品牌效果）
 const siteNameFirst = computed(() => {
   const name = siteName.value
