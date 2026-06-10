@@ -57,7 +57,8 @@ class VersionManager {
   /**
    * 规范化版本号字符串，移除前缀 'v'
    */
-  private normalizeVersion(version: string): string {
+  private normalizeVersion(version: string | null | undefined): string {
+    if (!version) return ''
     return version.replace(/^v/, '')
   }
 
@@ -128,8 +129,13 @@ class VersionManager {
     const normalizedCurrent = this.normalizeVersion(StorageConfig.CURRENT_VERSION)
     const normalizedStored = this.normalizeVersion(storedVersion)
 
+    if (!normalizedCurrent || !normalizedStored) {
+      return false
+    }
+
     return upgradeLogList.value.some((item) => {
       const itemVersion = this.normalizeVersion(item.version)
+      if (!itemVersion) return false
       return (
         item.requireReLogin && itemVersion > normalizedStored && itemVersion <= normalizedCurrent
       )
@@ -240,6 +246,11 @@ class VersionManager {
    * 系统升级处理主流程
    */
   async processUpgrade(): Promise<void> {
+    if (!StorageConfig.CURRENT_VERSION) {
+      console.warn('[Upgrade] 未配置应用版本号，跳过升级检查')
+      return
+    }
+
     // 跳过特定版本
     if (this.shouldSkipUpgrade()) {
       console.debug('[Upgrade] 跳过版本升级检查')
