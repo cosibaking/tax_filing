@@ -1,0 +1,21 @@
+# OCR.space API 配置示例
+# 复制为 manifest/config/ocrspace.yaml 并填入真实 apiKey
+# 或通过环境变量 OCRSPACE_API_KEY 覆盖 apiKey
+# 或通过 OCRSPACE_CONFIG 指定配置文件路径
+
+ocrspace:
+  # 必填：在 https://ocr.space/ocrapi/freekey 注册获取
+  apiKey: "your-api-key-here"
+
+  # 可选：API 端点（Free / PRO 不同）
+  endpoint: "https://api.ocr.space/parse/image"
+  endpointGet: "https://api.ocr.space/parse/imageurl"
+
+  # 可选：请求超时，支持 Go duration 格式（如 60s、2m）
+  timeout: 60s
+
+  # 可选：默认 OCR 语言（3 字母代码：eng/chs/cht/auto 等）
+  defaultLanguage: "chs"
+
+  # 可选：默认 OCR 引擎（1=最快，2=均衡，3=精度最高）
+  defaultEngine: 2
