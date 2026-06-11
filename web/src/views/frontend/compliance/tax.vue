@@ -3,13 +3,13 @@
   <div>
     <EmploymentStatusCard only-when-unknown class="mb-6" @saved="loadChecklist" />
 
-    <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <section class="member-panel">
+    <div class="member-panel__head">
       <div>
-        <h2 class="font-heading font-black text-2xl text-clay-foreground">申报管理</h2>
-        <p class="text-xs text-clay-muted mt-1">申报截止日与任务状态</p>
+        <h2 class="member-panel__title">申报管理</h2>
+        <p class="member-panel__desc">申报截止日与任务状态</p>
       </div>
-      <div v-if="calendar?.nextDueDate" class="px-4 py-2 rounded-2xl bg-orange-50 border border-orange-200 text-sm font-bold text-orange-700">
+      <div v-if="calendar?.nextDueDate" class="member-alert member-alert--info">
         下次截止：{{ calendar.nextDueDate }}
         <span v-if="calendar.daysUntilDue != null">（{{ calendar.daysUntilDue }} 天）</span>
       </div>
@@ -17,16 +17,16 @@
 
     <!-- 月历导航 -->
     <div class="flex items-center justify-between mb-6">
-      <button type="button" class="p-2 rounded-xl bg-[#f0f3f8] shadow-clay-pressed" @click="prevMonth">
+      <button type="button" class="member-btn member-btn--ghost" @click="prevMonth">
         <ArtSvgIcon icon="ri:arrow-left-s-line" class="text-xl text-clay-accent" />
       </button>
-      <span class="font-heading font-black text-lg text-clay-foreground">{{ viewYear }}年{{ viewMonth }}月</span>
-      <button type="button" class="p-2 rounded-xl bg-[#f0f3f8] shadow-clay-pressed" @click="nextMonth">
+      <span class="font-bold text-lg text-clay-foreground">{{ viewYear }}年{{ viewMonth }}月</span>
+      <button type="button" class="member-btn member-btn--ghost" @click="nextMonth">
         <ArtSvgIcon icon="ri:arrow-right-s-line" class="text-xl text-clay-accent" />
       </button>
     </div>
 
-    <div v-if="loading" class="py-16 text-center">
+    <div v-if="loading" class="member-empty">
       <ArtSvgIcon icon="ri:loader-4-line" class="text-3xl text-clay-accent animate-spin mx-auto" />
     </div>
 
@@ -54,7 +54,7 @@
           <div
             v-for="task in tasks"
             :key="task.id"
-            class="p-4 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed flex flex-wrap items-center justify-between gap-3"
+            class="p-4 rounded-lg border border-[#e8edf3] bg-[#f8fafc] flex flex-wrap items-center justify-between gap-3"
           >
             <div>
               <span class="font-bold text-clay-foreground">{{ formatTaskTitle(task) }}</span>
@@ -75,7 +75,7 @@
       </div>
 
       <!-- 自查清单 -->
-      <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
+      <div class="p-6 rounded-lg border border-[#e8edf3] bg-[#f8fafc]">
         <h3 class="text-sm font-black text-clay-muted uppercase tracking-widest mb-4">报税前自查清单</h3>
         <div class="space-y-3">
           <label
@@ -243,8 +243,5 @@ onMounted(loadData)
 <style lang="scss" scoped>
 .text-clay-foreground { color: #32325d; }
 .text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-.shadow-clay-card { box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9); }
-.shadow-clay-pressed { box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff; }
+.text-clay-accent { color: #2563eb; }
 </style>

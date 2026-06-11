@@ -56,6 +56,60 @@ func Verify(ctx context.Context, memberId, fileId uint64, expires int64, sign st
 	return hmac.Equal([]byte(expected), []byte(strings.TrimSpace(sign)))
 }
 
+// NormalizeAttachmentPath 去掉签名查询参数，仅保留附件相对路径
+func NormalizeAttachmentPath(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	if idx := strings.Index(raw, "?"); idx >= 0 {
+		return raw[:idx]
+	}
+	return raw
+}
+
+// RefreshMemberAvatarURL 为会员头像重新生成可访问的签名链接
+func RefreshMemberAvatarURL(ctx context.Context, memberId uint64, avatar string) string {
+	avatar = strings.TrimSpace(avatar)
+	if avatar == "" || memberId == 0 {
+		return avatar
+	}
+	if strings.HasPrefix(avatar, "http://") || strings.HasPrefix(avatar, "https://") {
+		return avatar
+	}
+
+	basePath := NormalizeAttachmentPath(avatar)
+	if !strings.HasPrefix(basePath, "/attachment/") {
+		return avatar
+	}
+
+	var fileId uint64
+	if parsed, err := url.Parse(avatar); err == nil {
+		if idStr := parsed.Query().Get("id"); idStr != "" {
+			if id, parseErr := strconv.ParseUint(idStr, 10, 64); parseErr == nil && id > 0 {
+				fileId = id
+			}
+		}
+	}
+
+	var att *attachmentRecord
+	var err error
+	if fileId > 0 {
+		att, err = loadAttachmentByID(ctx, fileId)
+	} else {
+		att, err = loadAttachmentByURL(ctx, basePath)
+	}
+	if err != nil || att == nil || att.UserId != memberId {
+		return avatar
+	}
+
+	signed, err := BuildSignedURL(ctx, memberId, att.Id, 0)
+	if err != nil {
+		return avatar
+	}
+	return signed
+}
+
 // BuildSignedURL 生成带签名的附件访问 URL（相对路径）
 func BuildSignedURL(ctx context.Context, memberId, fileId uint64, ttl time.Duration) (string, error) {
 	if ttl <= 0 {

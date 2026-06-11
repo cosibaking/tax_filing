@@ -1,46 +1,30 @@
 <!-- P-08 收入台账 -->
 <template>
-  <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <section class="member-panel">
+    <div class="member-panel__head">
       <div>
-        <h2 class="font-heading font-black text-2xl text-clay-foreground">收入台账</h2>
-        <p class="text-xs text-clay-muted mt-1">多平台收入、OCR 流水导入、MCN 分成与一致性比对</p>
+        <h2 class="member-panel__title">收入台账</h2>
+        <p class="member-panel__desc">多平台收入、OCR 流水导入、MCN 分成与一致性比对</p>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="member-toolbar">
         <ElDatePicker
           v-model="selectedMonth"
           type="month"
           value-format="YYYY-MM"
           placeholder="选择月份"
-          class="clay-date-picker"
+          class="member-field"
           @change="loadData"
         />
-        <button
-          type="button"
-          class="px-5 py-2.5 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-bold text-sm shadow-clay-btn active:scale-95 transition-all flex items-center gap-2"
-          @click="showAddModal = true"
-        >
+        <button type="button" class="member-btn member-btn--primary" @click="showAddModal = true">
           <ArtSvgIcon icon="ri:add-line" />记一笔
         </button>
-        <button
-          type="button"
-          class="px-5 py-2.5 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed text-clay-foreground font-bold text-sm active:scale-95 transition-all flex items-center gap-2"
-          @click="showImportModal = true"
-        >
+        <button type="button" class="member-btn member-btn--ghost" @click="showImportModal = true">
           <ArtSvgIcon icon="ri:file-upload-line" />CSV
         </button>
-        <button
-          type="button"
-          class="px-5 py-2.5 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed text-clay-foreground font-bold text-sm active:scale-95 transition-all flex items-center gap-2"
-          @click="showOcrModal = true"
-        >
+        <button type="button" class="member-btn member-btn--ghost" @click="showOcrModal = true">
           <ArtSvgIcon icon="ri:scan-line" />OCR 流水
         </button>
-        <button
-          type="button"
-          class="px-5 py-2.5 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed text-clay-foreground font-bold text-sm active:scale-95 transition-all flex items-center gap-2"
-          @click="showBankModal = true"
-        >
+        <button type="button" class="member-btn member-btn--ghost" @click="showBankModal = true">
           <ArtSvgIcon icon="ri:bank-line" />银行流水
         </button>
       </div>
@@ -68,33 +52,31 @@
     </div>
 
     <!-- 平台 Tab -->
-    <div class="flex flex-wrap gap-2 mb-6">
+    <div class="member-filter-tabs">
       <button
         v-for="p in INCOME_PLATFORMS"
         :key="p.value"
         type="button"
-        class="px-4 py-2 rounded-xl text-sm font-bold transition-all"
-        :class="activePlatform === p.value
-          ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn'
-          : 'bg-[#f0f3f8] text-clay-muted shadow-clay-pressed hover:text-clay-accent'"
+        class="member-filter-tab"
+        :class="{ 'is-active': activePlatform === p.value }"
         @click="activePlatform = p.value; loadData()"
       >
         {{ p.label }}
       </button>
     </div>
 
-    <div v-if="loading" class="py-16 text-center">
+    <div v-if="loading" class="member-empty">
       <ArtSvgIcon icon="ri:loader-4-line" class="text-3xl text-clay-accent animate-spin mx-auto" />
     </div>
 
-    <div v-else-if="list.length === 0" class="py-16 text-center text-clay-muted font-medium">
+    <div v-else-if="list.length === 0" class="member-empty">
       本月暂无收入记录，点击「记一笔」开始录入
     </div>
 
-    <div v-else class="overflow-x-auto rounded-2xl">
-      <table class="w-full text-sm">
+    <div v-else class="member-table-wrap">
+      <table class="member-table">
         <thead>
-          <tr class="text-left text-[10px] font-black text-clay-muted uppercase tracking-widest border-b border-gray-200/50">
+          <tr>
             <th class="py-3 px-4">日期</th>
             <th class="py-3 px-4">类型</th>
             <th class="py-3 px-4">含税收入</th>
@@ -128,7 +110,7 @@
       </table>
     </div>
 
-    <div v-if="summary" class="mt-6 p-4 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+    <div v-if="summary" class="mt-6 p-4 rounded-lg border border-[#e8edf3] bg-[#f8fafc] flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
       <span class="font-bold text-clay-foreground">本月合计：含税 ¥{{ formatMoney(summary.grossTotal) }}</span>
       <span class="font-bold text-clay-success">实收 ¥{{ formatMoney(summary.netTotal) }}</span>
       <RouterLink to="/user/compliance/ledger" class="text-clay-accent font-bold hover:underline">
@@ -603,20 +585,6 @@ onMounted(loadData)
 <style lang="scss" scoped>
 .text-clay-foreground { color: #32325d; }
 .text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.text-clay-success { color: #71dd37; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-.shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9);
-}
-.shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4);
-}
-.shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
-}
-:deep(.clay-date-picker) .el-input__wrapper {
-  border-radius: 16px; background: #f0f3f8;
-  box-shadow: inset 6px 6px 12px #e0e5ec, inset -6px -6px 12px #ffffff; border: none;
-}
+.text-clay-accent { color: #2563eb; }
+.text-clay-success { color: #16a34a; }
 </style>

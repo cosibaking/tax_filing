@@ -1,24 +1,26 @@
 <!-- P-12 月度对账单 -->
 <template>
-  <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
-    <div class="mb-8">
-      <h2 class="font-heading font-black text-2xl text-clay-foreground">月度对账单</h2>
-      <p class="text-xs text-clay-muted mt-1">查看历史对账单与服务完成状态</p>
+  <section class="member-panel">
+    <div class="member-panel__head">
+      <div>
+        <h2 class="member-panel__title">月度对账单</h2>
+        <p class="member-panel__desc">查看历史对账单与服务完成状态</p>
+      </div>
     </div>
 
-    <div v-if="loading" class="py-16 text-center">
+    <div v-if="loading" class="member-empty">
       <ArtSvgIcon icon="ri:loader-4-line" class="text-3xl text-clay-accent animate-spin mx-auto" />
     </div>
 
-    <div v-else-if="list.length === 0" class="py-16 text-center text-clay-muted font-medium">
+    <div v-else-if="list.length === 0" class="member-empty">
       暂无对账单，每月 16 日后由顾问生成
     </div>
 
     <template v-else>
-      <div class="overflow-x-auto rounded-2xl mb-8">
-        <table class="w-full text-sm">
+      <div class="member-table-wrap mb-8">
+        <table class="member-table">
           <thead>
-            <tr class="text-left text-[10px] font-black text-clay-muted uppercase tracking-widest border-b">
+            <tr>
               <th class="py-3 px-4">月份</th>
               <th class="py-3 px-4">收入</th>
               <th class="py-3 px-4">成本</th>
@@ -32,8 +34,7 @@
             <tr
               v-for="row in list"
               :key="row.id"
-              class="border-b border-gray-100 cursor-pointer transition-colors"
-              :class="selected?.id === row.id ? 'bg-blue-50' : 'hover:bg-white/50'"
+              :class="{ 'is-selected': selected?.id === row.id }"
               @click="selected = row"
             >
               <td class="py-3 px-4 font-bold text-clay-foreground">{{ row.period }}</td>
@@ -63,24 +64,24 @@
       </div>
 
       <!-- 详情卡片 -->
-      <div v-if="selected" class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed">
-        <h3 class="font-heading font-black text-lg text-clay-foreground mb-4">{{ selected.period }} 服务完成摘要</h3>
+      <div v-if="selected" class="p-6 rounded-lg border border-[#e8edf3] bg-[#f8fafc]">
+        <h3 class="font-bold text-lg text-clay-foreground mb-4">{{ selected.period }} 服务完成摘要</h3>
         <div class="grid sm:grid-cols-2 gap-4 text-sm">
-          <div class="p-4 rounded-2xl bg-white shadow-clay-btn">
+          <div class="p-4 rounded-lg border border-[#e8edf3] bg-white">
             <span class="block text-[10px] font-black text-clay-muted uppercase mb-1">本月收入</span>
             <span class="font-black text-xl text-clay-foreground">¥{{ formatMoney(selected.revenue) }}</span>
           </div>
-          <div class="p-4 rounded-2xl bg-white shadow-clay-btn">
+          <div class="p-4 rounded-lg border border-[#e8edf3] bg-white">
             <span class="block text-[10px] font-black text-clay-muted uppercase mb-1">本月成本</span>
             <span class="font-black text-xl text-clay-foreground">¥{{ formatMoney(selected.cost) }}</span>
           </div>
-          <div class="p-4 rounded-2xl bg-white shadow-clay-btn">
+          <div class="p-4 rounded-lg border border-[#e8edf3] bg-white">
             <span class="block text-[10px] font-black text-clay-muted uppercase mb-1">本月利润</span>
             <span class="font-black text-xl" :class="selected.profit >= 0 ? 'text-clay-success' : 'text-red-500'">
               ¥{{ formatMoney(selected.profit) }}
             </span>
           </div>
-          <div class="p-4 rounded-2xl bg-white shadow-clay-btn">
+          <div class="p-4 rounded-lg border border-[#e8edf3] bg-white">
             <span class="block text-[10px] font-black text-clay-muted uppercase mb-1">本月预缴税额</span>
             <span class="font-black text-xl text-clay-accent">¥{{ formatMoney(selected.prepaidTax) }}</span>
           </div>
@@ -144,10 +145,6 @@ onMounted(loadData)
 <style lang="scss" scoped>
 .text-clay-foreground { color: #32325d; }
 .text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.text-clay-success { color: #71dd37; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-.shadow-clay-card { box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9); }
-.shadow-clay-btn { box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4); }
-.shadow-clay-pressed { box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff; }
+.text-clay-accent { color: #2563eb; }
+.text-clay-success { color: #16a34a; }
 </style>

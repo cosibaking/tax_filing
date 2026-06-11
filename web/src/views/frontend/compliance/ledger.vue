@@ -1,20 +1,18 @@
 <!-- P-10 账套与利润表 -->
 <template>
-  <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+  <section class="member-panel">
+    <div class="member-panel__head">
       <div>
-        <h2 class="font-heading font-black text-2xl text-clay-foreground">利润报表</h2>
-        <p class="text-xs text-clay-muted mt-1">自动生成账套摘要与利润表</p>
+        <h2 class="member-panel__title">利润报表</h2>
+        <p class="member-panel__desc">自动生成账套摘要与利润表</p>
       </div>
-      <div class="flex items-center gap-2 p-1 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed">
+      <div class="member-tabs">
         <button
           v-for="t in periodTypes"
           :key="t.value"
           type="button"
-          class="px-4 py-2 rounded-xl text-sm font-bold transition-all"
-          :class="periodType === t.value
-            ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn'
-            : 'text-clay-muted hover:text-clay-accent'"
+          class="member-tab"
+          :class="{ 'is-active': periodType === t.value }"
           @click="periodType = t.value; loadData()"
         >
           {{ t.label }}
@@ -22,13 +20,12 @@
       </div>
     </div>
 
-    <div class="mb-6">
+    <div class="mb-6 member-field">
       <ElDatePicker
         v-if="periodType === 'month'"
         v-model="selectedPeriod"
         type="month"
         value-format="YYYY-MM"
-        class="clay-date-picker"
         @change="loadData"
       />
       <ElDatePicker
@@ -37,7 +34,6 @@
         type="month"
         value-format="YYYY-MM"
         placeholder="选择季度内任一月"
-        class="clay-date-picker"
         @change="loadData"
       />
       <ElDatePicker
@@ -45,18 +41,17 @@
         v-model="selectedPeriod"
         type="year"
         value-format="YYYY"
-        class="clay-date-picker"
         @change="loadData"
       />
     </div>
 
-    <div v-if="loading" class="py-16 text-center">
+    <div v-if="loading" class="member-empty">
       <ArtSvgIcon icon="ri:loader-4-line" class="text-3xl text-clay-accent animate-spin mx-auto" />
     </div>
 
     <div v-else-if="profit" class="space-y-6">
       <!-- 利润表简版 -->
-      <div class="p-6 rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed space-y-4">
+      <div class="p-6 rounded-lg border border-[#e8edf3] bg-[#f8fafc] space-y-4">
         <h3 class="text-sm font-black text-clay-muted uppercase tracking-widest">利润表（简版）</h3>
         <div class="flex justify-between text-sm">
           <span class="text-clay-muted font-medium">营业收入（不含税）</span>
@@ -89,10 +84,10 @@
           {{ showVouchers ? '收起' : '展开' }}本月会计分录（只读）
         </button>
 
-        <div v-if="showVouchers" class="overflow-x-auto rounded-2xl">
-          <table v-if="vouchers.length" class="w-full text-sm">
+        <div v-if="showVouchers" class="member-table-wrap">
+          <table v-if="vouchers.length" class="member-table">
             <thead>
-              <tr class="text-left text-[10px] font-black text-clay-muted uppercase tracking-widest border-b">
+              <tr>
                 <th class="py-3 px-4">日期</th>
                 <th class="py-3 px-4">摘要</th>
                 <th class="py-3 px-4">借方</th>
@@ -182,14 +177,6 @@ onMounted(loadData)
 <style lang="scss" scoped>
 .text-clay-foreground { color: #32325d; }
 .text-clay-muted { color: #8898aa; }
-.text-clay-accent { color: #5a8dee; }
-.text-clay-success { color: #71dd37; }
-.font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
-.shadow-clay-card { box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9); }
-.shadow-clay-btn { box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4); }
-.shadow-clay-pressed { box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff; }
-:deep(.clay-date-picker) .el-input__wrapper {
-  border-radius: 16px; background: #f0f3f8;
-  box-shadow: inset 6px 6px 12px #e0e5ec, inset -6px -6px 12px #ffffff; border: none;
-}
+.text-clay-accent { color: #2563eb; }
+.text-clay-success { color: #16a34a; }
 </style>

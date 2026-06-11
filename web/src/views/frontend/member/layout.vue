@@ -7,8 +7,8 @@
       <aside class="member-layout__aside">
         <!-- 用户卡片 -->
         <div class="member-card member-card--profile">
-          <ElAvatar :size="56" :src="userInfo.avatar" class="member-card__avatar">
-            {{ userInfo.nickname?.charAt(0) || 'U' }}
+          <ElAvatar :size="56" :src="memberAvatar" class="member-card__avatar">
+            {{ userInfo.nickname?.charAt(0) || userInfo.username?.charAt(0) || 'U' }}
           </ElAvatar>
           <h2 class="member-card__name">{{ userInfo.nickname || userInfo.username }}</h2>
           <p class="member-card__meta">金税管家会员</p>
@@ -70,6 +70,8 @@ import { getCompliancePlanState } from '@/api/frontend/compliance/member'
 import { getSocialConsults } from '@/api/frontend/compliance/social'
 import { memberMenuHref } from '@/utils/member-nav'
 import ComplianceGuideBanner, { type GuideBanner } from '@/components/member/ComplianceGuideBanner.vue'
+import { getMemberInfo } from '@/api/frontend/member/user'
+import { resolveMediaUrl } from '@/utils/media'
 
 defineOptions({ name: 'MemberLayout' })
 
@@ -77,6 +79,7 @@ const route = useRoute()
 const memberStore = useMemberStore()
 const memberMenuStore = useMemberMenuStore()
 const userInfo = computed(() => memberStore.getMemberInfo)
+const memberAvatar = computed(() => resolveMediaUrl(userInfo.value.avatar))
 
 /** 与税务合规业务无关的账户菜单 */
 const hiddenAccountPaths = new Set(['/user/checkin', '/user/points', '/user/balance'])
@@ -107,9 +110,20 @@ async function refreshMemberShell() {
   await loadSocialConsultBadge()
 }
 
+async function loadMemberProfile() {
+  if (!memberStore.getIsLogin) return
+  try {
+    const info = await getMemberInfo()
+    if (info) memberStore.setMemberInfo(info)
+  } catch {
+    /* token 失效时由业务页或拦截器处理 */
+  }
+}
+
 onMounted(async () => {
   if (!memberStore.getIsLogin) return
   try { await memberMenuStore.fetchMenus() } catch { /* ignore */ }
+  await loadMemberProfile()
   await refreshMemberShell()
 })
 
@@ -361,5 +375,261 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   .member-layout__aside {
     position: static;
   }
+}
+
+/* 台账类子页统一扁平风格（与报税中心、主体设立一致） */
+:deep(.member-panel) {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+:deep(.member-panel__head) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+:deep(.member-panel__title) {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1f36;
+}
+
+:deep(.member-panel__desc) {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7c93;
+}
+
+:deep(.member-toolbar) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+:deep(.member-btn) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:deep(.member-btn--primary) {
+  color: #fff;
+  background: #2563eb;
+}
+
+:deep(.member-btn--primary:hover:not(:disabled)) {
+  background: #1d4ed8;
+}
+
+:deep(.member-btn--ghost) {
+  color: #334155;
+  background: #fff;
+  border: 1px solid #d8dee9;
+}
+
+:deep(.member-btn--ghost:hover:not(:disabled)) {
+  background: #f8fafc;
+}
+
+:deep(.member-btn:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:deep(.member-tabs) {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+:deep(.member-tab) {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:deep(.member-tab.is-active) {
+  color: #fff;
+  background: #2563eb;
+}
+
+:deep(.member-tab:hover:not(.is-active)) {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+:deep(.member-filter-tabs) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+:deep(.member-filter-tab) {
+  padding: 8px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+:deep(.member-filter-tab.is-active) {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+:deep(.member-filter-tab:hover:not(.is-active)) {
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+:deep(.member-alert) {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+:deep(.member-alert--warn) {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+:deep(.member-alert--info) {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+}
+
+:deep(.member-alert--success) {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+
+:deep(.member-empty) {
+  padding: 40px 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+:deep(.member-table-wrap) {
+  overflow-x: auto;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+}
+
+:deep(.member-table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    background: #f8fafc;
+  }
+
+  tbody tr {
+    cursor: pointer;
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: #f8fafc;
+    }
+
+    &.is-selected {
+      background: #eff6ff;
+    }
+  }
+}
+
+:deep(.member-card-grid) {
+  display: grid;
+  gap: 12px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+:deep(.member-card-item) {
+  padding: 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: #2563eb;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1f36;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+}
+
+:deep(.member-field) .el-input__wrapper,
+:deep(.member-field) .el-select__wrapper {
+  min-height: 40px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d8dee9 inset;
 }
 </style>

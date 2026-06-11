@@ -15,6 +15,7 @@ import (
 
 	"xygo/internal/consts"
 	"xygo/internal/dao"
+	"xygo/internal/library/attachmentaccess"
 	"xygo/internal/model"
 	"xygo/internal/model/entity"
 	"xygo/internal/model/input/memberin"
@@ -45,7 +46,7 @@ func (s *sMemberUser) GetInfo(ctx context.Context, memberId uint64) (out *member
 		Id:       member.Id,
 		Username: member.Username,
 		Nickname: member.Nickname,
-		Avatar:   member.Avatar,
+		Avatar:   attachmentaccess.RefreshMemberAvatarURL(ctx, memberId, member.Avatar),
 		Mobile:   member.Mobile,
 		Email:    member.Email,
 		Gender:   member.Gender,
@@ -80,7 +81,7 @@ func (s *sMemberUser) UpdateProfile(ctx context.Context, memberId uint64, in *me
 		data["nickname"] = in.Nickname
 	}
 	if in.Avatar != "" {
-		data["avatar"] = in.Avatar
+		data["avatar"] = attachmentaccess.NormalizeAttachmentPath(in.Avatar)
 	}
 	if in.Gender >= 0 && in.Gender <= 2 {
 		data["gender"] = in.Gender

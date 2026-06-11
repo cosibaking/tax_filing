@@ -207,7 +207,7 @@
                 </ElFormItem>
               </div>
               <div class="member-avatar-box">
-                <ElAvatar :size="96" :src="profileForm.avatar" class="member-avatar-box__img">
+                <ElAvatar :size="96" :src="resolveMediaUrl(profileForm.avatar)" class="member-avatar-box__img">
                   {{ profileForm.nickname?.charAt(0) || 'U' }}
                 </ElAvatar>
                 <input ref="avatarInputRef" type="file" accept="image/jpeg,image/png,image/gif" class="hidden" @change="handleAvatarUpload" />
@@ -406,6 +406,7 @@ import {
 } from '@/api/frontend/compliance/member'
 import type { CompliancePlanState } from '@/config/complianceMenu'
 import { formatTimestamp } from '@/utils/time'
+import { resolveMediaUrl } from '@/utils/media'
 import ComplianceSlaPanel from '@/components/frontend/ComplianceSlaPanel.vue'
 import { SERVICE_SLA_ITEMS } from '@/data/frontend/complianceSla'
 

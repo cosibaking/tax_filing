@@ -98,8 +98,8 @@
               </RouterLink>
               <ElDropdown @command="handleUserCommand">
                 <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#e8edf3] cursor-pointer">
-                  <ElAvatar :size="28" :src="memberInfo.avatar">
-                    {{ memberInfo.nickname?.charAt(0) || 'U' }}
+                  <ElAvatar :size="28" :src="memberAvatar">
+                    {{ memberInfo.nickname?.charAt(0) || memberInfo.username?.charAt(0) || 'U' }}
                   </ElAvatar>
                   <span class="text-sm font-semibold text-clay-foreground">{{ memberInfo.nickname || memberInfo.username }}</span>
                 </div>
@@ -289,6 +289,8 @@ import type { MemberMenuItem } from '@/api/frontend/member/user'
 import { memberMenuHref as resolveMemberMenuHref } from '@/utils/member-nav'
 import { memberPathRequiresAuth, requireLogin } from '@/utils/auth/requireLogin'
 import { useMemberStore } from '@/store/modules/member'
+import { getMemberInfo } from '@/api/frontend/member/user'
+import { resolveMediaUrl } from '@/utils/media'
 import { useMemberMenuStore } from '@/store/modules/memberMenu'
 import { useSiteStore } from '@/store/modules/site'
 import { useSettingStore } from '@/store/modules/setting'
@@ -324,6 +326,7 @@ const siteNameLast = computed(() => {
 const currentLang = computed(() => locale.value === 'zh-CN' ? '中文' : 'EN')
 const isDark = computed(() => settingStore.isDark)
 const memberInfo = computed(() => memberStore.getMemberInfo)
+const memberAvatar = computed(() => resolveMediaUrl(memberInfo.value.avatar))
 const isLoggedIn = computed(() => memberStore.isLogin)
 const memberCenterOpen = computed(() => siteStore.isUserCenterEnabled())
 
@@ -435,6 +438,12 @@ onMounted(async () => {
     // 加载前台菜单
     if (!memberMenuStore.isLoaded) {
       await memberMenuStore.fetchMenus()
+    }
+    if (memberStore.getIsLogin) {
+      try {
+        const info = await getMemberInfo()
+        if (info) memberStore.setMemberInfo(info)
+      } catch { /* ignore */ }
     }
   } finally {
     pageLoading.value = false
