@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OCR.space 模块测试</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --panel-2: #243044;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --radius: 12px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(ellipse at top, #1e293b 0%, var(--bg) 55%);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      font-size: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .card-body { padding: 20px; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+
+    .tab.active {
+      background: rgba(59, 130, 246, 0.18);
+      border-color: var(--primary);
+      color: #dbeafe;
+    }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="url"],
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 14px;
+    }
+
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    .dropzone .hint { color: var(--muted); font-size: 13px; }
+    .dropzone .filename { margin-top: 8px; color: #93c5fd; font-size: 13px; word-break: break-all; }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 16px;
+      margin-bottom: 16px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .check input { width: auto; margin: 0; }
+
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .status {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .status.show { display: block; }
+    .status.info { background: rgba(59, 130, 246, 0.12); color: #93c5fd; }
+    .status.ok { background: rgba(34, 197, 94, 0.12); color: #86efac; }
+    .status.err { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
+
+    .result-text {
+      min-height: 180px;
+      max-height: 360px;
+      overflow: auto;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .result-text.empty { color: var(--muted); font-style: italic; }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .meta-item {
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .meta-item strong { color: var(--text); }
+
+    pre.json {
+      margin: 0;
+      max-height: 280px;
+      overflow: auto;
+      padding: 14px;
+      border-radius: 8px;
+      background: #0b1220;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .toggle-json {
+      margin-top: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .toggle-json:hover { border-color: var(--primary); color: var(--text); }
+
+    #jsonPanel { display: none; margin-top: 10px; }
+    #jsonPanel.show { display: block; }
+
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    footer code {
+      background: var(--panel-2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>OCR.space 模块测试</h1>
+      <p>通过独立 Demo 服务调用 <code style="color:#93c5fd">xygo/internal/library/ocrspace</code></p>
+      <span class="badge" id="healthBadge">检测服务中…</span>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="card-head">输入</div>
+        <div class="card-body">
+          <div class="tabs">
+            <button type="button" class="tab active" data-tab="file">上传文件</button>
+            <button type="button" class="tab" data-tab="url">图片 URL</button>
+          </div>
+
+          <div id="panel-file" class="panel active">
+            <div class="dropzone" id="dropzone">
+              <div>点击或拖拽图片 / PDF 到此处</div>
+              <div class="hint">支持 PNG、JPG、GIF、TIF、BMP、PDF（受 OCR.space 套餐限制）</div>
+              <div class="filename" id="fileName"></div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*,.pdf" hidden />
+          </div>
+
+          <div id="panel-url" class="panel">
+            <label for="imageUrl">远程图片 / PDF 地址</label>
+            <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" />
+          </div>
+
+          <label for="language">识别语言</label>
+          <select id="language">
+            <option value="chs" selected>简体中文 (chs)</option>
+            <option value="cht">繁体中文 (cht)</option>
+            <option value="eng">英语 (eng)</option>
+            <option value="auto">自动检测 (auto)</option>
+            <option value="jpn">日语 (jpn)</option>
+            <option value="kor">韩语 (kor)</option>
+          </select>
+
+          <label for="engine">OCR 引擎</label>
+          <select id="engine">
+            <option value="1">Engine 1 — 最快</option>
+            <option value="2" selected>Engine 2 — 均衡（推荐）</option>
+            <option value="3">Engine 3 — 精度最高</option>
+          </select>
+
+          <div class="options">
+            <label class="check"><input type="checkbox" id="scale" /> 放大低清图 (scale)</label>
+            <label class="check"><input type="checkbox" id="isTable" /> 表格/收据模式</label>
+            <label class="check"><input type="checkbox" id="detectOrientation" /> 自动旋转</label>
+            <label class="check"><input type="checkbox" id="isOverlayRequired" /> 返回坐标 overlay</label>
+          </div>
+
+          <button class="btn" id="submitBtn">开始识别</button>
+          <div class="status" id="statusBox"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">识别结果</div>
+        <div class="card-body">
+          <div class="meta" id="metaBox" style="display:none">
+            <div class="meta-item">耗时 <strong id="metaTime">-</strong></div>
+            <div class="meta-item">退出码 <strong id="metaExit">-</strong></div>
+            <div class="meta-item">页数 <strong id="metaPages">-</strong></div>
+          </div>
+          <div class="result-text empty" id="resultText">识别结果将显示在这里…</div>
+          <button type="button" class="toggle-json" id="toggleJson">查看原始 JSON</button>
+          <div id="jsonPanel"><pre class="json" id="jsonOut"></pre></div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      启动命令：<code>cd server &amp;&amp; go run ./internal/library/ocrspace/demo -apikey helloworld</code>
+    </footer>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let currentTab = 'file';
+    let selectedFile = null;
+
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        const badge = $('healthBadge');
+        if (data.ok) {
+          badge.textContent = '服务就绪 · ' + (data.configPath || '默认配置');
+          badge.style.background = 'rgba(34, 197, 94, 0.15)';
+          badge.style.color = '#86efac';
+        } else {
+          throw new Error(data.error || 'unknown');
+        }
+      } catch (e) {
+        const badge = $('healthBadge');
+        badge.textContent = '服务异常：' + e.message;
+        badge.style.background = 'rgba(239, 68, 68, 0.15)';
+        badge.style.color = '#fca5a5';
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        currentTab = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
+        document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+        $('panel-' + currentTab).classList.add('active');
+      });
+    });
+
+    const dropzone = $('dropzone');
+    const fileInput = $('fileInput');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) setFile(fileInput.files[0]);
+    });
+
+    function setFile(file) {
+      selectedFile = file;
+      $('fileName').textContent = file.name + ' (' + formatSize(file.size) + ')';
+    }
+
+    function formatSize(n) {
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      return (n / 1024 / 1024).toFixed(2) + ' MB';
+    }
+
+    function showStatus(msg, type) {
+      const box = $('statusBox');
+      box.textContent = msg;
+      box.className = 'status show ' + type;
+    }
+
+    function buildOptions() {
+      return {
+        language: $('language').value,
+        engine: Number($('engine').value),
+        scale: $('scale').checked,
+        isTable: $('isTable').checked,
+        detectOrientation: $('detectOrientation').checked,
+        isOverlayRequired: $('isOverlayRequired').checked,
+      };
+    }
+
+    $('toggleJson').addEventListener('click', () => {
+      $('jsonPanel').classList.toggle('show');
+    });
+
+    $('submitBtn').addEventListener('click', async () => {
+      const btn = $('submitBtn');
+      btn.disabled = true;
+      showStatus('识别中，请稍候…', 'info');
+      $('resultText').textContent = '';
+      $('resultText').classList.add('empty');
+      $('metaBox').style.display = 'none';
+      $('jsonOut').textContent = '';
+
+      try {
+        let res;
+        const opts = buildOptions();
+
+        if (currentTab === 'file') {
+          if (!selectedFile) throw new Error('请先选择文件');
+          const fd = new FormData();
+          fd.append('file', selectedFile);
+          fd.append('options', JSON.stringify(opts));
+          res = await fetch('/api/ocr/file', { method: 'POST', body: fd });
+        } else {
+          const url = $('imageUrl').value.trim();
+          if (!url) throw new Error('请输入图片 URL');
+          res = await fetch('/api/ocr/url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, options: opts }),
+          });
+        }
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || ('HTTP ' + res.status));
+        }
+
+        $('resultText').classList.remove('empty');
+        $('resultText').textContent = data.text || '(无文本内容)';
+        $('metaBox').style.display = 'flex';
+        $('metaTime').textContent = (data.processingMs || '-') + ' ms';
+        $('metaExit').textContent = String(data.exitCode ?? '-');
+        $('metaPages').textContent = String(data.pageCount ?? '-');
+        $('jsonOut').textContent = JSON.stringify(data.raw, null, 2);
+        showStatus('识别完成', 'ok');
+      } catch (e) {
+        showStatus(e.message || String(e), 'err');
+        $('resultText').classList.add('empty');
+        $('resultText').textContent = '识别失败';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    checkHealth();
+  </script>
+</body>
+</html>
