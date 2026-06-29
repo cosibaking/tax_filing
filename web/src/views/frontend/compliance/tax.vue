@@ -48,7 +48,7 @@
 
       <!-- 本年任务列表 -->
       <div class="mb-8">
-        <div class="flex flex-col gap-4 mb-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="mb-4">
           <div>
             <h3 class="text-sm font-black text-clay-muted uppercase tracking-widest">本年度任务列表</h3>
             <p class="text-xs text-clay-muted mt-1">可按申报状态筛选；未到申报期任务默认折叠。</p>
@@ -363,12 +363,18 @@ onMounted(loadData)
 
 .tax-task-filter {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  margin-top: 14px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
 }
 
 .tax-task-filter__btn {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
   padding: 7px 12px;
