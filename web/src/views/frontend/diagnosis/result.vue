@@ -11,17 +11,17 @@
       </div>
 
       <!-- Loading / Error -->
-      <div v-if="loading" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-16 text-center">
+      <div v-if="loading" class="bg-white rounded-xl shadow-clay-deep border border-[#e8edf3] p-12 md:p-16 text-center">
         <ArtSvgIcon icon="ri:loader-4-line" class="text-4xl text-clay-accent animate-spin mx-auto mb-4" />
         <p class="text-clay-muted font-bold">加载诊断结果...</p>
       </div>
 
-      <div v-else-if="!diagnosisResult" class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-16 text-center">
+      <div v-else-if="!diagnosisResult" class="bg-white rounded-xl shadow-clay-deep border border-[#e8edf3] p-12 md:p-16 text-center">
         <ArtSvgIcon icon="ri:file-search-line" class="text-5xl text-clay-muted mx-auto mb-4" />
         <p class="text-clay-muted font-bold mb-6">未找到诊断结果，请重新填写问卷</p>
         <RouterLink
           to="/diagnosis"
-          class="inline-block px-8 py-3 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black shadow-clay-btn hover:shadow-clay-btn-hover transition-all"
+          class="inline-block px-8 py-3 rounded-lg bg-[#2563eb] text-white font-bold shadow-clay-btn hover:bg-[#1d4ed8] transition-all"
         >
           开始诊断
         </RouterLink>
@@ -31,7 +31,7 @@
         <!-- 合规风险评级 -->
         <div
           v-if="riskLevelMeta"
-          class="rounded-[32px] p-6 border flex flex-wrap items-center gap-4"
+          class="rounded-xl p-6 border flex flex-wrap items-center gap-4"
           :class="riskLevelMeta.panelClass"
         >
           <span class="px-4 py-2 rounded-full text-sm font-black" :class="riskLevelMeta.badgeClass">
@@ -45,7 +45,7 @@
         <!-- 漏报/合规提示 -->
         <div
           v-if="complianceAlerts.length"
-          class="bg-orange-50/80 rounded-[32px] border border-orange-200 p-6 md:p-8"
+          class="bg-orange-50 rounded-xl border border-orange-200 p-6 md:p-8"
         >
           <h2 class="font-heading font-black text-lg text-orange-800 mb-4 flex items-center gap-2">
             <ArtSvgIcon icon="ri:alert-line" />
@@ -62,7 +62,7 @@
         <!-- MCN 指引 -->
         <div
           v-if="mcnGuidance.length"
-          class="bg-blue-50/70 rounded-[32px] border border-blue-100 p-6 md:p-8"
+          class="bg-blue-50 rounded-xl border border-blue-100 p-6 md:p-8"
         >
           <h2 class="font-heading font-black text-lg text-clay-foreground mb-4 flex items-center gap-2">
             <ArtSvgIcon icon="ri:team-line" class="text-clay-accent" />
@@ -81,13 +81,13 @@
           <div
             v-for="col in comparisonColumns"
             :key="col.plan"
-            class="relative rounded-[32px] p-6 transition-all duration-300 border"
+            class="relative rounded-xl p-6 transition-all duration-300 border"
             :class="col.cardClass"
           >
-            <div v-if="col.recommended" class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs font-black shadow-clay-btn whitespace-nowrap">
+            <div v-if="col.recommended" class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-lg bg-[#2563eb] text-white text-xs font-black shadow-clay-btn whitespace-nowrap">
               ⭐ 推荐方案
             </div>
-            <div v-if="col.warning" class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-orange-500 text-white text-xs font-black shadow-clay-btn whitespace-nowrap">
+            <div v-if="col.warning" class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-lg bg-orange-500 text-white text-xs font-black shadow-clay-btn whitespace-nowrap">
               ⚠️ 高危
             </div>
 
@@ -108,7 +108,7 @@
         </div>
 
         <!-- Recommendation summary -->
-        <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
+        <div class="bg-white rounded-xl shadow-clay-deep border border-[#e8edf3] p-8 md:p-10">
           <h2 class="font-heading font-black text-xl text-clay-foreground mb-6 flex items-center gap-2">
             <ArtSvgIcon icon="ri:lightbulb-flash-line" class="text-2xl text-clay-accent" />
             方案推荐摘要
@@ -124,7 +124,7 @@
         </div>
 
         <!-- Tax calculator -->
-        <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
+        <div class="bg-white rounded-xl shadow-clay-deep border border-[#e8edf3] p-8 md:p-10">
           <h2 class="font-heading font-black text-xl text-clay-foreground mb-6 flex items-center gap-2">
             <ArtSvgIcon icon="ri:calculator-line" class="text-2xl text-clay-accent" />
             税负计算器
@@ -141,7 +141,7 @@
           </div>
           <button
             type="button"
-            class="px-8 py-3 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover font-bold text-clay-foreground active:scale-95 transition-all flex items-center gap-2"
+            class="px-8 py-3 rounded-lg bg-white border border-[#d8dee9] hover:bg-[#f8fafc] font-bold text-clay-foreground transition-all flex items-center gap-2"
             :disabled="calculating"
             @click="handleRecalculate"
           >
@@ -151,7 +151,7 @@
 
           <div
             v-if="assumptionHints.length"
-            class="mt-6 p-5 md:p-6 rounded-2xl bg-blue-50/70 border border-blue-100/80"
+            class="mt-6 p-5 md:p-6 rounded-xl bg-blue-50 border border-blue-100"
           >
             <h3 class="text-sm font-black text-clay-foreground mb-3 flex items-center gap-2">
               <ArtSvgIcon icon="ri:information-line" class="text-lg text-clay-accent" />
@@ -175,7 +175,7 @@
           <button
             v-if="!isGuestResult"
             type="button"
-            class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover font-bold text-clay-foreground transition-all flex items-center justify-center gap-2"
+            class="w-full sm:w-auto px-8 py-3 rounded-lg bg-white border border-[#d8dee9] hover:bg-[#f8fafc] font-bold text-clay-foreground transition-all flex items-center justify-center gap-2"
             @click="handleDownloadPdf"
           >
             <ArtSvgIcon icon="ri:download-line" class="text-lg" />
@@ -183,7 +183,7 @@
           </button>
           <button
             type="button"
-            class="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black text-lg shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-2"
+            class="w-full sm:w-auto px-10 py-3 rounded-lg bg-[#2563eb] text-white font-bold text-base shadow-clay-btn hover:bg-[#1d4ed8] hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2"
             @click="handleSignUp"
           >
             确认方案并签约
@@ -192,7 +192,7 @@
         </div>
 
         <!-- 服务 SLA -->
-        <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-8 md:p-10">
+        <div class="bg-white rounded-xl shadow-clay-deep border border-[#e8edf3] p-8 md:p-10">
           <ComplianceSlaPanel
             title="签约后服务时效承诺"
             subtitle="对齐商业计划书 SLA，让您清楚每个环节的交付时间"
@@ -477,30 +477,26 @@ onMounted(loadResult)
 .font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
 
 .shadow-clay-deep {
-  box-shadow: 30px 30px 60px #d1d9e6, -30px -30px 60px #ffffff,
-    inset 10px 10px 20px rgba(90, 141, 238, 0.05), inset -10px -10px 20px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
 }
 .shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 .shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
 }
 .shadow-clay-btn-hover {
-  box-shadow: 16px 16px 32px rgba(90, 141, 238, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.5),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.32);
 }
 
 :deep(.clay-input) {
   .el-input__wrapper {
-    height: 48px; padding: 0 16px; border-radius: 16px; background: #f0f3f8;
-    box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
-    border: none;
+    height: 48px; padding: 0 16px; border-radius: 8px; background: #fff;
+    border: 1px solid #d8dee9;
+    box-shadow: none;
     &.is-focus {
-      background: #fff;
-      box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
   }
   .el-input__inner { font-weight: 500; color: #32325d; }

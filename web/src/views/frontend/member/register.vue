@@ -11,24 +11,24 @@
   <main class="pt-20 pb-8 px-6 flex items-center justify-center min-h-[80vh]">
     <!-- 会员中心已禁用提示 -->
     <div v-if="!memberCenterOpen" class="w-full max-w-md">
-      <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-10 md:p-12 text-center">
-        <div class="w-20 h-20 rounded-[24px] bg-[#f0f3f8] shadow-clay-pressed flex items-center justify-center mx-auto mb-6">
+      <div class="bg-white rounded-xl shadow-clay-deep border border-[#e8edf3] p-8 md:p-10 text-center">
+        <div class="w-16 h-16 rounded-lg bg-[#f8fafc] border border-[#e8edf3] flex items-center justify-center mx-auto mb-6">
           <ArtSvgIcon icon="ri:lock-2-line" class="text-[36px] text-clay-muted" />
         </div>
         <h2 class="font-heading font-black text-2xl text-clay-foreground mb-3">会员中心已关闭</h2>
         <p class="text-clay-muted font-medium leading-relaxed">会员中心已禁用，请联系网站管理员开启。</p>
-        <RouterLink to="/" class="inline-block mt-8 px-8 py-3 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover font-bold text-clay-foreground active:scale-95 transition-all">
+        <RouterLink to="/" class="inline-block mt-8 px-8 py-3 rounded-lg bg-white border border-[#d8dee9] hover:bg-[#f8fafc] font-bold text-clay-foreground transition-all">
           返回首页
         </RouterLink>
       </div>
     </div>
 
     <div v-else class="w-full max-w-md relative">
-      <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-10 md:p-12 relative z-10">
+      <div class="bg-white rounded-xl shadow-clay-deep border border-[#e8edf3] p-8 md:p-10 relative z-10">
         <!-- Header -->
-        <div class="text-center mb-10">
-          <img v-if="siteStore.getLogo()" :src="siteStore.getLogo()" alt="logo" class="w-16 h-16 rounded-lg shadow-clay-btn mb-6 mx-auto object-contain bg-[#2563eb] animate-breathe" />
-          <div v-else class="inline-flex w-16 h-16 rounded-[20px] bg-gradient-to-br from-blue-400 to-blue-600 shadow-clay-btn items-center justify-center text-white text-3xl font-black mb-6 animate-breathe">
+        <div class="text-center mb-8">
+          <img v-if="siteStore.getLogo()" :src="siteStore.getLogo()" alt="logo" class="w-14 h-14 rounded-lg border border-[#e8edf3] mb-6 mx-auto object-contain bg-[#2563eb]" />
+          <div v-else class="inline-flex w-14 h-14 rounded-lg bg-[#2563eb] items-center justify-center text-white text-2xl font-black mb-6">
             {{ siteName.charAt(0) }}
           </div>
           <h1 class="font-heading font-black text-3xl text-clay-foreground mb-2">创建账号</h1>
@@ -96,7 +96,7 @@
           <!-- 提交按钮 -->
           <button
             type="button"
-            class="w-full h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 text-white font-black text-lg shadow-clay-btn hover:shadow-clay-btn-hover hover:-translate-y-1 active:scale-95 active:shadow-clay-pressed transition-all duration-300 mt-4 flex items-center justify-center gap-2"
+            class="w-full h-12 rounded-lg bg-[#2563eb] text-white font-bold text-base shadow-clay-btn hover:bg-[#1d4ed8] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 mt-4 flex items-center justify-center gap-2"
             :disabled="loading"
             @click="handleSubmit"
           >
@@ -113,9 +113,6 @@
           </p>
         </div>
       </div>
-
-      <!-- 装饰 -->
-      <div class="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-gradient-to-br from-cyan-300 to-cyan-500 opacity-20 blur-2xl animate-float z-0"></div>
     </div>
   </main>
 </template>
@@ -238,39 +235,30 @@ const handleSubmit = async () => {
 .font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
 
 .shadow-clay-deep {
-  box-shadow: 30px 30px 60px #d1d9e6, -30px -30px 60px #ffffff,
-    inset 10px 10px 20px rgba(90, 141, 238, 0.05), inset -10px -10px 20px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
 }
 .shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
 }
 .shadow-clay-btn-hover {
-  box-shadow: 16px 16px 32px rgba(90, 141, 238, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.5),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.32);
 }
 .shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.08);
 }
-
-@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-.animate-breathe { animation: breathe 6s ease-in-out infinite; }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-.animate-float { animation: float 8s ease-in-out infinite; }
 
 :deep(.clay-input) {
   .el-input__wrapper {
     height: 48px;
     padding: 0 16px;
-    border-radius: 16px;
-    background: #f0f3f8;
-    box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
-    border: none;
-    transition: all 0.3s;
+    border: 1px solid #d8dee9;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: none;
+    transition: all 0.2s ease;
     &.is-focus {
-      background: #fff;
-      box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-        inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
     }
   }
   .el-input__inner { font-weight: 500; color: #32325d; }

@@ -1,7 +1,7 @@
 <!-- 社保咨询 P-SC -->
 <template>
   <section class="space-y-6">
-    <div class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
+    <div class="bg-white rounded-xl shadow-clay-card border border-[#e8edf3] p-8 md:p-10">
       <h2 class="font-heading font-black text-2xl text-clay-foreground mb-2">社保咨询</h2>
       <p class="text-sm text-clay-muted mb-6">
         进阶版及以上套餐可提交咨询，顾问将在工作时间 4 小时内首次回复。
@@ -30,7 +30,7 @@
       </ElForm>
     </div>
 
-    <div class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
+    <div class="bg-white rounded-xl shadow-clay-card border border-[#e8edf3] p-8 md:p-10">
       <h3 class="font-heading font-black text-lg text-clay-foreground mb-4">我的咨询记录</h3>
       <div v-if="listLoading" class="py-8 text-center">
         <ArtSvgIcon icon="ri:loader-4-line" class="text-2xl animate-spin mx-auto text-clay-accent" />
@@ -40,7 +40,7 @@
         <div
           v-for="item in consults"
           :key="item.id"
-          class="p-5 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed"
+          class="p-5 rounded-xl bg-[#f8fafc] border border-[#e8edf3]"
         >
           <div class="flex flex-wrap items-center gap-2 mb-2">
             <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-clay-accent">

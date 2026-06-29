@@ -11,13 +11,13 @@
   <!-- 会员中心已禁用提示 -->
   <main v-if="!memberCenterOpen" class="pt-32 pb-8 px-6 flex items-center justify-center min-h-[60vh]">
     <div class="w-full max-w-md">
-      <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-10 md:p-12 text-center">
-        <div class="w-20 h-20 rounded-[24px] bg-[#f0f3f8] shadow-clay-pressed flex items-center justify-center mx-auto mb-6">
+      <div class="bg-white rounded-xl shadow-clay-card border border-[#e8edf3] p-8 md:p-10 text-center">
+        <div class="w-16 h-16 rounded-lg bg-[#f8fafc] border border-[#e8edf3] flex items-center justify-center mx-auto mb-6">
           <ArtSvgIcon icon="ri:lock-2-line" class="text-[36px] text-clay-muted" />
         </div>
         <h2 class="font-heading font-black text-2xl text-clay-foreground mb-3">会员中心已关闭</h2>
         <p class="text-clay-muted font-medium leading-relaxed">会员中心已禁用，请联系网站管理员开启。</p>
-        <RouterLink to="/" class="inline-block mt-8 px-8 py-3 rounded-2xl bg-white shadow-clay-btn hover:shadow-clay-btn-hover font-bold text-clay-foreground active:scale-95 transition-all">
+        <RouterLink to="/" class="inline-block mt-8 px-8 py-3 rounded-lg bg-white border border-[#d8dee9] hover:bg-[#f8fafc] font-bold text-clay-foreground transition-all">
           返回首页
         </RouterLink>
       </div>
@@ -152,8 +152,8 @@
 
         <!-- 2. 每日签到（对齐 homesite：7天日历+签到按钮） -->
         <div v-if="activeMenu === 'checkin'" class="animate-in">
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-12 text-center">
-            <div class="w-24 h-24 rounded-[32px] bg-gradient-to-br from-amber-300 to-amber-500 shadow-clay-btn flex items-center justify-center text-4xl mx-auto mb-6">✨</div>
+          <section class="bg-white rounded-xl shadow-clay-card border border-[#e8edf3] p-8 md:p-10 text-center">
+            <div class="w-16 h-16 rounded-lg bg-amber-100 border border-amber-200 flex items-center justify-center text-3xl mx-auto mb-6">✨</div>
             <h2 class="font-heading font-black text-3xl text-clay-foreground mb-4">今日签到</h2>
             <p class="text-clay-muted mb-10 max-w-sm mx-auto">
               每日签到可获得随机积分奖励，连续签到更有额外大奖！
@@ -164,16 +164,16 @@
             <!-- 7天签到日历 -->
             <div class="grid grid-cols-7 gap-3 mb-12 max-w-lg mx-auto">
               <div v-for="(day, idx) in checkinData.weekDays" :key="idx"
-                   class="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all"
-                   :class="day.checked ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-clay-btn' : 'bg-[#f0f3f8] shadow-clay-pressed text-clay-muted opacity-50'">
+                   class="aspect-square rounded-lg flex flex-col items-center justify-center gap-1 transition-all border"
+                   :class="day.checked ? 'bg-[#2563eb] text-white border-[#2563eb]' : 'bg-[#f8fafc] border-[#e8edf3] text-clay-muted opacity-70'">
                 <span class="text-[10px] font-black uppercase">{{ day.date.slice(5) }}</span>
                 <span class="text-lg font-black">{{ idx + 1 }}</span>
                 <span v-if="day.checked" class="text-[10px]">+{{ day.score }}</span>
               </div>
             </div>
             <button
-              class="w-full max-w-xs py-5 rounded-[24px] text-white text-xl font-black shadow-clay-btn hover:shadow-clay-btn-hover active:scale-95 transition-all"
-              :class="checkinData.todayChecked ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-br from-blue-400 to-blue-600'"
+              class="w-full max-w-xs py-3 rounded-lg text-white text-base font-bold shadow-clay-btn hover:-translate-y-0.5 active:translate-y-0 transition-all"
+              :class="checkinData.todayChecked ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#2563eb] hover:bg-[#1d4ed8]'"
               :disabled="checkinData.todayChecked || checkinLoading"
               @click="handleCheckin"
             >
@@ -250,20 +250,20 @@
 
         <!-- 5. 积分记录（对齐 homesite 拟态表格） -->
         <div v-if="activeMenu === 'points'" class="animate-in">
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
+          <section class="bg-white rounded-xl shadow-clay-card border border-[#e8edf3] p-8 md:p-10">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
               <h2 class="font-heading font-black text-2xl text-clay-foreground">积分记录</h2>
-              <div class="px-6 py-3 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed font-bold text-clay-muted">
+              <div class="px-6 py-3 rounded-lg bg-[#f8fafc] border border-[#e8edf3] font-bold text-clay-muted">
                 当前积分：<span class="text-clay-accent">{{ userInfo.score ?? 0 }}</span>
               </div>
             </div>
             <div v-if="scoreLogList.length === 0 && !scoreLogLoading" class="py-20 text-center">
-              <div class="w-24 h-24 rounded-full bg-white shadow-clay-btn flex items-center justify-center mb-6 mx-auto">
+              <div class="w-16 h-16 rounded-lg bg-[#f8fafc] border border-[#e8edf3] flex items-center justify-center mb-6 mx-auto">
                 <ArtSvgIcon icon="ri:coin-line" class="text-[40px] text-clay-muted opacity-50" />
               </div>
               <p class="text-clay-muted font-bold text-lg">暂无积分变动记录</p>
             </div>
-            <div v-else class="overflow-hidden rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed p-2">
+            <div v-else class="overflow-hidden rounded-xl bg-white border border-[#e8edf3]">
               <table class="w-full text-left">
                 <thead>
                   <tr class="text-xs font-black text-clay-muted uppercase tracking-widest border-b border-gray-100">
@@ -296,20 +296,20 @@
 
         <!-- 6. 余额记录 -->
         <div v-if="activeMenu === 'balance'" class="animate-in">
-          <section class="bg-white/70 backdrop-blur-xl rounded-[48px] shadow-clay-card border border-[#d1d9e6]/40 p-8 md:p-10">
+          <section class="bg-white rounded-xl shadow-clay-card border border-[#e8edf3] p-8 md:p-10">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
               <h2 class="font-heading font-black text-2xl text-clay-foreground">余额变动记录</h2>
-              <div class="px-6 py-3 rounded-2xl bg-[#f0f3f8] shadow-clay-pressed font-bold text-clay-muted">
+              <div class="px-6 py-3 rounded-lg bg-[#f8fafc] border border-[#e8edf3] font-bold text-clay-muted">
                 可用余额：<span class="text-clay-success">{{ formatMoney(userInfo.money) }}</span> 元
               </div>
             </div>
             <div v-if="moneyLogList.length === 0 && !moneyLogLoading" class="py-20 flex flex-col items-center justify-center text-center">
-              <div class="w-24 h-24 rounded-full bg-white shadow-clay-btn flex items-center justify-center mb-6">
+              <div class="w-16 h-16 rounded-lg bg-[#f8fafc] border border-[#e8edf3] flex items-center justify-center mb-6">
                 <ArtSvgIcon icon="ri:wallet-3-line" class="text-[40px] text-clay-muted opacity-50" />
               </div>
               <p class="text-clay-muted font-bold text-lg">暂无余额变动记录</p>
             </div>
-            <div v-else class="overflow-hidden rounded-[32px] bg-[#f0f3f8] shadow-clay-pressed p-2">
+            <div v-else class="overflow-hidden rounded-xl bg-white border border-[#e8edf3]">
               <table class="w-full text-left">
                 <thead>
                   <tr class="text-xs font-black text-clay-muted uppercase tracking-widest border-b border-gray-100">
@@ -1310,19 +1310,16 @@ const handleChangePassword = async () => {
 .font-heading { font-family: 'Nunito', 'PingFang SC', sans-serif; }
 
 .shadow-clay-card {
-  box-shadow: 16px 16px 32px rgba(165, 175, 190, 0.3), -10px -10px 24px rgba(255, 255, 255, 0.9),
-    inset 6px 6px 12px rgba(90, 141, 238, 0.03), inset -6px -6px 12px rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 .shadow-clay-btn {
-  box-shadow: 12px 12px 24px rgba(90, 141, 238, 0.3), -8px -8px 16px rgba(255, 255, 255, 0.4),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
 }
 .shadow-clay-btn-hover {
-  box-shadow: 16px 16px 32px rgba(90, 141, 238, 0.4), -10px -10px 20px rgba(255, 255, 255, 0.5),
-    inset 4px 4px 8px rgba(255, 255, 255, 0.4), inset -4px -4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.32);
 }
 .shadow-clay-pressed {
-  box-shadow: inset 10px 10px 20px #e0e5ec, inset -10px -10px 20px #ffffff;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.08);
 }
 
 @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
