@@ -27,7 +27,7 @@
       <div class="bg-white/70 backdrop-blur-2xl rounded-[48px] shadow-clay-deep border border-[#d1d9e6]/40 p-10 md:p-12 relative z-10">
         <!-- Header -->
         <div class="text-center mb-10">
-          <img v-if="siteStore.getLogo()" :src="siteStore.getLogo()" alt="logo" class="w-16 h-16 rounded-[20px] shadow-clay-btn mb-6 mx-auto object-cover animate-breathe" />
+          <img v-if="siteStore.getLogo()" :src="siteStore.getLogo()" alt="logo" class="w-16 h-16 rounded-lg shadow-clay-btn mb-6 mx-auto object-contain bg-[#2563eb] animate-breathe" />
           <div v-else class="inline-flex w-16 h-16 rounded-[20px] bg-gradient-to-br from-blue-400 to-blue-600 shadow-clay-btn items-center justify-center text-white text-3xl font-black mb-6 animate-breathe">
             {{ siteName.charAt(0) }}
           </div>

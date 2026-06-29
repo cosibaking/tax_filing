@@ -24,7 +24,7 @@
       <div class="max-w-[1440px] mx-auto px-8 flex items-center justify-between">
         <!-- Logo（读取站点配置） -->
         <div class="flex items-center gap-3 cursor-pointer group" @click="router.push('/')">
-          <img :src="brandLogo" alt="金税管家" class="h-10 w-10 rounded-lg shadow-clay-btn group-hover:scale-105 transition-transform object-cover object-[center_35%]" />
+          <img :src="brandLogo" alt="金税管家" class="h-10 w-10 rounded-lg shadow-clay-btn group-hover:scale-105 transition-transform object-contain bg-[#2563eb]" />
           <span class="font-heading font-extrabold text-2xl text-clay-foreground tracking-tight">{{ siteNameFirst }}<span class="text-clay-accent">{{ siteNameLast }}</span></span>
         </div>
 
@@ -252,7 +252,7 @@
         <div class="grid md:grid-cols-4 gap-12 mb-12">
           <div class="col-span-1 md:col-span-2">
             <div class="flex items-center gap-3 mb-6">
-              <img :src="brandLogo" alt="金税管家" class="h-10 w-10 rounded-lg shadow-clay-btn object-cover object-[center_35%]" />
+              <img :src="brandLogo" alt="金税管家" class="h-10 w-10 rounded-lg shadow-clay-btn object-contain bg-[#2563eb]" />
               <span class="font-heading font-extrabold text-2xl text-clay-foreground tracking-tight">{{ siteNameFirst }}<span class="text-clay-accent">{{ siteNameLast }}</span></span>
             </div>
             <p class="text-clay-muted max-w-sm leading-relaxed">

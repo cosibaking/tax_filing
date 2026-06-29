@@ -22,7 +22,7 @@ import defaultLogo from '@imgs/common/jinshui-logo.png'
 
 const BRAND_SITE_NAME = '金税管家'
 const LEGACY_SITE_NAMES = new Set(['XYGo Admin', 'XYgoAdmin', 'XYGo'])
-const LEGACY_LOGO_MARKERS = ['995f9919-23d3-4ce2-8564-2460e4b1261d', 'logo.webp']
+const LEGACY_LOGO_MARKERS = ['995f9919-23d3-4ce2-8564-2460e4b1261d', 'logo.webp', '/attachment/upload/20260610/jinshui-logo.png']
 
 function normalizeSiteInfo(info: Partial<SiteInfo>): Partial<SiteInfo> {
   const normalized = { ...info }
