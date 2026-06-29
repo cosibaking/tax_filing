@@ -117,11 +117,30 @@
               </section>
 
               <div v-if="todoList.length > 0" class="overview-todos">
-                <h3 class="overview-todos__title">待办提醒</h3>
-                <ul>
+                <div class="overview-todos__head">
+                  <div>
+                    <h3 class="overview-todos__title">待办提醒</h3>
+                    <p class="overview-todos__desc">可按处理状态筛选；未到申报期任务默认折叠。</p>
+                  </div>
+                  <div class="overview-todo-filter" role="tablist" aria-label="待办提醒筛选">
+                    <button
+                      v-for="option in todoFilterOptions"
+                      :key="option.value"
+                      type="button"
+                      class="overview-todo-filter__btn"
+                      :class="{ 'is-active': todoFilter === option.value }"
+                      @click="todoFilter = option.value"
+                    >
+                      <span>{{ option.label }}</span>
+                      <span class="overview-todo-filter__count">{{ option.count }}</span>
+                    </button>
+                  </div>
+                </div>
+                <div v-if="visibleTodos.length === 0 && !showUpcomingTodos" class="overview-todos__empty">当前筛选下暂无待办提醒</div>
+                <ul v-else>
                   <li
-                    v-for="(todo, idx) in todoList"
-                    :key="idx"
+                    v-for="todo in visibleTodos"
+                    :key="todo.id"
                     class="overview-todo"
                     :class="{ 'is-urgent': todo.urgent }"
                   >
@@ -130,6 +149,34 @@
                     <RouterLink v-if="todo.path" :to="todo.path" class="overview-todo__link">去处理</RouterLink>
                   </li>
                 </ul>
+                <div v-if="showUpcomingTodos" class="overview-todo-upcoming">
+                  <button
+                    type="button"
+                    class="overview-todo-upcoming__toggle"
+                    @click="toggleTodoUpcomingCollapsed"
+                  >
+                    <span>未到申报期任务</span>
+                    <span>
+                      {{ upcomingTodos.length }} 项
+                      <ArtSvgIcon
+                        icon="ri:arrow-down-s-line"
+                        class="overview-todo-upcoming__icon"
+                        :class="todoUpcomingSectionCollapsed ? '' : 'rotate-180'"
+                      />
+                    </span>
+                  </button>
+                  <ul v-if="!todoUpcomingSectionCollapsed" class="overview-todo-upcoming__list">
+                    <li
+                      v-for="todo in upcomingTodos"
+                      :key="todo.id"
+                      class="overview-todo"
+                    >
+                      <ArtSvgIcon icon="ri:checkbox-circle-line" />
+                      <span class="overview-todo__text">{{ todo.text }}</span>
+                      <RouterLink v-if="todo.path" :to="todo.path" class="overview-todo__link">查看</RouterLink>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </template>
           </section>
@@ -404,6 +451,7 @@ import {
   getBankUnmatched,
   formatMoney as formatComplianceMoney,
 } from '@/api/frontend/compliance/member'
+import type { TaxTask } from '@/api/frontend/compliance/member'
 import type { CompliancePlanState } from '@/config/complianceMenu'
 import { formatTimestamp } from '@/utils/time'
 import { resolveMediaUrl } from '@/utils/media'
@@ -444,7 +492,29 @@ const activeMenu = computed(() => {
 const complianceState = ref<CompliancePlanState>({ hasActiveOrder: false, opcStatus: 'none' })
 const slaPreviewItems = computed(() => SERVICE_SLA_ITEMS.slice(0, 4))
 const monthSummary = reactive({ revenue: 0, profit: 0 })
-const todoList = ref<{ text: string; path?: string; urgent?: boolean }[]>([])
+type TodoFilter = 'all' | 'pending' | 'filed' | 'overdue' | 'upcoming'
+type OverviewTodo = { id: string; text: string; path?: string; urgent?: boolean; group: TodoFilter }
+
+const todoList = ref<OverviewTodo[]>([])
+const todoFilter = ref<TodoFilter>('all')
+const todoUpcomingCollapsed = ref(true)
+
+const actionableTodos = computed(() => todoList.value.filter(todo => todo.group !== 'upcoming' && todo.group !== 'filed'))
+const upcomingTodos = computed(() => todoList.value.filter(todo => todo.group === 'upcoming'))
+const visibleTodos = computed(() => {
+  if (todoFilter.value === 'all') return todoList.value.filter(todo => todo.group !== 'upcoming')
+  if (todoFilter.value === 'upcoming') return []
+  return todoList.value.filter(todo => todo.group === todoFilter.value)
+})
+const showUpcomingTodos = computed(() => (todoFilter.value === 'all' || todoFilter.value === 'upcoming') && upcomingTodos.value.length > 0)
+const todoUpcomingSectionCollapsed = computed(() => todoFilter.value === 'all' && todoUpcomingCollapsed.value)
+const todoFilterOptions = computed<Array<{ value: TodoFilter; label: string; count: number }>>(() => [
+  { value: 'all', label: '全部', count: todoList.value.length },
+  { value: 'pending', label: '待处理', count: todoList.value.filter(todo => todo.group === 'pending').length },
+  { value: 'filed', label: '已完成', count: todoList.value.filter(todo => todo.group === 'filed').length },
+  { value: 'overdue', label: '已逾期', count: todoList.value.filter(todo => todo.group === 'overdue').length },
+  { value: 'upcoming', label: '未到申报期', count: upcomingTodos.value.length }
+])
 
 const opcStatusLabel = computed(() => {
   if (complianceState.value.opcStatus === 'active') return '已激活'
@@ -483,11 +553,37 @@ const serviceSteps = computed(() => {
       key: 'filing',
       title: '台账申报',
       desc: '记账、申报与月度对账',
-      done: opcDone && todoList.value.length === 0,
+      done: opcDone && actionableTodos.value.length === 0,
       current: opcDone
     }
   ]
 })
+
+function toggleTodoUpcomingCollapsed() {
+  if (todoFilter.value === 'upcoming') return
+  todoUpcomingCollapsed.value = !todoUpcomingCollapsed.value
+}
+
+function getOverviewTodoGroup(task: TaxTask): TodoFilter {
+  if (task.status === 'filed' || task.status === 'overdue') return task.status
+  if (isOverviewUpcomingTask(task)) return 'upcoming'
+  return 'pending'
+}
+
+function isOverviewUpcomingTask(task: TaxTask) {
+  if (task.status !== 'pending') return false
+  const dueDate = parseOverviewDate(task.dueDate)
+  if (!dueDate) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return dueDate > today
+}
+
+function parseOverviewDate(value?: string) {
+  if (!value) return null
+  const date = new Date(value.replace(/-/g, '/'))
+  return Number.isNaN(date.getTime()) ? null : date
+}
 
 const overviewQuickLinks = computed(() => {
   const links: { label: string; path: string; icon: string }[] = [
@@ -530,9 +626,11 @@ async function loadComplianceOverview() {
         const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
         const prevLabel = `${prev.getFullYear()}年${prev.getMonth() + 1}月`
         todos.push({
+          id: `upload-${period}`,
           text: `请于本月 5 日前上传${prevLabel}银行流水、平台结算截图与成本发票`,
           path: '/user/compliance/income',
           urgent: day >= 4,
+          group: 'pending',
         })
       }
 
@@ -545,13 +643,14 @@ async function loadComplianceOverview() {
       try {
         const tax = await getTaxCalendar({ year: now.getFullYear(), month: now.getMonth() + 1 })
         for (const task of tax?.tasks || []) {
-          if (task.status === 'pending' || task.status === 'overdue') {
-            todos.push({
-              text: `${task.taxTypeLabel}申报（截止 ${task.dueDate}）`,
-              path: '/user/compliance/tax',
-              urgent: task.status === 'overdue',
-            })
-          }
+          const group = getOverviewTodoGroup(task)
+          todos.push({
+            id: `tax-${task.id}`,
+            text: `${task.taxTypeLabel}申报（截止 ${task.dueDate || '—'}）`,
+            path: '/user/compliance/tax',
+            urgent: group === 'overdue',
+            group,
+          })
         }
       } catch { /* ignore */ }
 
@@ -559,15 +658,19 @@ async function loadComplianceOverview() {
         const bank = await getBankUnmatched({ month: period })
         if (bank?.count > 0) {
           todos.push({
+            id: `bank-${period}`,
             text: `有 ${bank.count} 笔银行流水待匹配入账`,
             path: '/user/compliance/income',
             urgent: true,
+            group: 'pending',
           })
         }
       } catch { /* ignore */ }
     }
 
     todoList.value = todos
+    todoFilter.value = 'all'
+    todoUpcomingCollapsed.value = true
   } catch { /* ignore */ }
 }
 
@@ -1021,10 +1124,72 @@ const handleChangePassword = async () => {
 }
 
 .overview-todos__title {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   color: #475569;
+}
+
+.overview-todos__desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.overview-todos__head {
+  margin-bottom: 12px;
+}
+
+.overview-todo-filter {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+
+.overview-todo-filter__btn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid #d8dee9;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover,
+  &.is-active {
+    color: #2563eb;
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+}
+
+.overview-todo-filter__count {
+  min-width: 18px;
+  padding: 1px 6px;
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 999px;
+}
+
+.overview-todos__empty {
+  padding: 12px 0;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .overview-todos ul {
@@ -1068,6 +1233,49 @@ const handleChangePassword = async () => {
   &:hover {
     text-decoration: underline;
   }
+}
+
+.overview-todo-upcoming {
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.overview-todo-upcoming__toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  span:last-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 12px;
+  }
+}
+
+.overview-todo-upcoming__icon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.overview-todo-upcoming__list {
+  border-top: 1px solid #e8edf3;
 }
 
 .overview-links {
