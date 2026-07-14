@@ -19,6 +19,11 @@ import { useUserStore } from '@/store/modules/user'
 import { useMemberStore } from '@/store/modules/member'
 import { ApiStatus } from './status'
 import { HttpError, handleError, sanitizeErrorMessage, showError, showSuccess } from './error'
+import {
+  isJsonMediaType,
+  normalizeResponsePayload,
+  shouldHandleUnauthorized
+} from './response-payload'
 import { $t } from '@/locales'
 import { BaseResponse } from '@/types'
 import { router } from '@/router'
@@ -83,38 +88,20 @@ function isMemberRequest(url: string): boolean {
   return url.startsWith('/member')
 }
 
-function isJsonMediaType(contentType: string): boolean {
-  const mediaType = contentType.split(';', 1)[0].trim().toLowerCase()
-  return (
-    mediaType === 'application/json' ||
-    mediaType === 'text/json' ||
-    (mediaType.startsWith('application/') && mediaType.endsWith('+json'))
-  )
-}
-
-async function normalizeResponsePayload(response: AxiosResponse) {
-  const contentType = response.headers['content-type'] || ''
-  const payload = response.data as unknown
-  if (!isJsonMediaType(contentType) || typeof Blob === 'undefined' || !(payload instanceof Blob)) {
-    return payload
-  }
-
-  try {
-    response.data = JSON.parse(await payload.text())
-  } catch {
-    // 保留原始 Blob，由既有错误链按原响应处理。
-  }
-  return response.data
-}
-
 async function handleResponseAuthentication(
-  code: number | undefined,
+  payloadCode: number | undefined,
+  httpStatus: number | undefined,
   message: string | undefined,
   config: AxiosRequestConfig,
   isMember: boolean
 ) {
-  if (code === ApiStatus.kickedOut) handleKickedOutError(message, isMember)
-  if (code !== ApiStatus.unauthorized || isRefreshRequest(config)) return null
+  if (payloadCode === ApiStatus.kickedOut) handleKickedOutError(message, isMember)
+  if (
+    !shouldHandleUnauthorized(payloadCode, httpStatus, ApiStatus.unauthorized) ||
+    isRefreshRequest(config)
+  ) {
+    return null
+  }
 
   const result = await tryTokenRefresh(config, isMember)
   if (result) return result
@@ -180,7 +167,13 @@ axiosInstance.interceptors.response.use(
     const isMember = isMemberRequest(url)
 
     if (code === ApiStatus.success) return response
-    const authResult = await handleResponseAuthentication(code, errorMsg, response.config, isMember)
+    const authResult = await handleResponseAuthentication(
+      code,
+      response.status,
+      errorMsg,
+      response.config,
+      isMember
+    )
     if (authResult) return authResult
 
     throw createHttpError(
@@ -189,15 +182,21 @@ axiosInstance.interceptors.response.use(
     )
   },
   async (error) => {
-    if (error.response) await normalizeResponsePayload(error.response)
+    if (error.response) await normalizeResponsePayload(error.response, error)
 
     const url = error.config?.url || ''
     const isMember = isMemberRequest(url)
     const payload = error.response?.data as any
-    const code = payload?.code ?? error.response?.status
+    const code = payload?.code
     const errorMsg = payload?.msg || payload?.message
 
-    const authResult = await handleResponseAuthentication(code, errorMsg, error.config, isMember)
+    const authResult = await handleResponseAuthentication(
+      code,
+      error.response?.status,
+      errorMsg,
+      error.config,
+      isMember
+    )
     if (authResult) return authResult
 
     return Promise.reject(handleError(error))
