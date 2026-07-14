@@ -73,6 +73,15 @@ func (DatabaseRepository) Insert(ctx context.Context, item Task) (*Task, error) 
 		return nil, err
 	}
 	item.ID = uint64(id)
+	for _, reminder := range PlanReminders(item.ID, item.DueAt, []string{"in_app"}) {
+		if _, err := g.DB().Model("xy_task_reminder").Ctx(ctx).Data(g.Map{
+			"task_id": reminder.TaskID, "channel": reminder.Channel,
+			"planned_at": uint64(reminder.PlannedAt.Unix()), "status": reminder.Status,
+			"attempts": 0, "create_time": uint64(time.Now().Unix()), "update_time": uint64(time.Now().Unix()),
+		}).InsertIgnore(); err != nil {
+			return nil, err
+		}
+	}
 	return &item, nil
 }
 
