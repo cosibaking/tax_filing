@@ -2,9 +2,12 @@ package profile
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"reflect"
 	"testing"
+
+	"github.com/gogf/gf/v2/errors/gerror"
 )
 
 func TestMergeProfileJSONProducesValidJSON(t *testing.T) {
@@ -12,6 +15,23 @@ func TestMergeProfileJSONProducesValidJSON(t *testing.T) {
 	var decoded map[string]any
 	if err := json.Unmarshal([]byte(merged), &decoded); err != nil {
 		t.Fatalf("invalid merged JSON: %v", err)
+	}
+}
+
+type noRowsRepository struct{ memoryRepository }
+
+func (noRowsRepository) Active(context.Context, uint64) (*Profile, error) {
+	return nil, gerror.Wrap(sql.ErrNoRows, "scan active profile")
+}
+
+func TestGetForMemberTreatsMissingInitialProfileAsEmpty(t *testing.T) {
+	service := NewService(&noRowsRepository{}, fixedOwner{memberID: 1})
+	got, err := service.GetForMember(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("missing initial profile returned error: %v", err)
+	}
+	if got != nil {
+		t.Fatalf("profile=%+v want nil", got)
 	}
 }
 

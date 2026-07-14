@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 
 	"xygo/internal/logic/compliance/shared"
@@ -96,7 +98,7 @@ func (s *Service) Save(ctx context.Context, in SaveInput) (*Profile, bool, error
 		return nil, false, errors.New("无权修改该企业画像")
 	}
 
-	active, err := s.repository.Active(ctx, in.OpcID)
+	active, err := s.active(ctx, in.OpcID)
 	if err != nil {
 		return nil, false, err
 	}
@@ -138,7 +140,18 @@ func (s *Service) GetForMember(ctx context.Context, memberID, opcID uint64) (*Pr
 	if !owned {
 		return nil, errors.New("无权访问该企业画像")
 	}
-	return s.repository.Active(ctx, opcID)
+	return s.active(ctx, opcID)
+}
+
+func (s *Service) active(ctx context.Context, opcID uint64) (*Profile, error) {
+	item, err := s.repository.Active(ctx, opcID)
+	if err == nil {
+		return item, nil
+	}
+	if errors.Is(err, sql.ErrNoRows) || errors.Is(gerror.Cause(err), sql.ErrNoRows) {
+		return nil, nil
+	}
+	return nil, err
 }
 
 func validate(in SaveInput) error {
