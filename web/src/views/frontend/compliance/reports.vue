@@ -101,7 +101,7 @@
   import ReportAnomalyList from './reports/ReportAnomalyList.vue'
 
   const router = useRouter()
-  const period = ref(new Date().toISOString().slice(0, 7))
+  const period = ref(currentLocalPeriod())
   const items = ref<ComplianceReport[]>([])
   const loading = ref(false)
   const creating = ref(false)
@@ -109,6 +109,12 @@
   const exportingId = ref<number | null>(null)
 
   onMounted(load)
+
+  function currentLocalPeriod(date = new Date()) {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    return `${year}-${month}`
+  }
 
   async function load() {
     loading.value = true

@@ -13,6 +13,35 @@ func TestGenerateStructuredReport(t *testing.T) {
 	assertPDF(t, pdf)
 }
 
+func TestLocalizedReportLabelsAndRuleVersion(t *testing.T) {
+	if got := reportStatusLabel("draft"); got != "草稿" {
+		t.Fatalf("draft report status = %q, want 草稿", got)
+	}
+	if got := reportStatusLabel("published"); got != "已发布" {
+		t.Fatalf("published report status = %q, want 已发布", got)
+	}
+	for input, want := range map[string]string{"high": "高风险", "medium": "中风险", "low": "低风险"} {
+		if got := riskLevelLabel(input); got != want {
+			t.Fatalf("risk level %q = %q, want %q", input, got, want)
+		}
+	}
+	for input, want := range map[string]string{"normal": "正常", "attention": "需关注", "urgent": "紧急处理", "insufficient": "数据不足"} {
+		if got := checkStatusLabel(input); got != want {
+			t.Fatalf("check status %q = %q, want %q", input, got, want)
+		}
+	}
+
+	fields := anomalyDetailFields(Anomaly{Severity: "high", RuleVersion: "risk-v2026.07"})
+	joined := strings.Join(fields, "\n")
+	if !strings.Contains(joined, "等级：高风险") || !strings.Contains(joined, "规则版本：risk-v2026.07") {
+		t.Fatalf("localized anomaly detail is incomplete:\n%s", joined)
+	}
+	missingVersion := strings.Join(anomalyDetailFields(Anomaly{}), "\n")
+	if !strings.Contains(missingVersion, "规则版本：未记录，请结合原始资料人工复核") {
+		t.Fatalf("missing rule version fallback is not cautious:\n%s", missingVersion)
+	}
+}
+
 func TestGenerateLegacySummary(t *testing.T) {
 	pdf, err := Generate(Data{CompanyName: "历史测试企业", Version: 1, Status: "generated", GeneratedAt: "2026-07-14 10:00:00", LegacyContent: "历史体检结论：请补充发票与银行回单。"})
 	if err != nil {

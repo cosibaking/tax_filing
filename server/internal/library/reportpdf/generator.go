@@ -146,7 +146,7 @@ func (r *renderer) render(data Data) error {
 	}
 	meta := []string{
 		"企业：" + fallback(data.CompanyName, "—"), "账期：" + fallback(data.PeriodKey, "—"),
-		fmt.Sprintf("版本：%d", data.Version), "状态：" + statusLabel(data.Status), "生成时间：" + fallback(data.GeneratedAt, "—"),
+		fmt.Sprintf("版本：%d", data.Version), "状态：" + reportStatusLabel(data.Status), "生成时间：" + fallback(data.GeneratedAt, "—"),
 	}
 	for _, item := range meta {
 		if err := r.paragraph(item, 10); err != nil {
@@ -182,14 +182,14 @@ func (r *renderer) render(data Data) error {
 		return err
 	}
 	for i, category := range data.Categories {
-		if err := r.subheading(fmt.Sprintf("%d. %s（%s）", i+1, fallback(category.Name, category.Code), statusLabel(category.Status))); err != nil {
+		if err := r.subheading(fmt.Sprintf("%d. %s（%s）", i+1, fallback(category.Name, category.Code), riskLevelLabel(category.Status))); err != nil {
 			return err
 		}
 		if err := r.paragraph("分类结论："+fallback(category.Summary, "—"), 10); err != nil {
 			return err
 		}
 		for _, check := range category.Checks {
-			if err := r.paragraph(fmt.Sprintf("检查项：%s（%s） %s", fallback(check.Name, check.Code), statusLabel(check.Status), fallback(check.Message, "—")), 9); err != nil {
+			if err := r.paragraph(fmt.Sprintf("检查项：%s（%s） %s", fallback(check.Name, check.Code), checkStatusLabel(check.Status), fallback(check.Message, "—")), 9); err != nil {
 				return err
 			}
 		}
@@ -209,12 +209,7 @@ func (r *renderer) render(data Data) error {
 			return err
 		}
 		r.activeAnomalyHeading = heading
-		fields := []string{
-			"等级：" + severityLabel(anomaly.Severity), "事实：" + fallback(anomaly.Facts, "—"), "判断依据：" + fallback(anomaly.Basis, "—"),
-			"可能影响：" + fallback(anomaly.Impact, "—"), "处理建议：" + fallback(anomaly.Recommendation, "—"),
-			"所需材料：" + fallback(strings.Join(anomaly.RequiredMaterials, "、"), "—"), "处理期限：" + fallback(anomaly.DueDate, "—"),
-			"是否人工复核：" + yesNo(anomaly.RequiresManualReview),
-		}
+		fields := anomalyDetailFields(anomaly)
 		for _, field := range fields {
 			if err := r.paragraph(field, 9); err != nil {
 				return err
@@ -344,7 +339,7 @@ func conclusionLabel(v string) string {
 		return fallback(v, "未知")
 	}
 }
-func severityLabel(v string) string {
+func riskLevelLabel(v string) string {
 	switch strings.ToLower(v) {
 	case "high":
 		return "高风险"
@@ -352,14 +347,6 @@ func severityLabel(v string) string {
 		return "中风险"
 	case "low":
 		return "低风险"
-	default:
-		return fallback(v, "未知")
-	}
-}
-func statusLabel(v string) string {
-	switch strings.ToLower(v) {
-	case "generated":
-		return "已生成"
 	case "normal":
 		return "正常"
 	case "attention":
@@ -370,5 +357,45 @@ func statusLabel(v string) string {
 		return "数据不足"
 	default:
 		return fallback(v, "未知")
+	}
+}
+func reportStatusLabel(v string) string {
+	switch strings.ToLower(v) {
+	case "draft":
+		return "草稿"
+	case "published":
+		return "已发布"
+	case "generated":
+		return "已生成"
+	default:
+		return fallback(v, "未知")
+	}
+}
+func checkStatusLabel(v string) string {
+	switch strings.ToLower(v) {
+	case "normal":
+		return "正常"
+	case "attention":
+		return "需关注"
+	case "urgent":
+		return "紧急处理"
+	case "insufficient":
+		return "数据不足"
+	default:
+		return fallback(v, "未知")
+	}
+}
+
+func anomalyDetailFields(anomaly Anomaly) []string {
+	return []string{
+		"等级：" + riskLevelLabel(anomaly.Severity),
+		"规则版本：" + fallback(anomaly.RuleVersion, "未记录，请结合原始资料人工复核"),
+		"事实：" + fallback(anomaly.Facts, "—"),
+		"判断依据：" + fallback(anomaly.Basis, "—"),
+		"可能影响：" + fallback(anomaly.Impact, "—"),
+		"处理建议：" + fallback(anomaly.Recommendation, "—"),
+		"所需材料：" + fallback(strings.Join(anomaly.RequiredMaterials, "、"), "—"),
+		"处理期限：" + fallback(anomaly.DueDate, "—"),
+		"是否人工复核：" + yesNo(anomaly.RequiresManualReview),
 	}
 }
