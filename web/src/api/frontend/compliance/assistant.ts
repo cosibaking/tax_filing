@@ -151,3 +151,30 @@ export function transitionComplianceRisk(
     data: { action, note }
   })
 }
+
+export interface ComplianceReport {
+  id: number
+  periodKey: string
+  version: number
+  status: 'draft' | 'published'
+  content: string
+  aiModel: string
+  publishedAt: number
+}
+export function getComplianceReports(periodKey?: string) {
+  return memberRequest.get<{ list: ComplianceReport[] }>({
+    url: '/compliance/reports',
+    params: { periodKey }
+  })
+}
+export function createComplianceReport(periodKey: string) {
+  return memberRequest.post<{ report: ComplianceReport }>({
+    url: '/compliance/reports',
+    data: { data: { periodKey, statistics: {}, completeness: {}, risks: [] } }
+  })
+}
+export function publishComplianceReport(id: number) {
+  return memberRequest.post<{ report: ComplianceReport }>({
+    url: `/compliance/reports/${id}/publish`
+  })
+}

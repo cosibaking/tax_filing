@@ -75,6 +75,15 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     visible: (plan) => plan.opcStatus === 'active'
   },
   {
+    id: 'reports-assistant',
+    name: '月度体检',
+    icon: 'ri:file-chart-line',
+    path: '/user/compliance/reports',
+    menuGroup: 'service',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
     id: 'diagnosis',
     name: '诊断历史',
     icon: 'ri:file-search-line',

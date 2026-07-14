@@ -5,6 +5,7 @@ import (
 
 	compliancedocument "xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/profile"
+	compliancereport "xygo/internal/logic/compliance/report"
 	compliancerisk "xygo/internal/logic/compliance/risk"
 	"xygo/internal/logic/compliance/ruleengine"
 	compliancetask "xygo/internal/logic/compliance/task"
@@ -38,12 +39,18 @@ type IComplianceRisk interface {
 	List(ctx context.Context, memberID uint64, periodKey, status string) ([]compliancerisk.Event, error)
 	Decide(ctx context.Context, memberID, id uint64, action, note string) (*compliancerisk.Event, error)
 }
+type IComplianceReport interface {
+	Create(ctx context.Context, opcID, memberID uint64, in compliancereport.Input) (*compliancereport.MonthlyReport, error)
+	List(ctx context.Context, memberID uint64, period string) ([]compliancereport.MonthlyReport, error)
+	Publish(ctx context.Context, memberID, id uint64) (*compliancereport.MonthlyReport, error)
+}
 
 var localComplianceProfile IComplianceProfile
 var localComplianceRuleVersion IComplianceRuleVersion
 var localComplianceTask IComplianceTask
 var localComplianceDocument IComplianceDocument
 var localComplianceRisk IComplianceRisk
+var localComplianceReport IComplianceReport
 
 func ComplianceProfile() IComplianceProfile {
 	if localComplianceProfile == nil {
@@ -91,3 +98,10 @@ func ComplianceRisk() IComplianceRisk {
 	return localComplianceRisk
 }
 func RegisterComplianceRisk(i IComplianceRisk) { localComplianceRisk = i }
+func ComplianceReport() IComplianceReport {
+	if localComplianceReport == nil {
+		panic("IComplianceReport not registered")
+	}
+	return localComplianceReport
+}
+func RegisterComplianceReport(i IComplianceReport) { localComplianceReport = i }

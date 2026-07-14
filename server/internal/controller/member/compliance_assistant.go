@@ -176,3 +176,44 @@ func (c *ControllerV1) ComplianceRiskAction(ctx context.Context, req *api.Compli
 	}
 	return &api.ComplianceRiskActionRes{Risk: item}, nil
 }
+
+func (c *ControllerV1) ComplianceReportCreate(ctx context.Context, req *api.ComplianceReportCreateReq) (*api.ComplianceReportCreateRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	opc, err := shared.LoadOpcByMember(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	if opc == nil {
+		return nil, fmt.Errorf("请先完成企业主体建档")
+	}
+	item, err := service.ComplianceReport().Create(ctx, opc.Id, memberID, req.Data)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceReportCreateRes{Report: item}, nil
+}
+func (c *ControllerV1) ComplianceReportList(ctx context.Context, req *api.ComplianceReportListReq) (*api.ComplianceReportListRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	items, err := service.ComplianceReport().List(ctx, memberID, req.PeriodKey)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceReportListRes{List: items}, nil
+}
+func (c *ControllerV1) ComplianceReportPublish(ctx context.Context, req *api.ComplianceReportPublishReq) (*api.ComplianceReportPublishRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	item, err := service.ComplianceReport().Publish(ctx, memberID, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceReportPublishRes{Report: item}, nil
+}

@@ -5,6 +5,7 @@ import (
 
 	compliancedocument "xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/profile"
+	compliancereport "xygo/internal/logic/compliance/report"
 	compliancerisk "xygo/internal/logic/compliance/risk"
 	compliancetask "xygo/internal/logic/compliance/task"
 )
@@ -115,4 +116,26 @@ type ComplianceRiskActionReq struct {
 }
 type ComplianceRiskActionRes struct {
 	Risk *compliancerisk.Event `json:"risk"`
+}
+
+type ComplianceReportCreateReq struct {
+	g.Meta `path:"/compliance/reports" method:"post" tags:"会员合规助手" summary:"生成月度体检报告"`
+	Data   compliancereport.Input `json:"data" v:"required#请提供报告数据"`
+}
+type ComplianceReportCreateRes struct {
+	Report *compliancereport.MonthlyReport `json:"report"`
+}
+type ComplianceReportListReq struct {
+	g.Meta    `path:"/compliance/reports" method:"get" tags:"会员合规助手" summary:"月度体检报告列表"`
+	PeriodKey string `p:"periodKey"`
+}
+type ComplianceReportListRes struct {
+	List []compliancereport.MonthlyReport `json:"list"`
+}
+type ComplianceReportPublishReq struct {
+	g.Meta `path:"/compliance/reports/{id}/publish" method:"post" tags:"会员合规助手" summary:"发布月度体检报告"`
+	Id     uint64 `p:"id" in:"path" v:"required|min:1#请指定报告"`
+}
+type ComplianceReportPublishRes struct {
+	Report *compliancereport.MonthlyReport `json:"report"`
 }
