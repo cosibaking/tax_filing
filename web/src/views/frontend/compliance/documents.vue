@@ -4,16 +4,22 @@
       ><h1>经营资料库</h1
       ><p>原文件上传后永久保留，识别结果经确认后才参与台账和风险分析。</p></header
     >
-    <ElCard shadow="never"
-      ><div class="upload-row"
-        ><ElDatePicker v-model="period" type="month" value-format="YYYY-MM" /><MemberFileUpload
-          v-model="attachmentId"
-          accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx"
-        /><ElButton type="primary" :disabled="!attachmentId" @click="register"
-          >登记资料</ElButton
-        ></div
-      ></ElCard
-    >
+    <ElCard shadow="never">
+      <div class="upload-row">
+        <ElDatePicker v-model="period" class="period-field" type="month" value-format="YYYY-MM" />
+        <div class="upload-field">
+          <MemberFileUpload v-model="attachmentId" accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx" />
+        </div>
+        <ElButton
+          class="register-button"
+          type="primary"
+          :disabled="!attachmentId"
+          @click="register"
+        >
+          登记资料
+        </ElButton>
+      </div>
+    </ElCard>
     <ElTable :data="items" v-loading="loading">
       <ElTableColumn prop="periodKey" label="期间" width="120" /><ElTableColumn
         prop="attachmentId"
@@ -87,13 +93,27 @@
   }
   .upload-row {
     display: grid;
-    grid-template-columns: 180px 1fr auto;
+    grid-template-columns: 180px minmax(0, 1fr) auto;
     gap: 16px;
     align-items: start;
   }
+  .period-field {
+    width: 100%;
+  }
+  .upload-field {
+    min-width: 0;
+  }
+  .register-button {
+    align-self: start;
+  }
   @media (max-width: 760px) {
     .upload-row {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .period-field,
+    .upload-field,
+    .register-button {
+      width: 100%;
     }
   }
 </style>
