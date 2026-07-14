@@ -30,6 +30,7 @@ complianceAssistant:
 | POST | `/compliance/risks/{id}/action` | 确认、排除或解决风险 |
 | GET/POST | `/compliance/reports` | 报告列表、生成草稿 |
 | POST | `/compliance/reports/{id}/publish` | 发布不可变报告版本 |
+| GET | `/compliance/reports/{id}/pdf` | 导出月度体检 PDF |
 | GET/POST | `/compliance/tickets` | 工单列表、提交工单 |
 | POST | `/compliance/tickets/{id}/action` | 工单流转 |
 
@@ -62,6 +63,185 @@ complianceAssistant:
 ```
 
 `tax_filing`、`bookkeeping` 类型必须填写 `providerName`，以明确有资质服务机构。
+
+## 月度体检报告接口
+
+报告仅能由当前登录会员访问。创建会保存当时的结构化快照，发布后该版本不可修改；需要更新时应生成新版本。
+
+### 生成报告草稿
+
+`POST /compliance/reports`
+
+请求体：
+
+```json
+{
+  "data": {
+    "periodKey": "2026-07",
+    "statistics": {
+      "revenue": 35600,
+      "expense": 21800
+    },
+    "completeness": {
+      "rate": 81.5
+    },
+    "risks": [
+      {
+        "code": "unmatched-revenue",
+        "categoryCode": "tax",
+        "title": "部分收入未匹配发票",
+        "severity": "high",
+        "facts": "已确认回款 35,600 元，其中 14,600 元尚未匹配销项发票。",
+        "basis": "基于本期已确认的银行流水与销项资料比对。",
+        "impact": "可能影响申报数据的完整性。",
+        "recommendation": "核对合同、回款和开票记录，交由专业人员复核。",
+        "requiredMaterials": ["银行流水", "业务合同", "销项发票"],
+        "dueDate": "2026-08-10",
+        "requiresManualReview": true,
+        "ruleVersion": "tax-check-v3"
+      }
+    ]
+  }
+}
+```
+
+`periodKey` 必须为真实有效的 `YYYY-MM`。`statistics`、`completeness`、`risks` 均为本次报告的已确认快照；不要传入尚未经用户确认的 AI 推断。
+
+成功响应的 `data.report` 与列表项结构一致，初始 `status` 为 `draft`。
+
+### 查询报告列表
+
+`GET /compliance/reports?periodKey=2026-07`
+
+`periodKey` 可选；不传时返回当前会员的全部报告，按期间和版本倒序排列。结构化报告示例：
+
+```json
+{
+  "code": 0,
+  "message": "",
+  "data": {
+    "list": [
+      {
+        "id": 27,
+        "opcEntityId": 6,
+        "memberId": 18,
+        "periodKey": "2026-07",
+        "version": 1,
+        "status": "draft",
+        "content": "2026-07 月度经营合规体检\n……",
+        "aiModel": "",
+        "knowledgeVersion": "",
+        "structuredReport": {
+          "schemaVersion": 1,
+          "summary": {
+            "conclusion": "urgent",
+            "completenessRate": 81.5,
+            "highCount": 1,
+            "mediumCount": 0,
+            "lowCount": 0,
+            "dataNotice": "资料尚未完全齐备，请根据缺失清单及时补充。"
+          },
+          "categories": [
+            {
+              "code": "tax",
+              "name": "税务与申报",
+              "status": "urgent",
+              "summary": "识别到 1 项待处理风险，请按异常清单核实。",
+              "checks": [
+                {
+                  "code": "tax-overview",
+                  "name": "税务与申报检查",
+                  "status": "urgent",
+                  "message": "识别到 1 项待处理风险，请按异常清单核实。"
+                }
+              ]
+            }
+          ],
+          "anomalies": [
+            {
+              "code": "unmatched-revenue",
+              "categoryCode": "tax",
+              "title": "部分收入未匹配发票",
+              "severity": "high",
+              "facts": "已确认回款 35,600 元，其中 14,600 元尚未匹配销项发票。",
+              "basis": "基于本期已确认的银行流水与销项资料比对。",
+              "impact": "可能影响申报数据的完整性。",
+              "recommendation": "核对合同、回款和开票记录，交由专业人员复核。",
+              "requiredMaterials": ["银行流水", "业务合同", "销项发票"],
+              "dueDate": "2026-08-10",
+              "requiresManualReview": true,
+              "ruleVersion": "tax-check-v3"
+            }
+          ]
+        },
+        "legacy": false,
+        "publishedAt": 0,
+        "createdAt": 1783958400
+      }
+    ]
+  }
+}
+```
+
+`summary.conclusion` 可为 `normal`、`attention`、`urgent`；分类 `status` 还可为 `insufficient`；异常 `severity` 可为 `low`、`medium`、`high`。异常中的“事实、依据、影响、建议、所需资料、截止日期、是否人工复核、规则版本”用于给出可追溯的详细说明。
+
+历史报告没有 `structured_json` 时，返回 `legacy: true`，且不返回 `structuredReport`；前端和 PDF 导出必须降级使用 `content`，不得将历史报告显示为空白。结构化快照损坏时，列表会降级为历史内容并记录警告日志。
+
+### 发布报告
+
+`POST /compliance/reports/{id}/publish`
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+|---|---|---|---|---|
+| `id` | path | uint64 | 是 | 报告 ID，必须大于 0 |
+
+成功后 `data.report.status` 为 `published`，并返回 `publishedAt`。重复发布同一版本返回“已发布报告不可修改，请创建新版本”。
+
+### 导出 PDF
+
+`GET /compliance/reports/{id}/pdf`
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+|---|---|---|---|---|
+| `id` | path | uint64 | 是 | 报告 ID，必须大于 0 |
+
+草稿和已发布版本都可导出。成功响应不使用 JSON 信封：
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="monthly-checkup-2026-07-v1.pdf"
+Content-Length: 12345
+Cache-Control: private, no-store
+
+%PDF-...
+```
+
+PDF 包含企业、期间、版本、状态、总体结论、六类检查、完整异常说明和免责声明。历史报告降级输出 `content` 摘要。
+
+越权或不存在的 ID 不泄露资源是否存在，返回统一错误信封：
+
+```json
+{
+  "code": -1,
+  "message": "报告不存在或无权访问",
+  "traceId": "f7f9c265d6104c72"
+}
+```
+
+参数错误示例：
+
+```json
+{
+  "code": -1,
+  "message": "请指定报告",
+  "traceId": "f7f9c265d6104c72"
+}
+```
+
+PDF 加载字体或生成失败时也返回 JSON 错误信封，客户端必须在 `responseType: blob` 下检查 `Content-Type`，不要把 JSON 错误 Blob 作为 PDF 保存。
+
+> 审慎说明：体检报告是基于已确认资料和规则的自动整理结果，不是税务申报结论，也不替代会计、税务或法律专业意见。高风险、数据不足、规则版本变化及重要结论必须结合原始凭证人工复核。
 
 ## 管理接口
 
