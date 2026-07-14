@@ -46,3 +46,32 @@ func TestComplianceAssistantMigrationContainsCoreTables(t *testing.T) {
 		}
 	}
 }
+
+func TestRiskCodeColumnBelongsToRiskEvent(t *testing.T) {
+	body, err := os.ReadFile("../../../../cmd_tools/migrate/1.5.6_compliance_assistant_core.mysql.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := string(body)
+	task := tableDefinition(t, sql, "xy_enterprise_compliance_task")
+	risk := tableDefinition(t, sql, "xy_risk_event")
+	if strings.Contains(task, "`risk_code`") {
+		t.Fatal("risk_code must not be defined on compliance task")
+	}
+	if !strings.Contains(risk, "`risk_code` varchar(64)") {
+		t.Fatal("risk event must define risk_code before its unique index")
+	}
+}
+
+func tableDefinition(t *testing.T, sql, table string) string {
+	t.Helper()
+	start := strings.Index(sql, "CREATE TABLE IF NOT EXISTS `"+table+"`")
+	if start < 0 {
+		t.Fatalf("table %s not found", table)
+	}
+	end := strings.Index(sql[start:], ";")
+	if end < 0 {
+		t.Fatalf("table %s definition is incomplete", table)
+	}
+	return sql[start : start+end]
+}
