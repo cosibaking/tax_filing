@@ -152,6 +152,52 @@ export function transitionComplianceRisk(
   })
 }
 
+export interface ReportSummary {
+  conclusion: 'normal' | 'attention' | 'urgent'
+  completenessRate: number
+  highCount: number
+  mediumCount: number
+  lowCount: number
+  dataNotice: string
+}
+
+export interface ReportCheck {
+  code: string
+  name: string
+  status: string
+  message: string
+}
+
+export interface ReportCategory {
+  code: string
+  name: string
+  status: string
+  summary: string
+  checks: ReportCheck[]
+}
+
+export interface ReportAnomaly {
+  code: string
+  categoryCode: string
+  title: string
+  severity: 'high' | 'medium' | 'low'
+  facts: string
+  basis: string
+  impact: string
+  recommendation: string
+  requiredMaterials: string[]
+  dueDate: string
+  ruleVersion: string
+  requiresManualReview: boolean
+}
+
+export interface StructuredReport {
+  schemaVersion: number
+  summary: ReportSummary
+  categories: ReportCategory[]
+  anomalies: ReportAnomaly[]
+}
+
 export interface ComplianceReport {
   id: number
   periodKey: string
@@ -160,6 +206,9 @@ export interface ComplianceReport {
   content: string
   aiModel: string
   publishedAt: number
+  structuredReport?: StructuredReport
+  legacy: boolean
+  createdAt: number
 }
 export function getComplianceReports(periodKey?: string) {
   return memberRequest.get<{ list: ComplianceReport[] }>({
@@ -176,6 +225,12 @@ export function createComplianceReport(periodKey: string) {
 export function publishComplianceReport(id: number) {
   return memberRequest.post<{ report: ComplianceReport }>({
     url: `/compliance/reports/${id}/publish`
+  })
+}
+export function exportComplianceReportPdf(id: number) {
+  return memberRequest.get<Blob>({
+    url: `/compliance/reports/${id}/pdf`,
+    responseType: 'blob'
   })
 }
 export interface ComplianceTicket {

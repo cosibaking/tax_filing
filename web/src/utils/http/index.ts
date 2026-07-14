@@ -132,6 +132,25 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   async (response: AxiosResponse<BaseResponse>) => {
+    if (response.config.responseType === 'blob') {
+      const contentType = response.headers['content-type'] || ''
+      if (!contentType.includes('application/json')) return response
+
+      const blobData = response.data as unknown
+      if (typeof Blob !== 'undefined' && blobData instanceof Blob) {
+        try {
+          const payload = JSON.parse(await blobData.text())
+          throw createHttpError(
+            sanitizeErrorMessage(payload.msg || payload.message || $t('httpMsg.requestFailed')),
+            payload.code || ApiStatus.error
+          )
+        } catch (error) {
+          if (error instanceof HttpError) throw error
+          throw createHttpError($t('httpMsg.requestFailed'), ApiStatus.error)
+        }
+      }
+    }
+
     const { code, msg, message } = response.data as any
     const errorMsg = msg || message
     const url = response.config.url || ''
@@ -411,6 +430,13 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
     const successMsg = (res.data as any).msg || (res.data as any).message
     if (config.showSuccessMessage && successMsg) {
       showSuccess(successMsg)
+    }
+
+    if (
+      config.responseType === 'blob' ||
+      (typeof Blob !== 'undefined' && res.data instanceof Blob)
+    ) {
+      return res.data as T
     }
 
     return res.data.data as T
