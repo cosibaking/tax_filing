@@ -11,6 +11,7 @@ import (
 	"xygo/internal/logic/compliance/ruleengine"
 	_ "xygo/internal/logic/compliance/social"
 	_ "xygo/internal/logic/compliance/statement"
+	compliancetask "xygo/internal/logic/compliance/task"
 	_ "xygo/internal/logic/compliance/tax"
 	"xygo/internal/service"
 )
@@ -22,4 +23,5 @@ func init() {
 	service.RegisterComplianceLedger(ledger.New())
 	service.RegisterComplianceProfile(profile.New())
 	service.RegisterComplianceRuleVersion(ruleengine.NewDatabaseVersionService())
+	service.RegisterComplianceTask(compliancetask.NewDatabaseService())
 }
