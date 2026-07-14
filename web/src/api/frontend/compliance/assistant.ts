@@ -219,7 +219,7 @@ export function getComplianceReports(periodKey?: string) {
 export function createComplianceReport(periodKey: string) {
   return memberRequest.post<{ report: ComplianceReport }>({
     url: '/compliance/reports',
-    data: { data: { periodKey, statistics: {}, completeness: {}, risks: [] } }
+    data: { periodKey }
   })
 }
 export function publishComplianceReport(id: number) {

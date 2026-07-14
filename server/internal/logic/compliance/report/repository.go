@@ -30,6 +30,10 @@ func (DatabaseRepository) SaveDraft(ctx context.Context, opcID, memberID uint64,
 	if err != nil {
 		return nil, fmt.Errorf("序列化风险快照失败: %w", err)
 	}
+	ruleVersions, err := json.Marshal(in.RuleVersions)
+	if err != nil {
+		return nil, fmt.Errorf("序列化规则版本快照失败: %w", err)
+	}
 	structured, err := json.Marshal(result.Structured)
 	if err != nil {
 		return nil, fmt.Errorf("序列化结构化报告失败: %w", err)
@@ -53,7 +57,7 @@ func (DatabaseRepository) SaveDraft(ctx context.Context, opcID, memberID uint64,
 			return err
 		}
 		version = uint(max) + 1
-		res, err := tx.Model(tableReport).Ctx(ctx).Data(g.Map{"opc_entity_id": opcID, "member_id": memberID, "period_key": in.PeriodKey, "version": version, "status": "draft", "statistics_json": string(stats), "completeness_json": string(complete), "risk_snapshot_json": string(risks), "structured_json": string(structured), "rule_versions_json": "[]", "content": result.Content, "ai_model": result.AIModel, "knowledge_version": result.KnowledgeVersion, "create_time": now, "update_time": now}).Insert()
+		res, err := tx.Model(tableReport).Ctx(ctx).Data(g.Map{"opc_entity_id": opcID, "member_id": memberID, "period_key": in.PeriodKey, "version": version, "status": "draft", "statistics_json": string(stats), "completeness_json": string(complete), "risk_snapshot_json": string(risks), "structured_json": string(structured), "rule_versions_json": string(ruleVersions), "content": result.Content, "ai_model": result.AIModel, "knowledge_version": result.KnowledgeVersion, "create_time": now, "update_time": now}).Insert()
 		if err != nil {
 			return normalizeVersionConflict(err)
 		}
@@ -150,11 +154,20 @@ func normalizeVersionConflict(err error) error {
 }
 func NewDatabaseService() *Service { return NewService(DatabaseRepository{}, nil) }
 func (s *Service) Create(ctx context.Context, opcID, memberID uint64, in Input) (*MonthlyReport, error) {
-	result, err := s.Build(ctx, in)
+	if !validPeriod(in.PeriodKey) {
+		return nil, errors.New("periodKey 必须是真实有效的 YYYY-MM")
+	}
+	// Never use client-provided snapshots. Identity comes from the authenticated
+	// controller and all report facts are loaded under both OPC and member scope.
+	trusted, err := s.snapshotLoader.Load(ctx, opcID, memberID, in.PeriodKey)
 	if err != nil {
 		return nil, err
 	}
-	return s.repository.SaveDraft(ctx, opcID, memberID, in, result)
+	result, err := s.Build(ctx, trusted)
+	if err != nil {
+		return nil, err
+	}
+	return s.repository.SaveDraft(ctx, opcID, memberID, trusted, result)
 }
 func (s *Service) List(ctx context.Context, memberID uint64, period string) ([]MonthlyReport, error) {
 	return s.repository.List(ctx, memberID, period)

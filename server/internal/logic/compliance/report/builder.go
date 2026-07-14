@@ -26,6 +26,14 @@ func BuildStructured(in Input) (StructuredReport, error) {
 	}
 	statisticsMissing := len(in.Statistics) == 0
 	completenessMissing := len(in.Completeness) == 0
+	if trusted, _ := in.Statistics["trustedSnapshot"].(bool); trusted {
+		available, _ := in.Statistics["sourceAvailable"].(bool)
+		statisticsMissing = !available
+	}
+	if trusted, _ := in.Completeness["trustedSnapshot"].(bool); trusted {
+		count, ok := number(in.Completeness["confirmedDocumentCount"])
+		completenessMissing = !ok || count == 0
+	}
 	rate, rateOK := number(in.Completeness["rate"])
 	if math.IsNaN(rate) || math.IsInf(rate, 0) {
 		rate, rateOK = 0, false

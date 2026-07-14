@@ -13,6 +13,7 @@ type Input struct {
 	Statistics   map[string]any   `json:"statistics"`
 	Completeness map[string]any   `json:"completeness"`
 	Risks        []map[string]any `json:"risks"`
+	RuleVersions []uint64         `json:"ruleVersions,omitempty"`
 }
 
 type Result struct {
@@ -47,10 +48,11 @@ type Repository interface {
 	Publish(context.Context, uint64, uint64) (*MonthlyReport, error)
 }
 type Service struct {
-	repository    Repository
-	narrator      Narrator
-	companyLoader companyLoader
-	pdfGenerator  func(reportpdf.Data) ([]byte, error)
+	repository     Repository
+	narrator       Narrator
+	companyLoader  companyLoader
+	pdfGenerator   func(reportpdf.Data) ([]byte, error)
+	snapshotLoader SnapshotLoader
 }
 
 func NewService(repository Repository, narrator Narrator) *Service {
@@ -60,7 +62,13 @@ func NewService(repository Repository, narrator Narrator) *Service {
 type companyLoader func(context.Context, uint64) (*shared.OpcBrief, error)
 
 func newServiceWithCompanyLoader(repository Repository, narrator Narrator, loader companyLoader) *Service {
-	return &Service{repository: repository, narrator: narrator, companyLoader: loader, pdfGenerator: reportpdf.Generate}
+	return &Service{repository: repository, narrator: narrator, companyLoader: loader, pdfGenerator: reportpdf.Generate, snapshotLoader: DatabaseSnapshotLoader{}}
+}
+
+func newServiceWithSnapshotLoader(repository Repository, narrator Narrator, loader SnapshotLoader) *Service {
+	s := NewService(repository, narrator)
+	s.snapshotLoader = loader
+	return s
 }
 func (s *Service) Build(ctx context.Context, in Input) (Result, error) {
 	base, err := Generate(in)

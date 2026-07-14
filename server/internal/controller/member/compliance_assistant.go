@@ -12,6 +12,7 @@ import (
 	api "xygo/api/member"
 	compliancedocument "xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/profile"
+	compliancereport "xygo/internal/logic/compliance/report"
 	"xygo/internal/logic/compliance/shared"
 	compliancetask "xygo/internal/logic/compliance/task"
 	"xygo/internal/logic/compliance/ticket"
@@ -202,7 +203,11 @@ func (c *ControllerV1) ComplianceReportCreate(ctx context.Context, req *api.Comp
 	if opc == nil {
 		return nil, fmt.Errorf("请先完成企业主体建档")
 	}
-	item, err := service.ComplianceReport().Create(ctx, opc.Id, memberID, req.Data)
+	periodKey := req.PeriodKey
+	if periodKey == "" {
+		periodKey = req.Data.PeriodKey // backward-compatible request shape only
+	}
+	item, err := service.ComplianceReport().Create(ctx, opc.Id, memberID, compliancereport.Input{PeriodKey: periodKey})
 	if err != nil {
 		return nil, err
 	}

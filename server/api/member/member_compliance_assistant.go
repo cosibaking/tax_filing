@@ -120,8 +120,12 @@ type ComplianceRiskActionRes struct {
 }
 
 type ComplianceReportCreateReq struct {
-	g.Meta `path:"/compliance/reports" method:"post" tags:"会员合规助手" summary:"生成月度体检报告"`
-	Data   compliancereport.Input `json:"data" v:"required#请提供报告数据"`
+	g.Meta    `path:"/compliance/reports" method:"post" tags:"会员合规助手" summary:"生成月度体检报告"`
+	PeriodKey string `json:"periodKey"`
+	// Data is accepted only for old clients. The controller extracts periodKey
+	// from it and the report service replaces every snapshot field with trusted
+	// server-side data.
+	Data compliancereport.Input `json:"data"`
 }
 type ComplianceReportCreateRes struct {
 	Report *compliancereport.MonthlyReport `json:"report"`
