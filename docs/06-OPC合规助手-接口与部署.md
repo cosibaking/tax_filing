@@ -66,7 +66,7 @@ complianceAssistant:
 
 ## 月度体检报告接口
 
-报告仅能由当前登录会员访问。创建会保存当时的结构化快照，发布后该版本不可修改；需要更新时应生成新版本。
+报告仅能由当前登录会员访问。会员身份和 OPC 主体均由服务端根据登录上下文确定，客户端不得指定或覆盖。创建会保存服务端在生成时组装的结构化快照，发布后该版本不可修改；需要更新时应生成新版本。
 
 ### 生成报告草稿
 
@@ -76,36 +76,15 @@ complianceAssistant:
 
 ```json
 {
-  "data": {
-    "periodKey": "2026-07",
-    "statistics": {
-      "revenue": 35600,
-      "expense": 21800
-    },
-    "completeness": {
-      "rate": 81.5
-    },
-    "risks": [
-      {
-        "code": "unmatched-revenue",
-        "categoryCode": "tax",
-        "title": "部分收入未匹配发票",
-        "severity": "high",
-        "facts": "已确认回款 35,600 元，其中 14,600 元尚未匹配销项发票。",
-        "basis": "基于本期已确认的银行流水与销项资料比对。",
-        "impact": "可能影响申报数据的完整性。",
-        "recommendation": "核对合同、回款和开票记录，交由专业人员复核。",
-        "requiredMaterials": ["银行流水", "业务合同", "销项发票"],
-        "dueDate": "2026-08-10",
-        "requiresManualReview": true,
-        "ruleVersion": "tax-check-v3"
-      }
-    ]
-  }
+  "periodKey": "2026-07"
 }
 ```
 
-`periodKey` 必须为真实有效的 `YYYY-MM`。`statistics`、`completeness`、`risks` 均为本次报告的已确认快照；不要传入尚未经用户确认的 AI 推断。
+`periodKey` 是唯一业务入参，必须为真实有效的 `YYYY-MM`。服务端使用当前会员与 OPC 主体，从可信的经营资料、流水、资料完整度和合规风险记录组装报告。
+
+为兼容旧客户端，服务端仍可从旧的 `data.periodKey` 中读取期间；但旧请求内携带的 `data.statistics`、`data.completeness` 和 `data.risks` 一律忽略，不会进入报告快照。这些数据必须由服务端按当前会员范围查询，避免客户端伪造风险数量、资料完整度或他人经营数据。
+
+如果指定期间的可信数据不足，服务端仍可生成草稿，但必须在总体结论、分类状态和资料提示中明确标记“数据不足”，不得因客户端补传快照而得出确定性结论。
 
 成功响应的 `data.report` 与列表项结构一致，初始 `status` 为 `draft`。
 
