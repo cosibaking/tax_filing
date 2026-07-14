@@ -42,6 +42,24 @@ func TestGeneratePaginatesLongAnomalies(t *testing.T) {
 	}
 }
 
+func TestRenderRepeatsAnomalyHeadingAfterPageBreak(t *testing.T) {
+	data := sampleData()
+	longText := strings.Repeat("单个异常的事实和处理依据需要持续跨页展示，并在续页明确标识当前异常。", 500)
+	data.Anomalies[0].Facts = longText
+
+	pdf, stats, err := generateWithStats(data)
+	if err != nil {
+		t.Fatalf("Generate long anomaly failed: %v", err)
+	}
+	assertPDF(t, pdf)
+	if stats.pageCount <= 1 {
+		t.Fatalf("expected multiple pages, got %d", stats.pageCount)
+	}
+	if stats.anomalyContinuationCount <= 0 {
+		t.Fatal("expected anomaly continuation heading after page break")
+	}
+}
+
 func sampleData() Data {
 	return Data{
 		CompanyName: "示例科技有限公司", PeriodKey: "2026-06", Version: 2, Status: "generated", GeneratedAt: "2026-07-14 10:00:00",

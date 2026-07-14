@@ -12,7 +12,6 @@ import (
 
 var fontCandidates = []string{
 	"resource/font/statement.ttf",
-	"resource/captcha/fonts/SourceHanSansCN-Normal.ttf",
 	"internal/library/statementpdf/fonts/statement.ttf",
 	"/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
 	"/usr/share/fonts/truetype/noto/NotoSansSC-Regular.ttf",
@@ -43,15 +42,18 @@ func loadFontData() ([]byte, error) {
 	return nil, gerror.New("未找到 PDF 中文字体，请配置 compliance.statementPdfFont 或将字体放到 resource/font/statement.ttf")
 }
 
-// LoadChineseFontData returns the Chinese font used by statement PDFs.
+// ChineseFontDataForReport loads the repository's Chinese font for monthly reports.
 // Callers must treat the returned bytes as read-only.
-func LoadChineseFontData() ([]byte, error) {
-	return loadFontData()
-}
-
-// ChineseFontData returns the Chinese font used by statement PDFs, or nil when
-// no configured or bundled font can be found. Callers must treat it as read-only.
-func ChineseFontData() []byte {
-	data, _ := LoadChineseFontData()
-	return data
+func ChineseFontDataForReport() ([]byte, error) {
+	paths := []string{
+		"resource/captcha/fonts/SourceHanSansCN-Normal.ttf",
+		"../../../resource/captcha/fonts/SourceHanSansCN-Normal.ttf",
+	}
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err == nil && len(data) > 0 {
+			return data, nil
+		}
+	}
+	return nil, gerror.New("未找到月度报告中文字体 resource/captcha/fonts/SourceHanSansCN-Normal.ttf")
 }

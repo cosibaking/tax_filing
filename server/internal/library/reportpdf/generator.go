@@ -55,38 +55,51 @@ type Anomaly struct {
 }
 
 func Generate(data Data) ([]byte, error) {
-	fontData, err := statementpdf.LoadChineseFontData()
+	pdf, _, err := generateWithStats(data)
+	return pdf, err
+}
+
+type renderStats struct {
+	pageCount                int
+	anomalyContinuationCount int
+}
+
+func generateWithStats(data Data) ([]byte, renderStats, error) {
+	fontData, err := statementpdf.ChineseFontDataForReport()
 	if err != nil {
-		return nil, fmt.Errorf("加载中文字体失败: %w", err)
+		return nil, renderStats{}, fmt.Errorf("加载中文字体失败: %w", err)
 	}
 
 	pdf := &gopdf.GoPdf{}
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
 	if err := pdf.AddTTFFontData("zh", fontData); err != nil {
-		return nil, fmt.Errorf("加载中文字体失败: %w", err)
+		return nil, renderStats{}, fmt.Errorf("加载中文字体失败: %w", err)
 	}
 	r := renderer{pdf: pdf}
 	if err := r.addPage(); err != nil {
-		return nil, err
+		return nil, r.stats, err
 	}
 	if err := r.render(data); err != nil {
-		return nil, err
+		return nil, r.stats, err
 	}
 
 	var buf bytes.Buffer
 	if _, err := pdf.WriteTo(&buf); err != nil {
-		return nil, fmt.Errorf("写入 PDF 失败: %w", err)
+		return nil, r.stats, fmt.Errorf("写入 PDF 失败: %w", err)
 	}
-	return buf.Bytes(), nil
+	return buf.Bytes(), r.stats, nil
 }
 
 type renderer struct {
-	pdf *gopdf.GoPdf
-	y   float64
+	pdf                  *gopdf.GoPdf
+	y                    float64
+	stats                renderStats
+	activeAnomalyHeading string
 }
 
 func (r *renderer) addPage() error {
 	r.pdf.AddPage()
+	r.stats.pageCount++
 	r.y = margin
 	return r.setFont(10)
 }
@@ -102,7 +115,17 @@ func (r *renderer) ensureSpace(height float64) error {
 	if r.y+height <= bottomLimit {
 		return nil
 	}
-	return r.addPage()
+	if err := r.addPage(); err != nil {
+		return err
+	}
+	if r.activeAnomalyHeading != "" {
+		r.stats.anomalyContinuationCount++
+		if err := r.drawLine(r.activeAnomalyHeading+"（续）", 11, lineHeight); err != nil {
+			return err
+		}
+		r.y += 3
+	}
+	return nil
 }
 
 func (r *renderer) render(data Data) error {
@@ -169,9 +192,11 @@ func (r *renderer) render(data Data) error {
 		}
 	}
 	for i, anomaly := range data.Anomalies {
-		if err := r.subheading(fmt.Sprintf("异常 %d：%s", i+1, fallback(anomaly.Title, "待核实异常"))); err != nil {
+		heading := fmt.Sprintf("异常 %d：%s", i+1, fallback(anomaly.Title, "待核实异常"))
+		if err := r.subheading(heading); err != nil {
 			return err
 		}
+		r.activeAnomalyHeading = heading
 		fields := []string{
 			"等级：" + severityLabel(anomaly.Severity), "事实：" + fallback(anomaly.Facts, "—"), "判断依据：" + fallback(anomaly.Basis, "—"),
 			"可能影响：" + fallback(anomaly.Impact, "—"), "处理建议：" + fallback(anomaly.Recommendation, "—"),
@@ -183,6 +208,7 @@ func (r *renderer) render(data Data) error {
 				return err
 			}
 		}
+		r.activeAnomalyHeading = ""
 	}
 	return r.disclaimer()
 }
@@ -194,11 +220,7 @@ func (r *renderer) heading(text string, size float64) error {
 	if err := r.setFont(size); err != nil {
 		return err
 	}
-	r.pdf.SetX(margin)
-	r.pdf.SetY(r.y)
-	r.pdf.Cell(nil, text)
-	r.y += size + 14
-	return nil
+	return r.drawLine(text, size, size+14)
 }
 
 func (r *renderer) subheading(text string) error { return r.paragraph(text, 11) }
@@ -211,15 +233,24 @@ func (r *renderer) paragraph(text string, size float64) error {
 		if err := r.ensureSpace(lineHeight); err != nil {
 			return err
 		}
-		if err := r.setFont(size); err != nil {
+		if err := r.drawLine(line, size, lineHeight); err != nil {
 			return err
 		}
-		r.pdf.SetX(margin)
-		r.pdf.SetY(r.y)
-		r.pdf.Cell(nil, line)
-		r.y += lineHeight
 	}
 	r.y += 3
+	return nil
+}
+
+func (r *renderer) drawLine(text string, size, height float64) error {
+	if err := r.setFont(size); err != nil {
+		return err
+	}
+	r.pdf.SetX(margin)
+	r.pdf.SetY(r.y)
+	if err := r.pdf.Cell(nil, text); err != nil {
+		return fmt.Errorf("绘制 PDF 文本失败: %w", err)
+	}
+	r.y += height
 	return nil
 }
 
