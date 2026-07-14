@@ -83,6 +83,44 @@ function isMemberRequest(url: string): boolean {
   return url.startsWith('/member')
 }
 
+function isJsonMediaType(contentType: string): boolean {
+  const mediaType = contentType.split(';', 1)[0].trim().toLowerCase()
+  return (
+    mediaType === 'application/json' ||
+    mediaType === 'text/json' ||
+    (mediaType.startsWith('application/') && mediaType.endsWith('+json'))
+  )
+}
+
+async function normalizeResponsePayload(response: AxiosResponse) {
+  const contentType = response.headers['content-type'] || ''
+  const payload = response.data as unknown
+  if (!isJsonMediaType(contentType) || typeof Blob === 'undefined' || !(payload instanceof Blob)) {
+    return payload
+  }
+
+  try {
+    response.data = JSON.parse(await payload.text())
+  } catch {
+    // 保留原始 Blob，由既有错误链按原响应处理。
+  }
+  return response.data
+}
+
+async function handleResponseAuthentication(
+  code: number | undefined,
+  message: string | undefined,
+  config: AxiosRequestConfig,
+  isMember: boolean
+) {
+  if (code === ApiStatus.kickedOut) handleKickedOutError(message, isMember)
+  if (code !== ApiStatus.unauthorized || isRefreshRequest(config)) return null
+
+  const result = await tryTokenRefresh(config, isMember)
+  if (result) return result
+  handleUnauthorizedError(message, isMember)
+}
+
 /** 请求拦截器 */
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
@@ -132,38 +170,18 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   async (response: AxiosResponse<BaseResponse>) => {
-    if (response.config.responseType === 'blob') {
-      const contentType = response.headers['content-type'] || ''
-      if (!contentType.includes('application/json')) return response
+    const payload = await normalizeResponsePayload(response)
+    const contentType = response.headers['content-type'] || ''
+    if (response.config.responseType === 'blob' && !isJsonMediaType(contentType)) return response
 
-      const blobData = response.data as unknown
-      if (typeof Blob !== 'undefined' && blobData instanceof Blob) {
-        try {
-          const payload = JSON.parse(await blobData.text())
-          throw createHttpError(
-            sanitizeErrorMessage(payload.msg || payload.message || $t('httpMsg.requestFailed')),
-            payload.code || ApiStatus.error
-          )
-        } catch (error) {
-          if (error instanceof HttpError) throw error
-          throw createHttpError($t('httpMsg.requestFailed'), ApiStatus.error)
-        }
-      }
-    }
-
-    const { code, msg, message } = response.data as any
+    const { code, msg, message } = payload as any
     const errorMsg = msg || message
     const url = response.config.url || ''
     const isMember = isMemberRequest(url)
 
     if (code === ApiStatus.success) return response
-    if (code === ApiStatus.kickedOut) handleKickedOutError(errorMsg, isMember)
-
-    if (code === ApiStatus.unauthorized && !isRefreshRequest(response.config)) {
-      const result = await tryTokenRefresh(response.config, isMember)
-      if (result) return result
-      handleUnauthorizedError(errorMsg, isMember)
-    }
+    const authResult = await handleResponseAuthentication(code, errorMsg, response.config, isMember)
+    if (authResult) return authResult
 
     throw createHttpError(
       sanitizeErrorMessage(errorMsg || $t('httpMsg.requestFailed')),
@@ -171,14 +189,16 @@ axiosInstance.interceptors.response.use(
     )
   },
   async (error) => {
+    if (error.response) await normalizeResponsePayload(error.response)
+
     const url = error.config?.url || ''
     const isMember = isMemberRequest(url)
+    const payload = error.response?.data as any
+    const code = payload?.code ?? error.response?.status
+    const errorMsg = payload?.msg || payload?.message
 
-    if ((error.response?.status === 401 || error.response?.status === ApiStatus.unauthorized) && !isRefreshRequest(error.config)) {
-      const result = await tryTokenRefresh(error.config, isMember)
-      if (result) return result
-      handleUnauthorizedError(undefined, isMember)
-    }
+    const authResult = await handleResponseAuthentication(code, errorMsg, error.config, isMember)
+    if (authResult) return authResult
 
     return Promise.reject(handleError(error))
   }
@@ -432,10 +452,7 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
       showSuccess(successMsg)
     }
 
-    if (
-      config.responseType === 'blob' ||
-      (typeof Blob !== 'undefined' && res.data instanceof Blob)
-    ) {
+    if (typeof Blob !== 'undefined' && res.data instanceof Blob) {
       return res.data as T
     }
 
