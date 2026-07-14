@@ -3,6 +3,7 @@ package member
 import (
 	"github.com/gogf/gf/v2/frame/g"
 
+	compliancedocument "xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/profile"
 	compliancetask "xygo/internal/logic/compliance/task"
 )
@@ -23,6 +24,32 @@ type ComplianceProfileSaveReq struct {
 type ComplianceProfileSaveRes struct {
 	Profile *profile.Profile `json:"profile"`
 	Changed bool             `json:"changed"`
+}
+
+type ComplianceDocumentCreateReq struct {
+	g.Meta       `path:"/compliance/documents" method:"post" tags:"会员合规助手" summary:"登记经营资料"`
+	AttachmentId uint64 `json:"attachmentId" v:"required|min:1#请上传附件"`
+	PeriodKey    string `json:"periodKey" v:"required#请选择资料期间"`
+	FileHash     string `json:"fileHash"`
+}
+type ComplianceDocumentCreateRes struct {
+	Document *compliancedocument.BusinessDocument `json:"document"`
+}
+type ComplianceDocumentListReq struct {
+	g.Meta    `path:"/compliance/documents" method:"get" tags:"会员合规助手" summary:"经营资料列表"`
+	PeriodKey string `p:"periodKey"`
+}
+type ComplianceDocumentListRes struct {
+	List []compliancedocument.BusinessDocument `json:"list"`
+}
+type ComplianceDocumentConfirmReq struct {
+	g.Meta       `path:"/compliance/documents/{id}/confirm" method:"put" tags:"会员合规助手" summary:"确认经营资料"`
+	Id           uint64         `p:"id" in:"path" v:"required|min:1#请指定资料"`
+	DocumentType string         `json:"documentType" v:"required#请选择资料类型"`
+	Fields       map[string]any `json:"fields"`
+}
+type ComplianceDocumentConfirmRes struct {
+	Document *compliancedocument.BusinessDocument `json:"document"`
 }
 
 type ComplianceTaskListReq struct {

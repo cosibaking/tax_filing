@@ -54,6 +54,42 @@ export interface TaskListQuery {
   pageSize?: number
 }
 
+export interface BusinessDocument {
+  id: number
+  attachmentId: number
+  periodKey: string
+  documentType: string
+  processStatus: string
+  confidence: number
+  duplicateOfId?: number
+}
+export const documentTypes = [
+  { value: 'bank_statement', label: '银行流水' },
+  { value: 'sales_invoice', label: '销项发票' },
+  { value: 'expense_invoice', label: '费用凭证' },
+  { value: 'contract', label: '业务合同' },
+  { value: 'tax_receipt', label: '完税证明' }
+]
+export function createBusinessDocument(data: { attachmentId: number | string; periodKey: string }) {
+  return memberRequest.post<{ document: BusinessDocument }>({ url: '/compliance/documents', data })
+}
+export function getBusinessDocuments(periodKey?: string) {
+  return memberRequest.get<{ list: BusinessDocument[] }>({
+    url: '/compliance/documents',
+    params: { periodKey }
+  })
+}
+export function confirmBusinessDocument(
+  id: number,
+  documentType: string,
+  fields: Record<string, unknown> = {}
+) {
+  return memberRequest.put<{ document: BusinessDocument }>({
+    url: `/compliance/documents/${id}/confirm`,
+    data: { documentType, fields }
+  })
+}
+
 export function getEnterpriseProfile() {
   return memberRequest.get<{ profile?: EnterpriseProfile }>({ url: '/compliance/profile' })
 }

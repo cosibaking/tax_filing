@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	compliancedocument "xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/profile"
 	"xygo/internal/logic/compliance/ruleengine"
 	compliancetask "xygo/internal/logic/compliance/task"
@@ -25,9 +26,16 @@ type IComplianceTask interface {
 	ApplyEvent(ctx context.Context, memberID, id uint64, event, note string) (*compliancetask.Task, error)
 }
 
+type IComplianceDocument interface {
+	Register(ctx context.Context, in compliancedocument.RegisterInput) (*compliancedocument.BusinessDocument, error)
+	List(ctx context.Context, memberID uint64, periodKey string) ([]compliancedocument.BusinessDocument, error)
+	Confirm(ctx context.Context, memberID, id uint64, documentType string, fields map[string]any) (*compliancedocument.BusinessDocument, error)
+}
+
 var localComplianceProfile IComplianceProfile
 var localComplianceRuleVersion IComplianceRuleVersion
 var localComplianceTask IComplianceTask
+var localComplianceDocument IComplianceDocument
 
 func ComplianceProfile() IComplianceProfile {
 	if localComplianceProfile == nil {
@@ -59,3 +67,11 @@ func ComplianceTask() IComplianceTask {
 }
 
 func RegisterComplianceTask(i IComplianceTask) { localComplianceTask = i }
+
+func ComplianceDocument() IComplianceDocument {
+	if localComplianceDocument == nil {
+		panic("IComplianceDocument not registered")
+	}
+	return localComplianceDocument
+}
+func RegisterComplianceDocument(i IComplianceDocument) { localComplianceDocument = i }

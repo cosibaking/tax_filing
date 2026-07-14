@@ -4,6 +4,7 @@ import (
 	_ "xygo/internal/logic/compliance/audit"
 	_ "xygo/internal/logic/compliance/dashboard"
 	"xygo/internal/logic/compliance/diagnosis"
+	"xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/ledger"
 	"xygo/internal/logic/compliance/opc"
 	"xygo/internal/logic/compliance/order"
@@ -24,4 +25,5 @@ func init() {
 	service.RegisterComplianceProfile(profile.New())
 	service.RegisterComplianceRuleVersion(ruleengine.NewDatabaseVersionService())
 	service.RegisterComplianceTask(compliancetask.NewDatabaseService())
+	service.RegisterComplianceDocument(document.New())
 }

@@ -319,6 +319,14 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
           },
 
           {
+            path: 'compliance/documents',
+            name: 'MemberComplianceDocuments',
+            component: () => import('@/views/frontend/compliance/documents.vue'),
+            meta: { title: '经营资料库', requiresAuth: true },
+            beforeEnter: complianceRouteGuard
+          },
+
+          {
 
             path: 'compliance/diagnosis',
 

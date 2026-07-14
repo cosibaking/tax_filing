@@ -57,6 +57,11 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     visible: (plan) => plan.opcStatus === 'active'
   },
   {
+    id: 'documents-assistant', name: '经营资料库', icon: 'ri:folder-upload-line',
+    path: '/user/compliance/documents', menuGroup: 'service', requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
     id: 'diagnosis',
     name: '诊断历史',
     icon: 'ri:file-search-line',
