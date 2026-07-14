@@ -101,8 +101,35 @@ func TestTrustedEmptySourcesAreExplicitlyInsufficient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Summary.Conclusion != ConclusionAttention || !strings.Contains(got.Summary.DataNotice, "数据不足") || got.Categories[0].Status != "insufficient" || got.Categories[1].Status != "insufficient" {
+	if got.Summary.Conclusion != ConclusionAttention || !strings.Contains(got.Summary.DataNotice, "数据不足") {
 		t.Fatalf("trusted empty snapshot must not be normal: %+v", got)
+	}
+	for _, category := range got.Categories {
+		if category.Status != "insufficient" {
+			t.Fatalf("empty trusted category %s must be insufficient: %+v", category.Code, got.Categories)
+		}
+	}
+}
+
+func TestTrustedSingleCategoryRiskKeepsOtherUnavailableCategoriesInsufficient(t *testing.T) {
+	got, err := BuildStructured(Input{PeriodKey: "2026-07",
+		Statistics:   map[string]any{"trustedSnapshot": true, "sourceAvailable": false, "transactionCount": 0},
+		Completeness: map[string]any{"trustedSnapshot": true, "rate": 0, "confirmedDocumentCount": 0},
+		Risks:        []map[string]any{{"code": "ZERO_WITH_CASHFLOW", "categoryCode": "tax", "severity": "high", "title": "服务端税务风险", "facts": "服务端事实", "basis": "服务端依据", "impact": "服务端影响", "recommendation": "服务端建议", "ruleVersion": "v1"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, category := range got.Categories {
+		if category.Code == "tax" {
+			if category.Status != "high" {
+				t.Fatalf("tax category=%+v", category)
+			}
+			continue
+		}
+		if category.Status != "insufficient" {
+			t.Fatalf("unavailable category %s incorrectly normal: %+v", category.Code, got.Categories)
+		}
 	}
 }
 

@@ -26,11 +26,14 @@ func BuildStructured(in Input) (StructuredReport, error) {
 	}
 	statisticsMissing := len(in.Statistics) == 0
 	completenessMissing := len(in.Completeness) == 0
-	if trusted, _ := in.Statistics["trustedSnapshot"].(bool); trusted {
+	statisticsTrusted, _ := in.Statistics["trustedSnapshot"].(bool)
+	completenessTrusted, _ := in.Completeness["trustedSnapshot"].(bool)
+	trustedSnapshot := statisticsTrusted || completenessTrusted
+	if statisticsTrusted {
 		available, _ := in.Statistics["sourceAvailable"].(bool)
 		statisticsMissing = !available
 	}
-	if trusted, _ := in.Completeness["trustedSnapshot"].(bool); trusted {
+	if completenessTrusted {
 		count, ok := number(in.Completeness["confirmedDocumentCount"])
 		completenessMissing = !ok || count == 0
 	}
@@ -93,7 +96,7 @@ func BuildStructured(in Input) (StructuredReport, error) {
 	default:
 		report.Summary.Conclusion = ConclusionNormal
 	}
-	report.Categories = buildCategories(report.Anomalies, statisticsMissing, completenessMissing || !rateOK, statisticsMissing && completenessMissing && len(report.Anomalies) == 0)
+	report.Categories = buildCategories(report.Anomalies, statisticsMissing, completenessMissing || !rateOK, statisticsMissing && completenessMissing && len(report.Anomalies) == 0, trustedSnapshot)
 	return report, nil
 }
 
@@ -174,14 +177,20 @@ func normalizeRisk(raw map[string]any, index int) ReportAnomaly {
 	}
 }
 
-func buildCategories(anomalies []ReportAnomaly, statisticsMissing, documentsMissing, allDataMissing bool) []ReportCategory {
+func buildCategories(anomalies []ReportAnomaly, statisticsMissing, documentsMissing, allDataMissing, trustedSnapshot bool) []ReportCategory {
 	result := make([]ReportCategory, 0, len(categoryDefinitions))
 	for _, def := range categoryDefinitions {
 		missing := allDataMissing || def.code == "business" && statisticsMissing || def.code == "documents" && documentsMissing
+		if trustedSnapshot && def.code != "business" && def.code != "documents" {
+			missing = true
+		}
 		count, status := 0, ConclusionNormal
 		for _, anomaly := range anomalies {
 			if anomaly.CategoryCode == def.code {
 				count++
+				// A persisted server-side finding is a reliable fact for this
+				// category even when no broader category data source exists.
+				missing = false
 				if severityRank(anomaly.Severity) < severityRank(status) {
 					status = anomaly.Severity
 				}
