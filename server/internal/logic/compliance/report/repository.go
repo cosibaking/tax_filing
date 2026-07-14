@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/gogf/gf/v2/frame/g"
 	"strings"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/frame/g"
 )
 
 const tableReport = "xy_compliance_monthly_report"
@@ -36,13 +38,17 @@ func (DatabaseRepository) SaveDraft(ctx context.Context, opcID, memberID uint64,
 	var id int64
 	var version uint
 	err = g.DB().Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
-		model := tx.Model(tableReport).Ctx(ctx).Where("opc_entity_id", opcID).Where("period_key", in.PeriodKey)
 		// Existing rows serialize concurrent version generation. For the first row,
 		// the unique constraint remains the cross-database concurrency backstop.
-		if _, err := model.Fields("id").LockUpdate().All(); err != nil {
+		if _, err := tx.Model(tableReport).Ctx(ctx).
+			Where("opc_entity_id", opcID).Where("period_key", in.PeriodKey).
+			Fields("id").OrderAsc("id").LockUpdate().Array(); err != nil {
 			return err
 		}
-		max, err := model.Max("version")
+		// Use a fresh model so Fields/Order/Lock state cannot leak into MAX SQL.
+		max, err := tx.Model(tableReport).Ctx(ctx).
+			Where("opc_entity_id", opcID).Where("period_key", in.PeriodKey).
+			Max("version")
 		if err != nil {
 			return err
 		}
@@ -128,9 +134,17 @@ func normalizeVersionConflict(err error) error {
 	if err == nil {
 		return nil
 	}
-	message := strings.ToLower(err.Error())
-	if strings.Contains(message, "duplicate") || strings.Contains(message, "unique") {
-		return errors.New("报告版本生成冲突，请重试")
+	constraintMatches := strings.Contains(strings.ToLower(err.Error()), "uk_report_version")
+	if !constraintMatches {
+		return err
+	}
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+		return fmt.Errorf("报告版本生成冲突，请重试: %w", err)
+	}
+	var stateErr interface{ SQLState() string }
+	if errors.As(err, &stateErr) && stateErr.SQLState() == "23505" {
+		return fmt.Errorf("报告版本生成冲突，请重试: %w", err)
 	}
 	return err
 }

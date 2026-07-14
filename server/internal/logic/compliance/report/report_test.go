@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 type failingNarrator struct{}
@@ -279,15 +281,34 @@ func TestApplyStructuredJSONRejectsZeroSchemaVersion(t *testing.T) {
 	}
 }
 
-func TestNormalizeVersionConflict(t *testing.T) {
-	for _, message := range []string{"Duplicate entry for key uk_report_version", "UNIQUE constraint failed: xy_compliance_monthly_report"} {
-		err := normalizeVersionConflict(errors.New(message))
-		if err == nil || err.Error() != "报告版本生成冲突，请重试" {
-			t.Fatalf("message=%q err=%v", message, err)
-		}
+type sqlStateError struct {
+	state   string
+	message string
+}
+
+func (e sqlStateError) Error() string    { return e.message }
+func (e sqlStateError) SQLState() string { return e.state }
+
+func TestNormalizeVersionConflictOnlyConvertsReportVersionConstraint(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"mysql report version", &mysql.MySQLError{Number: 1062, Message: "Duplicate entry '1' for key 'uk_report_version'"}, true},
+		{"mysql other constraint", &mysql.MySQLError{Number: 1062, Message: "Duplicate entry '1' for key 'uk_member_email'"}, false},
+		{"postgres report version", sqlStateError{state: "23505", message: `duplicate key violates unique constraint "uk_report_version"`}, true},
+		{"plain unique text", errors.New("unique cache key unavailable for another reason"), false},
 	}
-	want := errors.New("connection lost")
-	if got := normalizeVersionConflict(want); !errors.Is(got, want) {
-		t.Fatalf("got=%v want=%v", got, want)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := normalizeVersionConflict(tc.err)
+			if tc.want && (got == nil || !strings.Contains(got.Error(), "报告版本生成冲突，请重试") || !errors.Is(got, tc.err)) {
+				t.Fatalf("got=%v", got)
+			}
+			if !tc.want && got != tc.err {
+				t.Fatalf("got=%v want original=%v", got, tc.err)
+			}
+		})
 	}
 }
