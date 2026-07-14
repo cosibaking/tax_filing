@@ -3,13 +3,10 @@ package report
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"time"
 
 	"xygo/internal/library/reportpdf"
 )
-
-var persistedPeriodPattern = regexp.MustCompile(`^\d{4}-\d{2}$`)
 
 func (s *Service) ExportPDF(ctx context.Context, memberID, id uint64) (filename string, content []byte, err error) {
 	item, err := s.repository.Get(ctx, memberID, id)
@@ -46,7 +43,7 @@ func (s *Service) ExportPDF(ctx context.Context, memberID, id uint64) (filename 
 	}
 
 	safePeriod := item.PeriodKey
-	if !persistedPeriodPattern.MatchString(safePeriod) {
+	if !validPeriod(safePeriod) {
 		safePeriod = fmt.Sprintf("report-%d", item.ID)
 	}
 	return fmt.Sprintf("monthly-checkup-%s-v%d.pdf", safePeriod, item.Version), content, nil

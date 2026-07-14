@@ -436,3 +436,21 @@ func TestExportPDFUsesSafeFilenameForInvalidPersistedPeriod(t *testing.T) {
 		t.Fatal("expected generated PDF")
 	}
 }
+
+func TestExportPDFUsesSafeFilenameForInvalidCalendarMonth(t *testing.T) {
+	for _, period := range []string{"2026-13", "2026-99"} {
+		t.Run(period, func(t *testing.T) {
+			repo := &exportRepository{item: &MonthlyReport{ID: 92, PeriodKey: period, Version: 4, Content: "历史报告", Legacy: true}}
+			svc := newServiceWithCompanyLoader(repo, nil, fixedCompanyLoader("测试企业"))
+			stubPDFGenerator(svc, nil)
+
+			filename, _, err := svc.ExportPDF(context.Background(), 3, 92)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if filename != "monthly-checkup-report-92-v4.pdf" {
+				t.Fatalf("period=%q filename=%q", period, filename)
+			}
+		})
+	}
+}
