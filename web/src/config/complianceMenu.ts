@@ -39,6 +39,24 @@ const always = () => true
 /** 全部合规菜单项定义 */
 export const complianceMenuItems: ComplianceMenuItem[] = [
   {
+    id: 'profile-assistant',
+    name: '企业画像',
+    icon: 'ri:building-4-line',
+    path: '/user/compliance/profile',
+    menuGroup: 'service',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
+    id: 'calendar-assistant',
+    name: '合规日历',
+    icon: 'ri:calendar-check-line',
+    path: '/user/compliance/calendar',
+    menuGroup: 'service',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
     id: 'diagnosis',
     name: '诊断历史',
     icon: 'ri:file-search-line',

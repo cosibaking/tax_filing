@@ -141,3 +141,11 @@ func TestSaveRejectsOpcOwnedByAnotherMember(t *testing.T) {
 		t.Fatal("expected ownership validation error")
 	}
 }
+
+func TestGetForMemberRejectsAnotherMember(t *testing.T) {
+	repo := &memoryRepository{items: map[uint64][]Profile{}}
+	service := NewService(repo, fixedOwner{memberID: 99})
+	if _, err := service.GetForMember(context.Background(), 1, 10); err == nil {
+		t.Fatal("expected ownership validation error")
+	}
+}

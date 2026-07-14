@@ -295,6 +295,30 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
           // 合规子页面
 
           {
+            path: 'compliance/profile',
+            name: 'MemberComplianceProfile',
+            component: () => import('@/views/frontend/compliance/profile.vue'),
+            meta: { title: '企业画像', requiresAuth: true },
+            beforeEnter: complianceRouteGuard
+          },
+
+          {
+            path: 'compliance/calendar',
+            name: 'MemberComplianceCalendar',
+            component: () => import('@/views/frontend/compliance/calendar.vue'),
+            meta: { title: '合规日历', requiresAuth: true },
+            beforeEnter: complianceRouteGuard
+          },
+
+          {
+            path: 'compliance/tasks/:id',
+            name: 'MemberComplianceTaskDetail',
+            component: () => import('@/views/frontend/compliance/task-detail.vue'),
+            meta: { title: '合规任务详情', requiresAuth: true },
+            beforeEnter: complianceRouteGuard
+          },
+
+          {
 
             path: 'compliance/diagnosis',
 
@@ -455,4 +479,3 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
 
 
 export default frontendRoutes
-

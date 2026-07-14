@@ -452,6 +452,7 @@ import {
   formatMoney as formatComplianceMoney,
 } from '@/api/frontend/compliance/member'
 import type { TaxTask } from '@/api/frontend/compliance/member'
+import { getComplianceTasks } from '@/api/frontend/compliance/assistant'
 import type { CompliancePlanState } from '@/config/complianceMenu'
 import { formatTimestamp } from '@/utils/time'
 import { resolveMediaUrl } from '@/utils/media'
@@ -633,6 +634,25 @@ async function loadComplianceOverview() {
           group: 'pending',
         })
       }
+
+      try {
+        const assistant = await getComplianceTasks({ page: 1, pageSize: 20 })
+        for (const task of assistant.list || []) {
+          if (task.status === 'cancelled') continue
+          const group: TodoFilter = task.status === 'completed'
+            ? 'filed'
+            : task.status === 'overdue'
+              ? 'overdue'
+              : 'pending'
+          todos.push({
+            id: `assistant-${task.id}`,
+            text: `${task.title}（截止 ${task.dueAt ? new Date(task.dueAt).toLocaleDateString('zh-CN') : '—'}）`,
+            path: `/user/compliance/tasks/${task.id}`,
+            urgent: group === 'overdue' || task.priority === 'high',
+            group,
+          })
+        }
+      } catch { /* ignore */ }
 
       try {
         const profit = await getProfitSummary({ period, periodType: 'month' })

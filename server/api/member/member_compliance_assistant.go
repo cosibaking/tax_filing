@@ -3,8 +3,27 @@ package member
 import (
 	"github.com/gogf/gf/v2/frame/g"
 
+	"xygo/internal/logic/compliance/profile"
 	compliancetask "xygo/internal/logic/compliance/task"
 )
+
+type ComplianceProfileGetReq struct {
+	g.Meta `path:"/compliance/profile" method:"get" tags:"会员合规助手" summary:"获取企业画像"`
+}
+
+type ComplianceProfileGetRes struct {
+	Profile *profile.Profile `json:"profile"`
+}
+
+type ComplianceProfileSaveReq struct {
+	g.Meta `path:"/compliance/profile" method:"put" tags:"会员合规助手" summary:"保存企业画像"`
+	Data   profile.Data `json:"data" v:"required#请填写企业画像"`
+}
+
+type ComplianceProfileSaveRes struct {
+	Profile *profile.Profile `json:"profile"`
+	Changed bool             `json:"changed"`
+}
 
 type ComplianceTaskListReq struct {
 	g.Meta    `path:"/compliance/tasks" method:"get" tags:"会员合规助手" summary:"合规任务列表"`

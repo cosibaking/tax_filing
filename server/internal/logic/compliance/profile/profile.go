@@ -130,6 +130,17 @@ func (s *Service) Save(ctx context.Context, in SaveInput) (*Profile, bool, error
 	return saved, true, nil
 }
 
+func (s *Service) GetForMember(ctx context.Context, memberID, opcID uint64) (*Profile, error) {
+	owned, err := s.ownership.MemberOwnsOpc(ctx, memberID, opcID)
+	if err != nil {
+		return nil, err
+	}
+	if !owned {
+		return nil, errors.New("无权访问该企业画像")
+	}
+	return s.repository.Active(ctx, opcID)
+}
+
 func validate(in SaveInput) error {
 	if in.MemberID == 0 || in.OpcID == 0 {
 		return errors.New("会员和企业不能为空")

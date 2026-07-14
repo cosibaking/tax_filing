@@ -2,11 +2,54 @@ package member
 
 import (
 	"context"
+	"fmt"
 
 	api "xygo/api/member"
+	"xygo/internal/logic/compliance/profile"
+	"xygo/internal/logic/compliance/shared"
 	compliancetask "xygo/internal/logic/compliance/task"
 	"xygo/internal/service"
 )
+
+func (c *ControllerV1) ComplianceProfileGet(ctx context.Context, _ *api.ComplianceProfileGetReq) (*api.ComplianceProfileGetRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	opc, err := shared.LoadOpcByMember(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	if opc == nil {
+		return &api.ComplianceProfileGetRes{}, nil
+	}
+	item, err := service.ComplianceProfile().GetForMember(ctx, memberID, opc.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceProfileGetRes{Profile: item}, nil
+}
+
+func (c *ControllerV1) ComplianceProfileSave(ctx context.Context, req *api.ComplianceProfileSaveReq) (*api.ComplianceProfileSaveRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	opc, err := shared.LoadOpcByMember(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	if opc == nil {
+		return nil, fmt.Errorf("请先完成企业主体建档")
+	}
+	item, changed, err := service.ComplianceProfile().Save(ctx, profile.SaveInput{
+		MemberID: memberID, OpcID: opc.Id, Source: profile.SourceUser, Data: req.Data,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceProfileSaveRes{Profile: item, Changed: changed}, nil
+}
 
 func (c *ControllerV1) ComplianceTaskList(ctx context.Context, req *api.ComplianceTaskListReq) (*api.ComplianceTaskListRes, error) {
 	memberID, err := requireMemberId(ctx)

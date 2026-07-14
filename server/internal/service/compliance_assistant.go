@@ -10,6 +10,7 @@ import (
 
 type IComplianceProfile interface {
 	Save(ctx context.Context, in profile.SaveInput) (*profile.Profile, bool, error)
+	GetForMember(ctx context.Context, memberID, opcID uint64) (*profile.Profile, error)
 }
 
 type IComplianceRuleVersion interface {
