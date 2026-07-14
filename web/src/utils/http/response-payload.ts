@@ -21,12 +21,18 @@ export function isJsonMediaType(contentType: string): boolean {
   )
 }
 
-export function shouldHandleUnauthorized(
-  payloadCode: number | undefined,
+export function shouldAuthenticateBeforePayloadParse(
   httpStatus: number | undefined,
   unauthorizedCode: number
 ): boolean {
-  return httpStatus === 401 || httpStatus === unauthorizedCode || payloadCode === unauthorizedCode
+  return httpStatus === 401 || httpStatus === unauthorizedCode
+}
+
+export function shouldHandlePayloadUnauthorized(
+  payloadCode: number | undefined,
+  unauthorizedCode: number
+): boolean {
+  return payloadCode === unauthorizedCode
 }
 
 export async function normalizeResponsePayload(response: AxiosResponse, originalError?: unknown) {

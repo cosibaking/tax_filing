@@ -22,7 +22,8 @@ import { HttpError, handleError, sanitizeErrorMessage, showError, showSuccess } 
 import {
   isJsonMediaType,
   normalizeResponsePayload,
-  shouldHandleUnauthorized
+  shouldAuthenticateBeforePayloadParse,
+  shouldHandlePayloadUnauthorized
 } from './response-payload'
 import { $t } from '@/locales'
 import { BaseResponse } from '@/types'
@@ -88,24 +89,37 @@ function isMemberRequest(url: string): boolean {
   return url.startsWith('/member')
 }
 
-async function handleResponseAuthentication(
-  payloadCode: number | undefined,
+async function handleUnauthorizedAuthentication(
+  message: string | undefined,
+  config: AxiosRequestConfig,
+  isMember: boolean
+) {
+  if (isRefreshRequest(config)) return null
+
+  const result = await tryTokenRefresh(config, isMember)
+  if (result) return result
+  handleUnauthorizedError(message, isMember)
+}
+
+async function handleHttpAuthentication(
   httpStatus: number | undefined,
+  config: AxiosRequestConfig,
+  isMember: boolean
+) {
+  if (httpStatus === ApiStatus.kickedOut) handleKickedOutError(undefined, isMember)
+  if (!shouldAuthenticateBeforePayloadParse(httpStatus, ApiStatus.unauthorized)) return null
+  return handleUnauthorizedAuthentication(undefined, config, isMember)
+}
+
+async function handlePayloadAuthentication(
+  payloadCode: number | undefined,
   message: string | undefined,
   config: AxiosRequestConfig,
   isMember: boolean
 ) {
   if (payloadCode === ApiStatus.kickedOut) handleKickedOutError(message, isMember)
-  if (
-    !shouldHandleUnauthorized(payloadCode, httpStatus, ApiStatus.unauthorized) ||
-    isRefreshRequest(config)
-  ) {
-    return null
-  }
-
-  const result = await tryTokenRefresh(config, isMember)
-  if (result) return result
-  handleUnauthorizedError(message, isMember)
+  if (!shouldHandlePayloadUnauthorized(payloadCode, ApiStatus.unauthorized)) return null
+  return handleUnauthorizedAuthentication(message, config, isMember)
 }
 
 /** 请求拦截器 */
@@ -167,13 +181,7 @@ axiosInstance.interceptors.response.use(
     const isMember = isMemberRequest(url)
 
     if (code === ApiStatus.success) return response
-    const authResult = await handleResponseAuthentication(
-      code,
-      response.status,
-      errorMsg,
-      response.config,
-      isMember
-    )
+    const authResult = await handlePayloadAuthentication(code, errorMsg, response.config, isMember)
     if (authResult) return authResult
 
     throw createHttpError(
@@ -182,21 +190,22 @@ axiosInstance.interceptors.response.use(
     )
   },
   async (error) => {
-    if (error.response) await normalizeResponsePayload(error.response, error)
-
     const url = error.config?.url || ''
     const isMember = isMemberRequest(url)
+    const httpStatus = error.response?.status
+    if (shouldAuthenticateBeforePayloadParse(httpStatus, ApiStatus.unauthorized)) {
+      const authResult = await handleHttpAuthentication(httpStatus, error.config, isMember)
+      if (authResult) return authResult
+      return Promise.reject(handleError(error))
+    }
+
+    if (error.response) await normalizeResponsePayload(error.response, error)
+
     const payload = error.response?.data as any
     const code = payload?.code
     const errorMsg = payload?.msg || payload?.message
 
-    const authResult = await handleResponseAuthentication(
-      code,
-      error.response?.status,
-      errorMsg,
-      error.config,
-      isMember
-    )
+    const authResult = await handlePayloadAuthentication(code, errorMsg, error.config, isMember)
     if (authResult) return authResult
 
     return Promise.reject(handleError(error))
