@@ -98,6 +98,7 @@
     align-items: start;
   }
   .period-field {
+    --el-date-editor-width: 100%;
     width: 100%;
   }
   .upload-field {
