@@ -28,6 +28,9 @@ gf run tools.go --args "migrate history"
 
 版本号使用语义化版本（如 `1.2.6`），工具按版本号排序依次执行。
 
+`1.5.6_compliance_assistant_core` 只新增经营合规助手表和索引。生产回滚时关闭
+`complianceAssistant` 相关功能开关并保留新增数据，不执行 `DROP`、`TRUNCATE` 或批量删除。
+
 ---
 
 ## 各类数据库变更的 SQL 写法
