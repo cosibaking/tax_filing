@@ -228,3 +228,66 @@ func TestPublishedReportIsImmutable(t *testing.T) {
 		t.Fatal("published report must be immutable")
 	}
 }
+
+func TestApplyStructuredJSONMarksEmptySnapshotLegacy(t *testing.T) {
+	item := MonthlyReport{StructuredReport: &StructuredReport{SchemaVersion: 99}}
+	if err := item.ApplyStructuredJSON(" \n\t "); err != nil {
+		t.Fatal(err)
+	}
+	if item.StructuredReport != nil || !item.Legacy {
+		t.Fatalf("item=%+v", item)
+	}
+}
+
+func TestApplyStructuredJSONRoundTripsValidSnapshot(t *testing.T) {
+	want, err := BuildStructured(Input{PeriodKey: "2026-07", Statistics: map[string]any{"ok": true}, Completeness: map[string]any{"rate": 100}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := MonthlyReport{}
+	if err := item.ApplyStructuredJSON(string(raw)); err != nil {
+		t.Fatal(err)
+	}
+	if item.Legacy || item.StructuredReport == nil || !reflect.DeepEqual(*item.StructuredReport, want) {
+		t.Fatalf("item=%+v want=%+v", item, want)
+	}
+}
+
+func TestApplyStructuredJSONRejectsInvalidJSONWithoutLeakingPartialData(t *testing.T) {
+	item := MonthlyReport{StructuredReport: &StructuredReport{SchemaVersion: 99}}
+	err := item.ApplyStructuredJSON(`{"schemaVersion":1,"summary":`)
+	if err == nil || !strings.Contains(err.Error(), "结构化报告") {
+		t.Fatalf("err=%v", err)
+	}
+	if item.StructuredReport != nil || !item.Legacy {
+		t.Fatalf("item=%+v", item)
+	}
+}
+
+func TestApplyStructuredJSONRejectsZeroSchemaVersion(t *testing.T) {
+	item := MonthlyReport{}
+	err := item.ApplyStructuredJSON(`{"schemaVersion":0}`)
+	if err == nil || !strings.Contains(err.Error(), "schemaVersion") {
+		t.Fatalf("err=%v", err)
+	}
+	if item.StructuredReport != nil || !item.Legacy {
+		t.Fatalf("item=%+v", item)
+	}
+}
+
+func TestNormalizeVersionConflict(t *testing.T) {
+	for _, message := range []string{"Duplicate entry for key uk_report_version", "UNIQUE constraint failed: xy_compliance_monthly_report"} {
+		err := normalizeVersionConflict(errors.New(message))
+		if err == nil || err.Error() != "报告版本生成冲突，请重试" {
+			t.Fatalf("message=%q err=%v", message, err)
+		}
+	}
+	want := errors.New("connection lost")
+	if got := normalizeVersionConflict(want); !errors.Is(got, want) {
+		t.Fatalf("got=%v want=%v", got, want)
+	}
+}

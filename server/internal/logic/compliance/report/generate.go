@@ -39,6 +39,7 @@ type Narrator interface {
 }
 type Repository interface {
 	SaveDraft(context.Context, uint64, uint64, Input, Result) (*MonthlyReport, error)
+	Get(context.Context, uint64, uint64) (*MonthlyReport, error)
 	List(context.Context, uint64, string) ([]MonthlyReport, error)
 	Publish(context.Context, uint64, uint64) (*MonthlyReport, error)
 }
@@ -67,14 +68,18 @@ func (s *Service) Build(ctx context.Context, in Input) (Result, error) {
 }
 
 type MonthlyReport struct {
-	ID               uint64 `json:"id" orm:"id"`
-	OpcEntityID      uint64 `json:"opcEntityId" orm:"opc_entity_id"`
-	MemberID         uint64 `json:"memberId" orm:"member_id"`
-	PeriodKey        string `json:"periodKey" orm:"period_key"`
-	Version          uint   `json:"version" orm:"version"`
-	Status           string `json:"status" orm:"status"`
-	Content          string `json:"content" orm:"content"`
-	AIModel          string `json:"aiModel" orm:"ai_model"`
-	KnowledgeVersion string `json:"knowledgeVersion" orm:"knowledge_version"`
-	PublishedAt      uint64 `json:"publishedAt" orm:"published_at"`
+	ID               uint64            `json:"id" orm:"id"`
+	OpcEntityID      uint64            `json:"opcEntityId" orm:"opc_entity_id"`
+	MemberID         uint64            `json:"memberId" orm:"member_id"`
+	PeriodKey        string            `json:"periodKey" orm:"period_key"`
+	Version          uint              `json:"version" orm:"version"`
+	Status           string            `json:"status" orm:"status"`
+	Content          string            `json:"content" orm:"content"`
+	AIModel          string            `json:"aiModel" orm:"ai_model"`
+	KnowledgeVersion string            `json:"knowledgeVersion" orm:"knowledge_version"`
+	StructuredJSON   string            `json:"-" orm:"structured_json"`
+	StructuredReport *StructuredReport `json:"structuredReport,omitempty" orm:"-"`
+	Legacy           bool              `json:"legacy" orm:"-"`
+	PublishedAt      uint64            `json:"publishedAt" orm:"published_at"`
+	CreatedAt        uint64            `json:"createdAt" orm:"create_time"`
 }
