@@ -60,6 +60,31 @@ func TestRenderRepeatsAnomalyHeadingAfterPageBreak(t *testing.T) {
 	}
 }
 
+func TestRenderWrapsLongContinuationHeading(t *testing.T) {
+	data := sampleData()
+	data.Anomalies[0].Title = strings.Repeat("这是需要在续页中保持可读且不能越过页面宽度的超长异常标题", 20) + "\n第二段标题"
+	data.Anomalies[0].Facts = strings.Repeat("异常事实需要跨越多个页面。", 500)
+
+	pdf, stats, err := generateWithStats(data)
+	if err != nil {
+		t.Fatalf("Generate long continuation heading failed: %v", err)
+	}
+	assertPDF(t, pdf)
+	if stats.pageCount <= 1 || stats.anomalyContinuationCount <= 0 {
+		t.Fatalf("expected continuation pages and headings, stats=%+v", stats)
+	}
+
+	lines := continuationHeadingLines("异常 1：" + data.Anomalies[0].Title + "（续）")
+	if len(lines) == 0 || len(lines) > maxContinuationHeadingLines {
+		t.Fatalf("unexpected continuation line count: %d", len(lines))
+	}
+	for _, line := range lines {
+		if len([]rune(line)) > charsPerLine(continuationHeadingFontSize) {
+			t.Fatalf("continuation line exceeds content width estimate: %q", line)
+		}
+	}
+}
+
 func sampleData() Data {
 	return Data{
 		CompanyName: "示例科技有限公司", PeriodKey: "2026-06", Version: 2, Status: "generated", GeneratedAt: "2026-07-14 10:00:00",

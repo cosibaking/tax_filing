@@ -17,6 +17,9 @@ const (
 	contentWidth = pageWidth - margin*2
 	bottomLimit  = pageHeight - 52
 	lineHeight   = 15.0
+
+	continuationHeadingFontSize = 11.0
+	maxContinuationHeadingLines = 3
 )
 
 type Data struct {
@@ -120,11 +123,20 @@ func (r *renderer) ensureSpace(height float64) error {
 	}
 	if r.activeAnomalyHeading != "" {
 		r.stats.anomalyContinuationCount++
-		if err := r.drawLine(r.activeAnomalyHeading+"（续）", 11, lineHeight); err != nil {
+		if err := r.drawWrappedContinuationHeading(r.activeAnomalyHeading + "（续）"); err != nil {
 			return err
 		}
-		r.y += 3
 	}
+	return nil
+}
+
+func (r *renderer) drawWrappedContinuationHeading(text string) error {
+	for _, line := range continuationHeadingLines(text) {
+		if err := r.drawLine(line, continuationHeadingFontSize, lineHeight); err != nil {
+			return err
+		}
+	}
+	r.y += 3
 	return nil
 }
 
@@ -279,6 +291,21 @@ func wrapText(text string, width int) []string {
 		result = append(result, string(runes))
 	}
 	return result
+}
+
+func continuationHeadingLines(text string) []string {
+	width := charsPerLine(continuationHeadingFontSize)
+	lines := wrapText(strings.TrimSpace(text), width)
+	if len(lines) <= maxContinuationHeadingLines {
+		return lines
+	}
+	lines = lines[:maxContinuationHeadingLines]
+	last := []rune(lines[len(lines)-1])
+	if len(last) >= width {
+		last = last[:width-1]
+	}
+	lines[len(lines)-1] = string(last) + "…"
+	return lines
 }
 
 func charsPerLine(size float64) int {
