@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,6 +27,9 @@ func BuildStructured(in Input) (StructuredReport, error) {
 	statisticsMissing := len(in.Statistics) == 0
 	completenessMissing := len(in.Completeness) == 0
 	rate, rateOK := number(in.Completeness["rate"])
+	if math.IsNaN(rate) || math.IsInf(rate, 0) {
+		rate, rateOK = 0, false
+	}
 	if rate < 0 {
 		rate = 0
 	} else if rate > 100 {

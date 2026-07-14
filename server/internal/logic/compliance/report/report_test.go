@@ -2,7 +2,9 @@ package report
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -83,6 +85,97 @@ func TestBuildStructuredClampsCompletenessRate(t *testing.T) {
 		}
 		if got.Summary.CompletenessRate != tc.want {
 			t.Fatalf("rate(%v)=%v want %v", tc.value, got.Summary.CompletenessRate, tc.want)
+		}
+	}
+}
+
+func TestBuildStructuredRejectsNonFiniteCompletenessRate(t *testing.T) {
+	for _, value := range []any{math.NaN(), math.Inf(1), float32(math.Inf(-1)), json.Number("NaN"), "Inf"} {
+		got, err := BuildStructured(Input{PeriodKey: "2026-07", Statistics: map[string]any{"ok": true}, Completeness: map[string]any{"rate": value}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.Summary.CompletenessRate != 0 || got.Summary.Conclusion != ConclusionAttention || !strings.Contains(got.Summary.DataNotice, "数据不足") {
+			t.Fatalf("rate(%v) summary=%+v", value, got.Summary)
+		}
+	}
+}
+
+func TestBuildStructuredRiskDefaultsAndDueDateOrdering(t *testing.T) {
+	got, err := BuildStructured(Input{PeriodKey: "2026-07", Statistics: map[string]any{"ok": true}, Completeness: map[string]any{"rate": 100}, Risks: []map[string]any{
+		{"code": "no-date", "severity": "high"},
+		{"code": "dated", "severity": "high", "dueDate": "2026-08-01"},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Anomalies[0].Code != "dated" || got.Anomalies[1].Code != "no-date" {
+		t.Fatalf("due date order=%+v", got.Anomalies)
+	}
+	if !got.Anomalies[1].RequiresManualReview {
+		t.Fatalf("high risk should require manual review by default: %+v", got.Anomalies[1])
+	}
+}
+
+func TestBuildStructuredConclusionForCompleteData(t *testing.T) {
+	medium, err := BuildStructured(Input{PeriodKey: "2026-07", Statistics: map[string]any{"ok": true}, Completeness: map[string]any{"rate": 100}, Risks: []map[string]any{{"severity": "medium"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	normal, err := BuildStructured(Input{PeriodKey: "2026-07", Statistics: map[string]any{"ok": true}, Completeness: map[string]any{"rate": 100}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if medium.Summary.Conclusion != ConclusionAttention || normal.Summary.Conclusion != ConclusionNormal {
+		t.Fatalf("medium=%+v normal=%+v", medium.Summary, normal.Summary)
+	}
+}
+
+func TestRenderContentContainsRequiredSections(t *testing.T) {
+	structured, err := BuildStructured(Input{PeriodKey: "2026-07", Statistics: map[string]any{"ok": true}, Completeness: map[string]any{"rate": 75}, Risks: []map[string]any{{"severity": "medium"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := RenderContent("2026-07", structured)
+	for _, required := range []string{"2026-07 月度经营合规体检", "总体结论：需关注", "资料完整度：75.0%", "风险分布：高风险 0 项、中风险 1 项、低风险 0 项", "资料提示：", structured.Summary.DataNotice, "免责声明："} {
+		if !strings.Contains(content, required) {
+			t.Fatalf("content missing %q: %s", required, content)
+		}
+	}
+}
+
+func TestStructuredAndResultJSONUseStableLowerCamelFields(t *testing.T) {
+	result, err := Generate(Input{PeriodKey: "2026-07", Statistics: map[string]any{"ok": true}, Completeness: map[string]any{"rate": 100}, Risks: []map[string]any{{"severity": "high"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	structured, ok := decoded["structuredReport"].(map[string]any)
+	if !ok || structured["schemaVersion"] != float64(StructuredSchemaVersion) {
+		t.Fatalf("json=%s", data)
+	}
+	for _, field := range []string{"summary", "categories", "anomalies"} {
+		if _, ok := structured[field]; !ok {
+			t.Fatalf("structured field %q missing: %s", field, data)
+		}
+	}
+	summary := structured["summary"].(map[string]any)
+	for _, field := range []string{"conclusion", "completenessRate", "highCount", "mediumCount", "lowCount", "dataNotice"} {
+		if _, ok := summary[field]; !ok {
+			t.Fatalf("summary field %q missing: %s", field, data)
+		}
+	}
+	anomaly := structured["anomalies"].([]any)[0].(map[string]any)
+	for _, field := range []string{"categoryCode", "requiredMaterials", "dueDate", "requiresManualReview", "ruleVersion"} {
+		if _, ok := anomaly[field]; !ok {
+			t.Fatalf("anomaly field %q missing: %s", field, data)
 		}
 	}
 }
