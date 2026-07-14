@@ -41,6 +41,7 @@
               <ElTag :type="item.status === 'published' ? 'success' : 'info'">
                 {{ statusLabel(item.status) }}
               </ElTag>
+              <span>生成于 {{ formatTimestamp(item.createdAt) }}</span>
               <span v-if="item.publishedAt">发布于 {{ formatTimestamp(item.publishedAt) }}</span>
               <span v-else>报告草稿，发布前请核对资料与提示内容</span>
             </div>
@@ -50,14 +51,14 @@
               v-if="item.status === 'draft'"
               type="primary"
               :loading="publishingId === item.id"
-              :disabled="publishingId === item.id"
+              :disabled="publishingId !== null"
               @click="publish(item.id)"
             >
               确认并发布
             </ElButton>
             <ElButton
               :loading="exportingId === item.id"
-              :disabled="exportingId === item.id"
+              :disabled="exportingId !== null"
               @click="exportPdf(item)"
             >
               导出 PDF
@@ -135,7 +136,7 @@
   }
 
   async function publish(id: number) {
-    if (publishingId.value === id) return
+    if (publishingId.value !== null) return
     publishingId.value = id
     try {
       await publishComplianceReport(id)
@@ -144,12 +145,12 @@
     } catch {
       ElMessage.error('报告发布失败，请稍后重试')
     } finally {
-      publishingId.value = null
+      if (publishingId.value === id) publishingId.value = null
     }
   }
 
   async function exportPdf(report: ComplianceReport) {
-    if (exportingId.value === report.id) return
+    if (exportingId.value !== null) return
     exportingId.value = report.id
     let objectUrl = ''
     try {
@@ -167,7 +168,7 @@
       ElMessage.error('PDF 导出失败，请稍后重试或申请人工协助')
     } finally {
       if (objectUrl) URL.revokeObjectURL(objectUrl)
-      exportingId.value = null
+      if (exportingId.value === report.id) exportingId.value = null
     }
   }
 
@@ -194,8 +195,10 @@
       periodKey: report.periodKey,
       anomalyId: anomaly.code,
       anomalyCode: anomaly.code,
+      anomalyTitle: anomaly.title,
       riskRuleId: anomaly.code,
-      ruleVersion: anomaly.ruleVersion
+      ruleVersion: anomaly.ruleVersion,
+      title: anomaly.title
     }
   }
 
