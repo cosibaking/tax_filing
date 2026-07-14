@@ -140,6 +140,11 @@ type ComplianceReportPublishReq struct {
 type ComplianceReportPublishRes struct {
 	Report *compliancereport.MonthlyReport `json:"report"`
 }
+type ComplianceReportPdfReq struct {
+	g.Meta `path:"/compliance/reports/{id}/pdf" method:"get" tags:"会员合规助手" summary:"下载月度体检报告 PDF"`
+	Id     uint64 `p:"id" in:"path" v:"required|min:1#请指定报告"`
+}
+type ComplianceReportPdfRes struct{}
 type ComplianceTicketCreateReq struct {
 	g.Meta       `path:"/compliance/tickets" method:"post" tags:"会员合规助手" summary:"提交人工服务工单"`
 	TicketType   string `json:"ticketType" v:"required#请选择服务类型"`

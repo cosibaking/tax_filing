@@ -10,6 +10,9 @@ import (
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
+
+	"xygo/internal/library/reportpdf"
+	"xygo/internal/logic/compliance/shared"
 )
 
 type failingNarrator struct{}
@@ -310,5 +313,126 @@ func TestNormalizeVersionConflictOnlyConvertsReportVersionConstraint(t *testing.
 				t.Fatalf("got=%v want original=%v", got, tc.err)
 			}
 		})
+	}
+}
+
+type exportRepository struct {
+	item         *MonthlyReport
+	err          error
+	gotMemberID  uint64
+	gotReportID  uint64
+	getCallCount int
+}
+
+func (r *exportRepository) SaveDraft(context.Context, uint64, uint64, Input, Result) (*MonthlyReport, error) {
+	panic("unexpected SaveDraft call")
+}
+func (r *exportRepository) Get(_ context.Context, memberID, id uint64) (*MonthlyReport, error) {
+	r.getCallCount++
+	r.gotMemberID, r.gotReportID = memberID, id
+	return r.item, r.err
+}
+func (r *exportRepository) List(context.Context, uint64, string) ([]MonthlyReport, error) {
+	panic("unexpected List call")
+}
+func (r *exportRepository) Publish(context.Context, uint64, uint64) (*MonthlyReport, error) {
+	panic("unexpected Publish call")
+}
+
+func fixedCompanyLoader(name string) companyLoader {
+	return func(context.Context, uint64) (*shared.OpcBrief, error) {
+		return &shared.OpcBrief{Id: 1, CompanyName: name}, nil
+	}
+}
+
+func stubPDFGenerator(svc *Service, capture *reportpdf.Data) {
+	svc.pdfGenerator = func(data reportpdf.Data) ([]byte, error) {
+		if capture != nil {
+			*capture = data
+		}
+		return []byte("%PDF-test"), nil
+	}
+}
+
+func TestExportPDFUsesPersistedStructuredReportAndScopedGet(t *testing.T) {
+	structured := StructuredReport{
+		SchemaVersion: StructuredSchemaVersion,
+		Summary:       ReportSummary{Conclusion: ConclusionUrgent, CompletenessRate: 81.5, HighCount: 1, DataNotice: "持久化提示"},
+		Categories:    []ReportCategory{{Code: "tax", Name: "税务与申报", Status: ConclusionUrgent, Summary: "持久化分类", Checks: []ReportCheck{{Code: "tax-overview", Name: "税务检查", Status: ConclusionUrgent, Message: "持久化检查"}}}},
+		Anomalies:     []ReportAnomaly{{Code: "tax-1", CategoryCode: "tax", Title: "持久化异常", Severity: "high", Facts: "事实", Basis: "依据", Impact: "影响", Recommendation: "建议", RequiredMaterials: []string{"申报表"}, DueDate: "2026-07-31", RequiresManualReview: true, RuleVersion: "v1"}},
+	}
+	repo := &exportRepository{item: &MonthlyReport{ID: 17, MemberID: 29, PeriodKey: "2026-06", Version: 3, Status: "published", StructuredReport: &structured, Content: "不应替代结构化快照", CreatedAt: 1750000000}}
+	svc := newServiceWithCompanyLoader(repo, nil, fixedCompanyLoader("测试企业"))
+	var generated reportpdf.Data
+	stubPDFGenerator(svc, &generated)
+
+	filename, content, err := svc.ExportPDF(context.Background(), 29, 17)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filename != "monthly-checkup-2026-06-v3.pdf" {
+		t.Fatalf("filename=%q", filename)
+	}
+	if !strings.HasPrefix(string(content), "%PDF") {
+		t.Fatalf("invalid pdf header: %q", content[:min(len(content), 16)])
+	}
+	if repo.getCallCount != 1 || repo.gotMemberID != 29 || repo.gotReportID != 17 {
+		t.Fatalf("Get calls=%d memberID=%d reportID=%d", repo.getCallCount, repo.gotMemberID, repo.gotReportID)
+	}
+	if generated.CompanyName != "测试企业" || generated.LegacyContent != "" || generated.Summary.DataNotice != "持久化提示" || len(generated.Categories) != 1 || generated.Categories[0].Checks[0].Message != "持久化检查" || len(generated.Anomalies) != 1 || generated.Anomalies[0].Title != "持久化异常" {
+		t.Fatalf("generated data=%+v", generated)
+	}
+}
+
+func TestExportPDFSupportsPersistedLegacyContent(t *testing.T) {
+	repo := &exportRepository{item: &MonthlyReport{ID: 8, PeriodKey: "2026-05", Version: 1, Status: "draft", Content: "历史报告结论", Legacy: true}}
+	svc := newServiceWithCompanyLoader(repo, nil, fixedCompanyLoader("历史企业"))
+	var generated reportpdf.Data
+	stubPDFGenerator(svc, &generated)
+
+	filename, content, err := svc.ExportPDF(context.Background(), 2, 8)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filename != "monthly-checkup-2026-05-v1.pdf" || !strings.HasPrefix(string(content), "%PDF") {
+		t.Fatalf("filename=%q content prefix=%q", filename, content[:min(len(content), 16)])
+	}
+	if generated.LegacyContent != "历史报告结论" || generated.Summary != (reportpdf.Summary{}) {
+		t.Fatalf("generated data=%+v", generated)
+	}
+}
+
+func TestExportPDFReturnsRepositoryErrorWithoutLoadingCompany(t *testing.T) {
+	wantErr := errors.New("报告不存在或无权访问")
+	repo := &exportRepository{err: wantErr}
+	companyCalls := 0
+	svc := newServiceWithCompanyLoader(repo, nil, func(context.Context, uint64) (*shared.OpcBrief, error) {
+		companyCalls++
+		return nil, nil
+	})
+
+	filename, content, err := svc.ExportPDF(context.Background(), 44, 55)
+	if !errors.Is(err, wantErr) || filename != "" || content != nil {
+		t.Fatalf("filename=%q content=%v err=%v", filename, content, err)
+	}
+	if companyCalls != 0 {
+		t.Fatalf("company loader called %d times", companyCalls)
+	}
+}
+
+func TestExportPDFUsesSafeFilenameForInvalidPersistedPeriod(t *testing.T) {
+	repo := &exportRepository{item: &MonthlyReport{ID: 91, PeriodKey: "../../evil\r\nX-Test: injected", Version: 7, Content: "历史报告", Legacy: true}}
+	svc := newServiceWithCompanyLoader(repo, nil, func(context.Context, uint64) (*shared.OpcBrief, error) { return nil, nil })
+	stubPDFGenerator(svc, nil)
+
+	filename, content, err := svc.ExportPDF(context.Background(), 3, 91)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filename != "monthly-checkup-report-91-v7.pdf" || strings.ContainsAny(filename, "\r\n/") {
+		t.Fatalf("unsafe filename=%q", filename)
+	}
+	if !strings.HasPrefix(string(content), "%PDF") {
+		t.Fatal("expected generated PDF")
 	}
 }

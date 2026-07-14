@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/net/ghttp"
 
 	api "xygo/api/member"
 	compliancedocument "xygo/internal/logic/compliance/document"
@@ -227,6 +229,24 @@ func (c *ControllerV1) ComplianceReportPublish(ctx context.Context, req *api.Com
 		return nil, err
 	}
 	return &api.ComplianceReportPublishRes{Report: item}, nil
+}
+func (c *ControllerV1) ComplianceReportPdf(ctx context.Context, req *api.ComplianceReportPdfReq) (*api.ComplianceReportPdfRes, error) {
+	memberID, err := requireAssistantMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	filename, content, err := service.ComplianceReport().ExportPDF(ctx, memberID, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	if r := ghttp.RequestFromCtx(ctx); r != nil {
+		r.Response.Header().Set("Content-Type", "application/pdf")
+		r.Response.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+		r.Response.Header().Set("Content-Length", strconv.Itoa(len(content)))
+		r.Response.Header().Set("Cache-Control", "private, no-store")
+		r.Response.Write(content)
+	}
+	return &api.ComplianceReportPdfRes{}, nil
 }
 func (c *ControllerV1) ComplianceTicketCreate(ctx context.Context, req *api.ComplianceTicketCreateReq) (*api.ComplianceTicketCreateRes, error) {
 	memberID, err := requireAssistantMemberId(ctx)

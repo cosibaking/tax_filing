@@ -44,6 +44,7 @@ type IComplianceReport interface {
 	Create(ctx context.Context, opcID, memberID uint64, in compliancereport.Input) (*compliancereport.MonthlyReport, error)
 	List(ctx context.Context, memberID uint64, period string) ([]compliancereport.MonthlyReport, error)
 	Publish(ctx context.Context, memberID, id uint64) (*compliancereport.MonthlyReport, error)
+	ExportPDF(ctx context.Context, memberID, id uint64) (filename string, content []byte, err error)
 }
 type IComplianceTicket interface {
 	Create(context.Context, complianceticket.CreateInput) (*complianceticket.Ticket, error)

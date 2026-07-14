@@ -3,6 +3,9 @@ package report
 import (
 	"context"
 	"errors"
+
+	"xygo/internal/library/reportpdf"
+	"xygo/internal/logic/compliance/shared"
 )
 
 type Input struct {
@@ -44,12 +47,20 @@ type Repository interface {
 	Publish(context.Context, uint64, uint64) (*MonthlyReport, error)
 }
 type Service struct {
-	repository Repository
-	narrator   Narrator
+	repository    Repository
+	narrator      Narrator
+	companyLoader companyLoader
+	pdfGenerator  func(reportpdf.Data) ([]byte, error)
 }
 
 func NewService(repository Repository, narrator Narrator) *Service {
-	return &Service{repository: repository, narrator: narrator}
+	return newServiceWithCompanyLoader(repository, narrator, shared.LoadOpcByMember)
+}
+
+type companyLoader func(context.Context, uint64) (*shared.OpcBrief, error)
+
+func newServiceWithCompanyLoader(repository Repository, narrator Narrator, loader companyLoader) *Service {
+	return &Service{repository: repository, narrator: narrator, companyLoader: loader, pdfGenerator: reportpdf.Generate}
 }
 func (s *Service) Build(ctx context.Context, in Input) (Result, error) {
 	base, err := Generate(in)
