@@ -9,6 +9,7 @@ import (
 	compliancerisk "xygo/internal/logic/compliance/risk"
 	"xygo/internal/logic/compliance/ruleengine"
 	compliancetask "xygo/internal/logic/compliance/task"
+	complianceticket "xygo/internal/logic/compliance/ticket"
 )
 
 type IComplianceProfile interface {
@@ -44,6 +45,11 @@ type IComplianceReport interface {
 	List(ctx context.Context, memberID uint64, period string) ([]compliancereport.MonthlyReport, error)
 	Publish(ctx context.Context, memberID, id uint64) (*compliancereport.MonthlyReport, error)
 }
+type IComplianceTicket interface {
+	Create(context.Context, complianceticket.CreateInput) (*complianceticket.Ticket, error)
+	List(context.Context, uint64) ([]complianceticket.Ticket, error)
+	Apply(context.Context, uint64, uint64, string, string) (*complianceticket.Ticket, error)
+}
 
 var localComplianceProfile IComplianceProfile
 var localComplianceRuleVersion IComplianceRuleVersion
@@ -51,6 +57,7 @@ var localComplianceTask IComplianceTask
 var localComplianceDocument IComplianceDocument
 var localComplianceRisk IComplianceRisk
 var localComplianceReport IComplianceReport
+var localComplianceTicket IComplianceTicket
 
 func ComplianceProfile() IComplianceProfile {
 	if localComplianceProfile == nil {
@@ -105,3 +112,10 @@ func ComplianceReport() IComplianceReport {
 	return localComplianceReport
 }
 func RegisterComplianceReport(i IComplianceReport) { localComplianceReport = i }
+func ComplianceTicket() IComplianceTicket {
+	if localComplianceTicket == nil {
+		panic("IComplianceTicket not registered")
+	}
+	return localComplianceTicket
+}
+func RegisterComplianceTicket(i IComplianceTicket) { localComplianceTicket = i }

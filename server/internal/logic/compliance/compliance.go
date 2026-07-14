@@ -16,6 +16,7 @@ import (
 	_ "xygo/internal/logic/compliance/statement"
 	compliancetask "xygo/internal/logic/compliance/task"
 	_ "xygo/internal/logic/compliance/tax"
+	"xygo/internal/logic/compliance/ticket"
 	"xygo/internal/service"
 )
 
@@ -30,4 +31,5 @@ func init() {
 	service.RegisterComplianceDocument(document.New())
 	service.RegisterComplianceRisk(risk.New())
 	service.RegisterComplianceReport(report.NewDatabaseService())
+	service.RegisterComplianceTicket(ticket.New())
 }

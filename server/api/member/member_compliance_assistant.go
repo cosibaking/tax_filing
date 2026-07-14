@@ -8,6 +8,7 @@ import (
 	compliancereport "xygo/internal/logic/compliance/report"
 	compliancerisk "xygo/internal/logic/compliance/risk"
 	compliancetask "xygo/internal/logic/compliance/task"
+	complianceticket "xygo/internal/logic/compliance/ticket"
 )
 
 type ComplianceProfileGetReq struct {
@@ -138,4 +139,31 @@ type ComplianceReportPublishReq struct {
 }
 type ComplianceReportPublishRes struct {
 	Report *compliancereport.MonthlyReport `json:"report"`
+}
+type ComplianceTicketCreateReq struct {
+	g.Meta       `path:"/compliance/tickets" method:"post" tags:"会员合规助手" summary:"提交人工服务工单"`
+	TicketType   string `json:"ticketType" v:"required#请选择服务类型"`
+	Title        string `json:"title" v:"required#请填写标题"`
+	Description  string `json:"description"`
+	TaskId       uint64 `json:"taskId"`
+	RiskEventId  uint64 `json:"riskEventId"`
+	ProviderName string `json:"providerName"`
+}
+type ComplianceTicketCreateRes struct {
+	Ticket *complianceticket.Ticket `json:"ticket"`
+}
+type ComplianceTicketListReq struct {
+	g.Meta `path:"/compliance/tickets" method:"get" tags:"会员合规助手" summary:"人工服务工单列表"`
+}
+type ComplianceTicketListRes struct {
+	List []complianceticket.Ticket `json:"list"`
+}
+type ComplianceTicketActionReq struct {
+	g.Meta `path:"/compliance/tickets/{id}/action" method:"post" tags:"会员合规助手" summary:"流转人工服务工单"`
+	Id     uint64 `p:"id" in:"path" v:"required|min:1#请指定工单"`
+	Action string `json:"action" v:"required#请选择操作"`
+	Note   string `json:"note"`
+}
+type ComplianceTicketActionRes struct {
+	Ticket *complianceticket.Ticket `json:"ticket"`
 }

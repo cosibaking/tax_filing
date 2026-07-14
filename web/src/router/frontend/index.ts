@@ -343,6 +343,14 @@ export const frontendRoutes: AppRouteRecordRaw[] = [
           },
 
           {
+            path: 'compliance/tickets',
+            name: 'MemberComplianceTickets',
+            component: () => import('@/views/frontend/compliance/tickets.vue'),
+            meta: { title: '人工服务', requiresAuth: true },
+            beforeEnter: complianceRouteGuard
+          },
+
+          {
 
             path: 'compliance/diagnosis',
 

@@ -84,6 +84,15 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     visible: (plan) => plan.opcStatus === 'active'
   },
   {
+    id: 'tickets-assistant',
+    name: '人工服务',
+    icon: 'ri:customer-service-2-line',
+    path: '/user/compliance/tickets',
+    menuGroup: 'service',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
     id: 'diagnosis',
     name: '诊断历史',
     icon: 'ri:file-search-line',

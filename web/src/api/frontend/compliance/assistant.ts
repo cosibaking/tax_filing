@@ -178,3 +178,29 @@ export function publishComplianceReport(id: number) {
     url: `/compliance/reports/${id}/publish`
   })
 }
+export interface ComplianceTicket {
+  id: number
+  ticketType: string
+  title: string
+  description: string
+  status: string
+  providerName: string
+  completedAt: number
+}
+export function getComplianceTickets() {
+  return memberRequest.get<{ list: ComplianceTicket[] }>({ url: '/compliance/tickets' })
+}
+export function createComplianceTicket(data: {
+  ticketType: string
+  title: string
+  description: string
+  providerName?: string
+}) {
+  return memberRequest.post<{ ticket: ComplianceTicket }>({ url: '/compliance/tickets', data })
+}
+export function transitionComplianceTicket(id: number, action: string, note = '') {
+  return memberRequest.post<{ ticket: ComplianceTicket }>({
+    url: `/compliance/tickets/${id}/action`,
+    data: { action, note }
+  })
+}

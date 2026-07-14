@@ -9,6 +9,7 @@ import (
 	"xygo/internal/logic/compliance/profile"
 	"xygo/internal/logic/compliance/shared"
 	compliancetask "xygo/internal/logic/compliance/task"
+	"xygo/internal/logic/compliance/ticket"
 	"xygo/internal/service"
 )
 
@@ -216,4 +217,44 @@ func (c *ControllerV1) ComplianceReportPublish(ctx context.Context, req *api.Com
 		return nil, err
 	}
 	return &api.ComplianceReportPublishRes{Report: item}, nil
+}
+func (c *ControllerV1) ComplianceTicketCreate(ctx context.Context, req *api.ComplianceTicketCreateReq) (*api.ComplianceTicketCreateRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	opc, err := shared.LoadOpcByMember(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	if opc == nil {
+		return nil, fmt.Errorf("请先完成企业主体建档")
+	}
+	item, err := service.ComplianceTicket().Create(ctx, ticket.CreateInput{OpcEntityID: opc.Id, MemberID: memberID, TicketType: req.TicketType, Title: req.Title, Description: req.Description, TaskID: req.TaskId, RiskEventID: req.RiskEventId, ProviderName: req.ProviderName})
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceTicketCreateRes{Ticket: item}, nil
+}
+func (c *ControllerV1) ComplianceTicketList(ctx context.Context, _ *api.ComplianceTicketListReq) (*api.ComplianceTicketListRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	items, err := service.ComplianceTicket().List(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceTicketListRes{List: items}, nil
+}
+func (c *ControllerV1) ComplianceTicketAction(ctx context.Context, req *api.ComplianceTicketActionReq) (*api.ComplianceTicketActionRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	item, err := service.ComplianceTicket().Apply(ctx, memberID, req.Id, req.Action, req.Note)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceTicketActionRes{Ticket: item}, nil
 }
