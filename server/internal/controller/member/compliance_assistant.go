@@ -2,7 +2,10 @@ package member
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/gogf/gf/v2/frame/g"
 
 	api "xygo/api/member"
 	compliancedocument "xygo/internal/logic/compliance/document"
@@ -13,8 +16,15 @@ import (
 	"xygo/internal/service"
 )
 
+func requireAssistantMemberId(ctx context.Context) (uint64, error) {
+	if !g.Cfg().MustGet(ctx, "complianceAssistant.enabled", false).Bool() {
+		return 0, errors.New("OPC公司经营合规助手尚未开放")
+	}
+	return requireMemberId(ctx)
+}
+
 func (c *ControllerV1) ComplianceDocumentCreate(ctx context.Context, req *api.ComplianceDocumentCreateReq) (*api.ComplianceDocumentCreateRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +43,7 @@ func (c *ControllerV1) ComplianceDocumentCreate(ctx context.Context, req *api.Co
 }
 
 func (c *ControllerV1) ComplianceDocumentList(ctx context.Context, req *api.ComplianceDocumentListReq) (*api.ComplianceDocumentListRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +55,7 @@ func (c *ControllerV1) ComplianceDocumentList(ctx context.Context, req *api.Comp
 }
 
 func (c *ControllerV1) ComplianceDocumentConfirm(ctx context.Context, req *api.ComplianceDocumentConfirmReq) (*api.ComplianceDocumentConfirmRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +67,7 @@ func (c *ControllerV1) ComplianceDocumentConfirm(ctx context.Context, req *api.C
 }
 
 func (c *ControllerV1) ComplianceProfileGet(ctx context.Context, _ *api.ComplianceProfileGetReq) (*api.ComplianceProfileGetRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +86,7 @@ func (c *ControllerV1) ComplianceProfileGet(ctx context.Context, _ *api.Complian
 }
 
 func (c *ControllerV1) ComplianceProfileSave(ctx context.Context, req *api.ComplianceProfileSaveReq) (*api.ComplianceProfileSaveRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +107,7 @@ func (c *ControllerV1) ComplianceProfileSave(ctx context.Context, req *api.Compl
 }
 
 func (c *ControllerV1) ComplianceTaskList(ctx context.Context, req *api.ComplianceTaskListReq) (*api.ComplianceTaskListRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +122,7 @@ func (c *ControllerV1) ComplianceTaskList(ctx context.Context, req *api.Complian
 }
 
 func (c *ControllerV1) ComplianceTaskDetail(ctx context.Context, req *api.ComplianceTaskDetailReq) (*api.ComplianceTaskDetailRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +134,7 @@ func (c *ControllerV1) ComplianceTaskDetail(ctx context.Context, req *api.Compli
 }
 
 func (c *ControllerV1) ComplianceTaskAction(ctx context.Context, req *api.ComplianceTaskActionReq) (*api.ComplianceTaskActionRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +146,7 @@ func (c *ControllerV1) ComplianceTaskAction(ctx context.Context, req *api.Compli
 }
 
 func (c *ControllerV1) ComplianceRiskScan(ctx context.Context, req *api.ComplianceRiskScanReq) (*api.ComplianceRiskScanRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +165,7 @@ func (c *ControllerV1) ComplianceRiskScan(ctx context.Context, req *api.Complian
 }
 
 func (c *ControllerV1) ComplianceRiskList(ctx context.Context, req *api.ComplianceRiskListReq) (*api.ComplianceRiskListRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +177,7 @@ func (c *ControllerV1) ComplianceRiskList(ctx context.Context, req *api.Complian
 }
 
 func (c *ControllerV1) ComplianceRiskAction(ctx context.Context, req *api.ComplianceRiskActionReq) (*api.ComplianceRiskActionRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +189,7 @@ func (c *ControllerV1) ComplianceRiskAction(ctx context.Context, req *api.Compli
 }
 
 func (c *ControllerV1) ComplianceReportCreate(ctx context.Context, req *api.ComplianceReportCreateReq) (*api.ComplianceReportCreateRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +207,7 @@ func (c *ControllerV1) ComplianceReportCreate(ctx context.Context, req *api.Comp
 	return &api.ComplianceReportCreateRes{Report: item}, nil
 }
 func (c *ControllerV1) ComplianceReportList(ctx context.Context, req *api.ComplianceReportListReq) (*api.ComplianceReportListRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +218,7 @@ func (c *ControllerV1) ComplianceReportList(ctx context.Context, req *api.Compli
 	return &api.ComplianceReportListRes{List: items}, nil
 }
 func (c *ControllerV1) ComplianceReportPublish(ctx context.Context, req *api.ComplianceReportPublishReq) (*api.ComplianceReportPublishRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +229,7 @@ func (c *ControllerV1) ComplianceReportPublish(ctx context.Context, req *api.Com
 	return &api.ComplianceReportPublishRes{Report: item}, nil
 }
 func (c *ControllerV1) ComplianceTicketCreate(ctx context.Context, req *api.ComplianceTicketCreateReq) (*api.ComplianceTicketCreateRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +247,7 @@ func (c *ControllerV1) ComplianceTicketCreate(ctx context.Context, req *api.Comp
 	return &api.ComplianceTicketCreateRes{Ticket: item}, nil
 }
 func (c *ControllerV1) ComplianceTicketList(ctx context.Context, _ *api.ComplianceTicketListReq) (*api.ComplianceTicketListRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +258,7 @@ func (c *ControllerV1) ComplianceTicketList(ctx context.Context, _ *api.Complian
 	return &api.ComplianceTicketListRes{List: items}, nil
 }
 func (c *ControllerV1) ComplianceTicketAction(ctx context.Context, req *api.ComplianceTicketActionReq) (*api.ComplianceTicketActionRes, error) {
-	memberID, err := requireMemberId(ctx)
+	memberID, err := requireAssistantMemberId(ctx)
 	if err != nil {
 		return nil, err
 	}

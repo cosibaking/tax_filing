@@ -39,6 +39,8 @@ Frontend: [Art Design Pro](https://github.com/Daymychen/art-design-pro) (Vue3 + 
 Diagnosis → Sign-up → OPC Setup → Bookkeeping → Filing Reminders → Monthly Statements
 ```
 
+The optional OPC Compliance Assistant adds versioned enterprise profiles, dynamic tasks, document confirmation, deterministic risk checks, monthly reports, and human-service tickets. It is disabled by default through `complianceAssistant.enabled`; see [API and deployment](./docs/06-OPC合规助手-接口与部署.md) and [acceptance checklist](./docs/07-OPC合规助手-验收清单.md).
+
 | Stage | Streamer Portal | Advisor Console |
 |-------|-----------------|-----------------|
 | Compliance Diagnosis | `/diagnosis` — anonymous questionnaire + 3-way tax comparison | — |
