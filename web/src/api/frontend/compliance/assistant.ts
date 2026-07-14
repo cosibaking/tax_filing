@@ -123,3 +123,31 @@ export function transitionComplianceTask(id: number | string, action: string, no
     data: { action, note }
   })
 }
+
+export interface ComplianceRisk {
+  id: number
+  riskCode: string
+  periodKey: string
+  severity: 'low' | 'medium' | 'high'
+  status: 'open' | 'confirmed' | 'dismissed' | 'resolved'
+  summary: string
+  evidence: Record<string, unknown>
+  resolutionNote: string
+  firstHitAt: number
+  lastHitAt: number
+}
+
+export function getComplianceRisks(params?: { periodKey?: string; status?: string }) {
+  return memberRequest.get<{ list: ComplianceRisk[] }>({ url: '/compliance/risks', params })
+}
+
+export function transitionComplianceRisk(
+  id: number,
+  action: 'confirm' | 'dismiss' | 'resolve',
+  note = ''
+) {
+  return memberRequest.post<{ risk: ComplianceRisk }>({
+    url: `/compliance/risks/${id}/action`,
+    data: { action, note }
+  })
+}

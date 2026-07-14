@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS `xy_enterprise_compliance_task` (
   `opc_entity_id` bigint unsigned NOT NULL DEFAULT 0,
   `member_id` bigint unsigned NOT NULL DEFAULT 0,
   `rule_version_id` bigint unsigned NOT NULL DEFAULT 0,
+  `risk_code` varchar(64) NOT NULL DEFAULT '',
   `period_key` varchar(16) NOT NULL DEFAULT '',
   `trigger_key` varchar(64) NOT NULL DEFAULT 'periodic',
   `task_type` varchar(32) NOT NULL DEFAULT 'general',
@@ -146,7 +147,7 @@ CREATE TABLE IF NOT EXISTS `xy_risk_event` (
   `create_time` bigint unsigned NOT NULL DEFAULT 0,
   `update_time` bigint unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_risk_period` (`opc_entity_id`,`rule_version_id`,`period_key`),
+  UNIQUE KEY `uk_risk_period` (`opc_entity_id`,`risk_code`,`period_key`),
   KEY `idx_risk_member_status` (`member_id`,`status`,`severity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='合规风险事件';
 
@@ -226,4 +227,3 @@ CREATE TABLE IF NOT EXISTS `xy_ai_audit_log` (
   PRIMARY KEY (`id`),
   KEY `idx_ai_audit_opc_scene` (`opc_entity_id`,`scene`,`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI调用审计摘要';
-

@@ -5,6 +5,7 @@ import (
 
 	compliancedocument "xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/profile"
+	compliancerisk "xygo/internal/logic/compliance/risk"
 	"xygo/internal/logic/compliance/ruleengine"
 	compliancetask "xygo/internal/logic/compliance/task"
 )
@@ -32,10 +33,17 @@ type IComplianceDocument interface {
 	Confirm(ctx context.Context, memberID, id uint64, documentType string, fields map[string]any) (*compliancedocument.BusinessDocument, error)
 }
 
+type IComplianceRisk interface {
+	ScanAndSave(ctx context.Context, opcEntityID, memberID uint64, periodKey string, facts compliancerisk.Facts) ([]compliancerisk.Event, error)
+	List(ctx context.Context, memberID uint64, periodKey, status string) ([]compliancerisk.Event, error)
+	Decide(ctx context.Context, memberID, id uint64, action, note string) (*compliancerisk.Event, error)
+}
+
 var localComplianceProfile IComplianceProfile
 var localComplianceRuleVersion IComplianceRuleVersion
 var localComplianceTask IComplianceTask
 var localComplianceDocument IComplianceDocument
+var localComplianceRisk IComplianceRisk
 
 func ComplianceProfile() IComplianceProfile {
 	if localComplianceProfile == nil {
@@ -75,3 +83,11 @@ func ComplianceDocument() IComplianceDocument {
 	return localComplianceDocument
 }
 func RegisterComplianceDocument(i IComplianceDocument) { localComplianceDocument = i }
+
+func ComplianceRisk() IComplianceRisk {
+	if localComplianceRisk == nil {
+		panic("IComplianceRisk not registered")
+	}
+	return localComplianceRisk
+}
+func RegisterComplianceRisk(i IComplianceRisk) { localComplianceRisk = i }

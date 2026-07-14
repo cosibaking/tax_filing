@@ -57,8 +57,21 @@ export const complianceMenuItems: ComplianceMenuItem[] = [
     visible: (plan) => plan.opcStatus === 'active'
   },
   {
-    id: 'documents-assistant', name: '经营资料库', icon: 'ri:folder-upload-line',
-    path: '/user/compliance/documents', menuGroup: 'service', requiresOpcActive: true,
+    id: 'documents-assistant',
+    name: '经营资料库',
+    icon: 'ri:folder-upload-line',
+    path: '/user/compliance/documents',
+    menuGroup: 'service',
+    requiresOpcActive: true,
+    visible: (plan) => plan.opcStatus === 'active'
+  },
+  {
+    id: 'risks-assistant',
+    name: '风险中心',
+    icon: 'ri:alarm-warning-line',
+    path: '/user/compliance/risks',
+    menuGroup: 'service',
+    requiresOpcActive: true,
     visible: (plan) => plan.opcStatus === 'active'
   },
   {

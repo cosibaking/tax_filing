@@ -5,6 +5,7 @@ import (
 
 	compliancedocument "xygo/internal/logic/compliance/document"
 	"xygo/internal/logic/compliance/profile"
+	compliancerisk "xygo/internal/logic/compliance/risk"
 	compliancetask "xygo/internal/logic/compliance/task"
 )
 
@@ -86,4 +87,32 @@ type ComplianceTaskActionReq struct {
 
 type ComplianceTaskActionRes struct {
 	Task *compliancetask.Task `json:"task"`
+}
+
+type ComplianceRiskScanReq struct {
+	g.Meta    `path:"/compliance/risks/scan" method:"post" tags:"会员合规助手" summary:"执行合规风险扫描"`
+	PeriodKey string               `json:"periodKey" v:"required#请选择扫描期间"`
+	Facts     compliancerisk.Facts `json:"facts" v:"required#请提供扫描事实"`
+}
+type ComplianceRiskScanRes struct {
+	List []compliancerisk.Event `json:"list"`
+}
+
+type ComplianceRiskListReq struct {
+	g.Meta    `path:"/compliance/risks" method:"get" tags:"会员合规助手" summary:"合规风险列表"`
+	PeriodKey string `p:"periodKey"`
+	Status    string `p:"status"`
+}
+type ComplianceRiskListRes struct {
+	List []compliancerisk.Event `json:"list"`
+}
+
+type ComplianceRiskActionReq struct {
+	g.Meta `path:"/compliance/risks/{id}/action" method:"post" tags:"会员合规助手" summary:"处置合规风险"`
+	Id     uint64 `p:"id" in:"path" v:"required|min:1#请指定风险事件"`
+	Action string `json:"action" v:"required|in:confirm,dismiss,resolve#请选择操作|操作无效"`
+	Note   string `json:"note"`
+}
+type ComplianceRiskActionRes struct {
+	Risk *compliancerisk.Event `json:"risk"`
 }

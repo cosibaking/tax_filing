@@ -9,6 +9,7 @@ import (
 	"xygo/internal/logic/compliance/opc"
 	"xygo/internal/logic/compliance/order"
 	"xygo/internal/logic/compliance/profile"
+	"xygo/internal/logic/compliance/risk"
 	"xygo/internal/logic/compliance/ruleengine"
 	_ "xygo/internal/logic/compliance/social"
 	_ "xygo/internal/logic/compliance/statement"
@@ -26,4 +27,5 @@ func init() {
 	service.RegisterComplianceRuleVersion(ruleengine.NewDatabaseVersionService())
 	service.RegisterComplianceTask(compliancetask.NewDatabaseService())
 	service.RegisterComplianceDocument(document.New())
+	service.RegisterComplianceRisk(risk.New())
 }

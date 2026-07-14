@@ -133,3 +133,46 @@ func (c *ControllerV1) ComplianceTaskAction(ctx context.Context, req *api.Compli
 	}
 	return &api.ComplianceTaskActionRes{Task: item}, nil
 }
+
+func (c *ControllerV1) ComplianceRiskScan(ctx context.Context, req *api.ComplianceRiskScanReq) (*api.ComplianceRiskScanRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	opc, err := shared.LoadOpcByMember(ctx, memberID)
+	if err != nil {
+		return nil, err
+	}
+	if opc == nil {
+		return nil, fmt.Errorf("请先完成企业主体建档")
+	}
+	items, err := service.ComplianceRisk().ScanAndSave(ctx, opc.Id, memberID, req.PeriodKey, req.Facts)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceRiskScanRes{List: items}, nil
+}
+
+func (c *ControllerV1) ComplianceRiskList(ctx context.Context, req *api.ComplianceRiskListReq) (*api.ComplianceRiskListRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	items, err := service.ComplianceRisk().List(ctx, memberID, req.PeriodKey, req.Status)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceRiskListRes{List: items}, nil
+}
+
+func (c *ControllerV1) ComplianceRiskAction(ctx context.Context, req *api.ComplianceRiskActionReq) (*api.ComplianceRiskActionRes, error) {
+	memberID, err := requireMemberId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	item, err := service.ComplianceRisk().Decide(ctx, memberID, req.Id, req.Action, req.Note)
+	if err != nil {
+		return nil, err
+	}
+	return &api.ComplianceRiskActionRes{Risk: item}, nil
+}
